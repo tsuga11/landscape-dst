@@ -41,7 +41,7 @@
       height: 100%;
       object-fit: cover;
       object-position: center;
-      filter: brightness(0.6);
+      filter: brightness(0.6) blur(2px); 
     }
     
     /* Gradient fades image from visible bottom-right → transparent top-left */
@@ -52,10 +52,10 @@
       inset: 0;
       background: linear-gradient(
         135deg,
-        rgba(140, 120, 95, 0.96) 0%,
-        rgba(140, 120, 95, 0.85) 40%,
-        rgba(140, 120, 95, 0.45) 70%,
-        rgba(140, 120, 95, 0.10) 100%
+        rgba(80, 85, 95, 0.96) 0%,
+        rgba(90, 90, 100, 0.85) 40%,
+        rgba(110, 105, 100, 0.45) 70%,
+        rgba(120, 110, 95, 0.10) 100%
       );
     }
   
