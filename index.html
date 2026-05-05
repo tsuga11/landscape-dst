@@ -152,19 +152,30 @@
   </footer>
 
   <script>
-    // ── Parallax hero ──────────────────────────────────────────
-    const hero        = document.querySelector('.hero');
+    // ── Cards scroll OVER the fixed hero ──────────────────────
+    // Hero stays fixed; #projects slides up on top of it
+    const hero     = document.querySelector('.hero');
+    const projects = document.getElementById('projects');
+  
+    // Pin the hero so it stays in place while page scrolls
+    hero.style.position = 'sticky';
+    hero.style.top      = '0';
+  
+    // Remove overflow:hidden so sticky works correctly
+    hero.style.overflow = 'visible';
+  
+    // Fade + lift hero content as projects section approaches
     const heroContent = document.querySelector('.hero-content');
-
+  
     window.addEventListener('scroll', () => {
-      const scrollY = window.scrollY;
-      const heroH   = hero.offsetHeight;
-      hero.style.backgroundPositionY = `${scrollY * 0.5}px`;
+      const scrollY  = window.scrollY;
+      const heroH    = hero.offsetHeight;
       const progress = Math.min(scrollY / heroH, 1);
-      heroContent.style.opacity   = 1 - progress * 1.5;
-      heroContent.style.transform = `translateY(${scrollY * 0.25}px)`;
+  
+      heroContent.style.opacity   = Math.max(1 - progress * 2, 0);
+      heroContent.style.transform = `translateY(${scrollY * 0.2}px)`;
     }, { passive: true });
-
+  
     // ── Card reveal ────────────────────────────────────────────
     const cards = document.querySelectorAll('.project-card');
     cards.forEach((card, i) => {
