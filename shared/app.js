@@ -903,7 +903,7 @@ function drawWeightChart(restoreWeights, protectWeights, restoreLabels, protectL
   const labelWidth = 130;   // wider label column
   const barH      = 14;
   const rowH      = barH + 5;
-  const margin    = { top: 8, right: 45, bottom: 4, left: 8 };
+  const margin = { top: 20, right: 45, bottom: 4, left: 8 };
   const svgWidth  = svgEl.getBoundingClientRect().width || 290;
   const barWidth  = svgWidth - margin.left - margin.right - labelWidth;
   const svgHeight = allData.length * rowH + 30;
