@@ -42,22 +42,34 @@
 	    heroContent.style.transform = `translateY(${scrollY * 0.25}px)`;
 	  }, { passive: true });
 	
-	  // ── Card reveal on scroll ────────────────────────────────
+ 	  // ── Card reveal on scroll ────────────────────────────────
 	  const cards = document.querySelectorAll('.project-card');
 	
 	  const observer = new IntersectionObserver(entries => {
-	    entries.forEach((entry, i) => {
+	    entries.forEach(entry => {
 	      if (entry.isIntersecting) {
-	        // Stagger each card slightly
-	        setTimeout(() => entry.target.classList.add('visible'),
-	                   i * 80);
+	        entry.target.classList.add('visible');
 	        observer.unobserve(entry.target);
 	      }
 	    });
+	  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+	
+	  cards.forEach((card, i) => {
+	    const rect = card.getBoundingClientRect();
+	    if (rect.top < window.innerHeight) {
+	      // Already in view on load — make visible immediately with stagger
+	      setTimeout(() => card.classList.add('visible'), i * 80);
+	    } else {
+	      // Below fold — observe and reveal on scroll
+	      observer.observe(card);
+	    }
+	  });
 	  }, { threshold: 0.1 });
 	
 	  cards.forEach(card => observer.observe(card));
-	</script>	  
+	</script>	
+
+											
 
     body {
       font-family: 'DM Sans', sans-serif;
