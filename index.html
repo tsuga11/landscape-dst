@@ -61,11 +61,15 @@
   
     .hero::before { content: ''; position: absolute; inset: 0; background-image: repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255,255,255,0.04) 60px), repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255,255,255,0.04) 60px); pointer-events: none; }
     .hero::after { content: ''; position: absolute; top: -20%; right: -10%; width: 55%; height: 160%; background: linear-gradient(135deg, transparent 40%, rgba(196,150,58,0.07) 40%); pointer-events: none; }
-    .hero-nav { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; padding: 2rem 4rem; }
+    .hero::before,
+    .hero::after {
+      z-index: 1;    /* ← above image, below text */
+    }
+    .hero-nav { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 2rem 4rem; }
     .hero-nav .site-name { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
     .hero-nav a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; letter-spacing: 0.05em; transition: color 0.2s; }
     .hero-nav a:hover { color: var(--gold-light); }
-    .hero-content { position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 4rem 4rem 6rem; max-width: 800px; transition: opacity 0.1s ease, transform 0.1s ease; }
+    .hero-content { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 4rem 4rem 6rem; max-width: 800px; transition: opacity 0.1s ease, transform 0.1s ease; }
     .hero-eyebrow { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.5rem; }
     .hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(3rem, 6vw, 5.5rem); font-weight: 700; line-height: 1.05; color: #fff; margin-bottom: 1.5rem; }
     .hero-title em { font-style: italic; color: var(--gold-light); }
