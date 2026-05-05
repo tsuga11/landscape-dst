@@ -9,397 +9,56 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --green-deep:  #1b3a2f;
-      --green-mid:   #2a5240;
-      --green-light: #3d7a5e;
-      --gold:        #c4963a;
-      --gold-light:  #e8c46a;
-      --cream:       #f5f0e8;
-      --text-dark:   #1a1a1a;
-      --text-mid:    #4a4a4a;
-      --text-light:  #888;
+      --green-deep:  #1b3a2f; --green-mid: #2a5240; --green-light: #3d7a5e;
+      --gold: #c4963a; --gold-light: #e8c46a; --cream: #f5f0e8;
+      --text-dark: #1a1a1a; --text-mid: #4a4a4a;
     }
-
     html { scroll-behavior: smooth; }
-
-	<script>
-	  // ── Parallax hero ────────────────────────────────────────
-	  const hero        = document.querySelector('.hero');
-	  const heroContent = document.querySelector('.hero-content');
-	
-	  window.addEventListener('scroll', () => {
-	    const scrollY = window.scrollY;
-	    const heroH   = hero.offsetHeight;
-	
-	    // Background moves at half scroll speed
-	    hero.style.backgroundPositionY = `${scrollY * 0.5}px`;
-	
-	    // Content fades and lifts as you scroll out of hero
-	    const progress = Math.min(scrollY / heroH, 1);
-	    heroContent.style.opacity   = 1 - progress * 1.5;
-	    heroContent.style.transform = `translateY(${scrollY * 0.25}px)`;
-	  }, { passive: true });
-	
- 	  // ── Card reveal on scroll ────────────────────────────────
-	  const cards = document.querySelectorAll('.project-card');
-	
-	  const observer = new IntersectionObserver(entries => {
-	    entries.forEach(entry => {
-	      if (entry.isIntersecting) {
-	        entry.target.classList.add('visible');
-	        observer.unobserve(entry.target);
-	      }
-	    });
-	  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-	
-	  cards.forEach((card, i) => {
-	    const rect = card.getBoundingClientRect();
-	    if (rect.top < window.innerHeight) {
-	      // Already in view on load — make visible immediately with stagger
-	      setTimeout(() => card.classList.add('visible'), i * 80);
-	    } else {
-	      // Below fold — observe and reveal on scroll
-	      observer.observe(card);
-	    }
-	  });
-	  }, { threshold: 0.1 });
-	
-	  cards.forEach(card => observer.observe(card));
-	</script>	
-
-											
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--cream);
-      color: var(--text-dark);
-      min-height: 100vh;
-    }
-
-    /* ── HERO ────────────────────────────────────────────────── */
-    .hero {
-      background: var(--green-deep);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: hidden;
-      background-attachment: fixed;
-      will-change: transform;		
-    }
-
-    /* Subtle topographic grid overlay */
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        repeating-linear-gradient(0deg,   transparent, transparent 59px, rgba(255,255,255,0.04) 60px),
-        repeating-linear-gradient(90deg,  transparent, transparent 59px, rgba(255,255,255,0.04) 60px);
-      pointer-events: none;
-    }
-
-    /* Diagonal accent band */
-    .hero::after {
-      content: '';
-      position: absolute;
-      top: -20%;
-      right: -10%;
-      width: 55%;
-      height: 160%;
-      background: linear-gradient(135deg, transparent 40%, rgba(196,150,58,0.07) 40%);
-      pointer-events: none;
-    }
-
-    .hero-nav {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 2rem 4rem;
-    }
-
-    .hero-nav .site-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.1rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.6);
-    }
-
-    .hero-nav a {
-      color: rgba(255,255,255,0.5);
-      text-decoration: none;
-      font-size: 0.85rem;
-      letter-spacing: 0.05em;
-      transition: color 0.2s;
-    }
-
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text-dark); min-height: 100vh; }
+    .hero { background: var(--green-deep); min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; background-attachment: fixed; will-change: transform; }
+    .hero::before { content: ''; position: absolute; inset: 0; background-image: repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255,255,255,0.04) 60px), repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255,255,255,0.04) 60px); pointer-events: none; }
+    .hero::after { content: ''; position: absolute; top: -20%; right: -10%; width: 55%; height: 160%; background: linear-gradient(135deg, transparent 40%, rgba(196,150,58,0.07) 40%); pointer-events: none; }
+    .hero-nav { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; padding: 2rem 4rem; }
+    .hero-nav .site-name { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+    .hero-nav a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; letter-spacing: 0.05em; transition: color 0.2s; }
     .hero-nav a:hover { color: var(--gold-light); }
-
-    .hero-content {
-      position: relative;
-      z-index: 10;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 4rem 4rem 6rem;
-      max-width: 800px;
-	  transition: opacity 0.1s ease, transform 0.1s ease;
-    }
-
-    .hero-eyebrow {
-      font-size: 0.75rem;
-      font-weight: 500;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 1.5rem;
-    }
-
-    .hero-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(3rem, 6vw, 5.5rem);
-      font-weight: 700;
-      line-height: 1.05;
-      color: #fff;
-      margin-bottom: 1.5rem;
-    }
-
-    .hero-title em {
-      font-style: italic;
-      color: var(--gold-light);
-    }
-
-    .hero-desc {
-      font-size: 1.05rem;
-      font-weight: 300;
-      line-height: 1.7;
-      color: rgba(255,255,255,0.65);
-      max-width: 520px;
-      margin-bottom: 2.5rem;
-    }
-
-    .hero-scroll {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.6rem;
-      color: rgba(255,255,255,0.45);
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
+    .hero-content { position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 4rem 4rem 6rem; max-width: 800px; transition: opacity 0.1s ease, transform 0.1s ease; }
+    .hero-eyebrow { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.5rem; }
+    .hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(3rem, 6vw, 5.5rem); font-weight: 700; line-height: 1.05; color: #fff; margin-bottom: 1.5rem; }
+    .hero-title em { font-style: italic; color: var(--gold-light); }
+    .hero-desc { font-size: 1.05rem; font-weight: 300; line-height: 1.7; color: rgba(255,255,255,0.65); max-width: 520px; margin-bottom: 2.5rem; }
+    .hero-scroll { display: inline-flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.45); font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; transition: color 0.2s; }
     .hero-scroll:hover { color: var(--gold-light); }
-
-    .hero-scroll svg {
-      animation: bounce 2s infinite;
-    }
-
-	/* Card reveal animation */
-	.project-card {
-	  opacity: 0;
-	  transform: translateY(24px);
-	  transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.25s ease;
-	}
-	
-	.project-card.visible {
-	  opacity: 1;
-	  transform: translateY(0);
-	}
-	
-	.project-card.wip.visible {
-	  opacity: 0.72;
-	}	  
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(5px); }
-    }
-
-    /* ── PROJECTS SECTION ────────────────────────────────────── */
-    #projects {
-      background: var(--cream);
-      padding: 6rem 4rem;
-    }
-
-    .section-header {
-      margin-bottom: 3.5rem;
-    }
-
-    .section-eyebrow {
-      font-size: 0.72rem;
-      font-weight: 500;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--green-light);
-      margin-bottom: 0.75rem;
-    }
-
-    .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2rem, 3.5vw, 3rem);
-      font-weight: 700;
-      color: var(--green-deep);
-      line-height: 1.2;
-    }
-
-    .section-sub {
-      margin-top: 0.75rem;
-      font-size: 0.95rem;
-      font-weight: 300;
-      color: var(--text-mid);
-      max-width: 520px;
-      line-height: 1.65;
-    }
-
-    /* ── CARD GRID ───────────────────────────────────────────── */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 2rem;
-    }
-
-    .project-card {
-      background: #fff;
-      border-radius: 4px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.05);
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-      position: relative;
-    }
-
-    .project-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 40px rgba(27,58,47,0.15);
-    }
-
-    .project-card.wip { opacity: 0.72; }
-    .project-card.wip:hover { transform: none; cursor: default; }
-
-    .card-img-wrap {
-      height: 180px;
-      overflow: hidden;
-      background: var(--green-mid);
-      position: relative;
-    }
-
-    .card-img-wrap img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.4s ease;
-      filter: brightness(0.85);
-    }
-
-    .project-card:not(.wip):hover .card-img-wrap img {
-      transform: scale(1.04);
-    }
-
-    /* Placeholder gradient when no image */
-    .card-img-placeholder {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, var(--green-deep), var(--green-light));
-    }
-
-    .card-badge {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      padding: 0.25rem 0.65rem;
-      border-radius: 2px;
-      font-size: 0.68rem;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    .badge-ready {
-      background: var(--gold);
-      color: #fff;
-    }
-
-    .badge-wip {
-      background: rgba(0,0,0,0.45);
-      color: rgba(255,255,255,0.8);
-    }
-
-    .card-body {
-      padding: 1.5rem;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-region {
-      font-size: 0.7rem;
-      font-weight: 500;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--green-light);
-      margin-bottom: 0.5rem;
-    }
-
-    .card-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.45rem;
-      font-weight: 600;
-      color: var(--green-deep);
-      line-height: 1.25;
-      margin-bottom: 0.65rem;
-    }
-
-    .card-desc {
-      font-size: 0.88rem;
-      font-weight: 300;
-      line-height: 1.65;
-      color: var(--text-mid);
-      flex: 1;
-      margin-bottom: 1.25rem;
-    }
-
-    .card-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.6rem 1.2rem;
-      background: var(--green-deep);
-      color: #fff;
-      font-size: 0.8rem;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-decoration: none;
-      border-radius: 2px;
-      align-self: flex-start;
-      transition: background 0.2s;
-    }
-
+    .hero-scroll svg { animation: bounce 2s infinite; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+    #projects { background: var(--cream); padding: 6rem 4rem; }
+    .section-header { margin-bottom: 3.5rem; }
+    .section-eyebrow { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--green-light); margin-bottom: 0.75rem; }
+    .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 700; color: var(--green-deep); line-height: 1.2; }
+    .section-sub { margin-top: 0.75rem; font-size: 0.95rem; font-weight: 300; color: var(--text-mid); max-width: 520px; line-height: 1.65; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
+    .project-card { background: #fff; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.05); position: relative; opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.25s ease; }
+    .project-card:hover { transform: translateY(-4px); box-shadow: 0 8px 40px rgba(27,58,47,0.15); }
+    .project-card.visible { opacity: 1; transform: translateY(0); }
+    .project-card.wip { cursor: default; }
+    .project-card.wip.visible { opacity: 0.72; }
+    .project-card.wip:hover { transform: none; }
+    .card-img-wrap { height: 180px; overflow: hidden; background: var(--green-mid); position: relative; }
+    .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; filter: brightness(0.85); }
+    .project-card:not(.wip):hover .card-img-wrap img { transform: scale(1.04); }
+    .card-badge { position: absolute; top: 12px; right: 12px; padding: 0.25rem 0.65rem; border-radius: 2px; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; }
+    .badge-ready { background: var(--gold); color: #fff; }
+    .badge-wip { background: rgba(0,0,0,0.45); color: rgba(255,255,255,0.8); }
+    .card-body { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; }
+    .card-region { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--green-light); margin-bottom: 0.5rem; }
+    .card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.45rem; font-weight: 600; color: var(--green-deep); line-height: 1.25; margin-bottom: 0.65rem; }
+    .card-desc { font-size: 0.88rem; font-weight: 300; line-height: 1.65; color: var(--text-mid); flex: 1; margin-bottom: 1.25rem; }
+    .card-link { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; background: var(--green-deep); color: #fff; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.06em; text-decoration: none; border-radius: 2px; align-self: flex-start; transition: background 0.2s; }
     .card-link:hover { background: var(--green-light); }
     .card-link.disabled { background: #ccc; cursor: default; pointer-events: none; }
-
-    /* ── FOOTER ──────────────────────────────────────────────── */
-    footer {
-      background: var(--green-deep);
-      color: rgba(255,255,255,0.4);
-      text-align: center;
-      padding: 2rem;
-      font-size: 0.8rem;
-      letter-spacing: 0.05em;
-    }
-
+    footer { background: var(--green-deep); color: rgba(255,255,255,0.4); text-align: center; padding: 2rem; font-size: 0.8rem; letter-spacing: 0.05em; }
     footer a { color: rgba(255,255,255,0.55); }
-
-    /* ── RESPONSIVE ──────────────────────────────────────────── */
     @media (max-width: 768px) {
       .hero-nav, .hero-content, #projects { padding-left: 1.5rem; padding-right: 1.5rem; }
       .hero-title { font-size: 2.5rem; }
@@ -409,133 +68,79 @@
 </head>
 <body>
 
-  <!-- ═══════════════════════════════════════════════════════════ -->
-  <!-- HERO                                                        -->
-  <!-- ═══════════════════════════════════════════════════════════ -->
   <section class="hero">
     <nav class="hero-nav">
       <span class="site-name">Landscape DST</span>
       <a href="mailto:napovak@gmail.com">napovak@gmail.com</a>
     </nav>
-
     <div class="hero-content">
       <p class="hero-eyebrow">Spatial decision support</p>
-      <h1 class="hero-title">
-        Forest &amp; watershed<br>
-        management <em>tools</em>
-      </h1>
-      <p class="hero-desc">
-        Web-based decision support tools for prioritizing ecological
-        restoration and protection across landscapes. Explore spatial
-        data layers and adjust multi-criteria model weights to generate
-        customized management priorities.
-      </p>
+      <h1 class="hero-title">Forest &amp; watershed<br>management <em>tools</em></h1>
+      <p class="hero-desc">Web-based decision support tools for prioritizing ecological restoration and protection across landscapes. Explore spatial data layers and adjust multi-criteria model weights to generate customized management priorities.</p>
       <a class="hero-scroll" href="#projects">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-          <path d="M7 10.5L1.5 5h11L7 10.5z"/>
-        </svg>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 10.5L1.5 5h11L7 10.5z"/></svg>
         View projects
       </a>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════════════════════ -->
-  <!-- PROJECTS                                                    -->
-  <!-- ═══════════════════════════════════════════════════════════ -->
   <section id="projects">
     <div class="section-header">
       <p class="section-eyebrow">Decision support tools</p>
       <h2 class="section-title">Select a geography</h2>
-      <p class="section-sub">
-        Click a project to open its interactive map and multi-criteria
-        decision model. Adjust weights to explore management trade-offs
-        for your study area.
-      </p>
+      <p class="section-sub">Click a project to open its interactive map and multi-criteria decision model. Adjust weights to explore management trade-offs for your study area.</p>
     </div>
-
     <div class="card-grid">
 
-      <!-- ── HAMAKUA ───────────────────────────────────────── -->
       <article class="project-card">
         <div class="card-img-wrap">
-          <!-- Replace with your own image: <img src="assets/hamakua.jpg" alt="Hamakua coast aerial"> -->
-	  <img src="assets/hamakua.jpg" alt="Hamakua coast aerial">
-          <div class="card-img-placeholder"></div>
+          <img src="assets/hamakua.jpg" alt="Hamakua coast aerial">
           <span class="card-badge badge-ready">Live</span>
         </div>
         <div class="card-body">
           <p class="card-region">Hawai'i, USA</p>
           <h3 class="card-title">Hamakua Coast</h3>
-          <p class="card-desc">
-            Prioritizing strawberry guava removal to restore freshwater
-            yield across Hamakua watershed catchments.
-          </p>
-          <a class="card-link" href="geographies/hamakua/index.html">
-            Open tool
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-              <path d="M7 1l4 5-4 5M1 6h10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </a>
+          <p class="card-desc">Prioritizing strawberry guava removal to restore freshwater yield across Hamakua watershed catchments.</p>
+          <a class="card-link" href="geographies/hamakua/index.html">Open tool <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M7 1l4 5-4 5M1 6h10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></a>
         </div>
       </article>
 
-      <!-- ── BABELDAOB ─────────────────────────────────────── -->
       <article class="project-card wip">
         <div class="card-img-wrap">
-	  <img src="assets/Babeldaob-mosaic.jpg" alt="Babeldaob mosaic">
-          <div class="card-img-placeholder" style="background: linear-gradient(135deg, #0d3348, #1a6e6e);"></div>
+          <img src="assets/Babeldaob-mosaic.jpg" alt="Babeldaob mosaic">
           <span class="card-badge badge-wip">Coming soon</span>
         </div>
         <div class="card-body">
           <p class="card-region">Palau, Micronesia</p>
           <h3 class="card-title">Babeldaob Island</h3>
-          <p class="card-desc">
-            Managing tropical forest to protect near-shore environments
-            from upland sediment reaching coral reefs.
-          </p>
-          <a class="card-link disabled" href="#" onclick="return false;">
-            Coming soon
-          </a>
+          <p class="card-desc">Managing tropical forest to protect near-shore environments from upland sediment reaching coral reefs.</p>
+          <a class="card-link disabled" href="#" onclick="return false;">Coming soon</a>
         </div>
       </article>
 
-      <!-- ── TAHOE ─────────────────────────────────────────── -->
       <article class="project-card wip">
         <div class="card-img-wrap">
-	  <img src="assets/tahoe.jpg" alt="Tahoe mosaic">
-          <div class="card-img-placeholder" style="background: linear-gradient(135deg, #2a3a1e, #5a6e3a);"></div>
+          <img src="assets/tahoe.jpg" alt="Tahoe mosaic">
           <span class="card-badge badge-wip">In progress</span>
         </div>
         <div class="card-body">
           <p class="card-region">California / Nevada, USA</p>
           <h3 class="card-title">Tahoe–Central Sierra</h3>
-          <p class="card-desc">
-            Managing 2.4 million hectares for multiple co-benefits across
-            the Tahoe–Central Sierra Initiative footprint.
-          </p>
-          <a class="card-link disabled" href="#" onclick="return false;">
-            In progress
-          </a>
+          <p class="card-desc">Managing 2.4 million hectares for multiple co-benefits across the Tahoe–Central Sierra Initiative footprint.</p>
+          <a class="card-link disabled" href="#" onclick="return false;">In progress</a>
         </div>
       </article>
 
-      <!-- ── N. WASHINGTON ─────────────────────────────────── -->
       <article class="project-card wip">
         <div class="card-img-wrap">
-	  <img src="assets/washington.jpeg" alt="Washington mosaic">
-          <div class="card-img-placeholder" style="background: linear-gradient(135deg, #1e2a3a, #3a5a6e);"></div>
+          <img src="assets/washington.jpeg" alt="Washington mosaic">
           <span class="card-badge badge-wip">In progress</span>
         </div>
         <div class="card-body">
           <p class="card-region">Washington, USA</p>
           <h3 class="card-title">North-Central Washington</h3>
-          <p class="card-desc">
-            Managing subbasins for hydrologic function, biomass production,
-            and fire hazard reduction.
-          </p>
-          <a class="card-link disabled" href="#" onclick="return false;">
-            In progress
-          </a>
+          <p class="card-desc">Managing subbasins for hydrologic function, biomass production, and fire hazard reduction.</p>
+          <a class="card-link disabled" href="#" onclick="return false;">In progress</a>
         </div>
       </article>
 
@@ -543,12 +148,29 @@
   </section>
 
   <footer>
-    <p>
-      Landscape Decision Support Tools &nbsp;·&nbsp;
-      <a href="http://northcoastxy.com">northcoastxy.com</a> &nbsp;·&nbsp;
-      Nicholas Povak
-    </p>
+    <p>Landscape Decision Support Tools &nbsp;·&nbsp; <a href="http://northcoastxy.com">northcoastxy.com</a> &nbsp;·&nbsp; Nicholas Povak</p>
   </footer>
+
+  <script>
+    // ── Parallax hero ──────────────────────────────────────────
+    const hero        = document.querySelector('.hero');
+    const heroContent = document.querySelector('.hero-content');
+
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      const heroH   = hero.offsetHeight;
+      hero.style.backgroundPositionY = `${scrollY * 0.5}px`;
+      const progress = Math.min(scrollY / heroH, 1);
+      heroContent.style.opacity   = 1 - progress * 1.5;
+      heroContent.style.transform = `translateY(${scrollY * 0.25}px)`;
+    }, { passive: true });
+
+    // ── Card reveal ────────────────────────────────────────────
+    const cards = document.querySelectorAll('.project-card');
+    cards.forEach((card, i) => {
+      setTimeout(() => card.classList.add('visible'), 200 + i * 120);
+    });
+  </script>
 
 </body>
 </html>
