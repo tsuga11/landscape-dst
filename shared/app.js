@@ -376,23 +376,45 @@ function styleFeature(feature, lyrDef) {
 // OPACITY CONTROL
 // =============================================================================
 function buildOpacityControl() {
-  const container = document.getElementById('opacity-control');
-  if (!container) return;
-  container.innerHTML = `
-    <label for="opacity-slider">Opacity</label>
-    <input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="${_currentOpacity}">
-    <span id="opacity-val">${Math.round(_currentOpacity * 100)}%</span>
+  // Inject opacity slider into bottom of the layer control panel
+  const list = _layerControl.getContainer()
+                             .querySelector('.leaflet-control-layers-list');
+  if (!list) return;
+
+  // Divider line
+  L.DomUtil.create('div', 'leaflet-control-layers-separator', list);
+
+  // Slider container
+  const wrap = L.DomUtil.create('div', '', list);
+  wrap.style.cssText = 'padding: 6px 10px 4px;';
+  wrap.innerHTML = `
+    <div style="font-size:11px;color:#555;font-weight:500;margin-bottom:5px;">
+      Opacity
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <input type="range" id="opacity-slider"
+        min="0" max="1" step="0.05" value="${_currentOpacity}"
+        style="flex:1;height:3px;cursor:pointer;">
+      <span id="opacity-val"
+        style="font-size:11px;width:28px;color:#555;text-align:right;">
+        ${Math.round(_currentOpacity * 100)}%
+      </span>
+    </div>
   `;
-  document.getElementById('opacity-slider').addEventListener('input', e => {
+
+  // Prevent map interactions while using the slider
+  L.DomEvent.disableClickPropagation(wrap);
+  L.DomEvent.disableScrollPropagation(wrap);
+
+  wrap.querySelector('#opacity-slider').addEventListener('input', e => {
     _currentOpacity = parseFloat(e.target.value);
-    document.getElementById('opacity-val').textContent = Math.round(_currentOpacity * 100) + '%';
-    // Update all active overlay layers
+    wrap.querySelector('#opacity-val').textContent =
+      Math.round(_currentOpacity * 100) + '%';
     Object.values(_leafletLayers).forEach(lyr => {
-      if (typeof lyr.setStyle === 'function') {
+      if (typeof lyr.setStyle === 'function')
         lyr.setStyle({ fillOpacity: _currentOpacity, opacity: _currentOpacity });
-      } else if (typeof lyr.setOpacity === 'function') {
+      else if (typeof lyr.setOpacity === 'function')
         lyr.setOpacity(_currentOpacity);
-      }
     });
   });
 }
