@@ -1,0 +1,5 @@
+* go to H:/My Drive/Hawaii/new_app
+* in address bar type -> cmd
+* in console type --> py -m http.server 8000
+* in chrome address bar type --> http://localhost:8000/
+* Ctrl + c in console to quit

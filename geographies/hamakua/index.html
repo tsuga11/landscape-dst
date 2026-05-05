@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Loading…</title><!-- overwritten by app.js from CONFIG.title -->
+
+  <!-- ── Leaflet ──────────────────────────────────────────── -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <!-- ── App styles ───────────────────────────────────────── -->
+  <link rel="stylesheet" href="../../shared/style.css">
+</head>
+<body>
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║  TOP NAVBAR                                          ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+  <nav id="navbar">
+    <a id="app-title" href="#">Loading…</a>
+    <div class="navbar-right">
+      <button id="dst-toggle" class="navbar-btn btn-gold">Decision Tool</button>
+      <a href="/../../index.html" class="navbar-btn btn-outline">← Geographies</a>
+    </div>
+  </nav>
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║  MAP                                                 ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+  <div id="map"></div>
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║  DECISION SUPPORT TOOL PANEL (populated by app.js)  ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+  <div id="dst-panel">
+    <!-- content injected by app.js buildDSTPanel() -->
+  </div>
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║  FLOATING CONTROLS (populated by app.js)            ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+  <div id="info-box"></div>
+  <div id="opacity-control"></div>
+  <div id="search-box"></div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- SCRIPTS — order matters                                 -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <!-- Leaflet -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- numeric.js — required for AHP eigenvalue calculation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+
+  <!-- D3 v7 — for the weight visualization chart -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+
+  <!-- georaster — uncomment BOTH lines below when adding COG raster layers -->
+  <!-- <script src="https://unpkg.com/georaster"></script> -->
+  <!-- <script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script> -->
+
+  <!-- Geography config  ← THIS is what you swap per geography -->
+  <script src="config.js"></script>
+
+  <!-- Generic app logic  ← never edit this -->
+  <script src="/../../shared/app.js"></script>
+
+</body>
+</html>
