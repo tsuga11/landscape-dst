@@ -444,7 +444,7 @@ html, body {
   cursor: pointer;
 }
 
-/* ── SEARCH ─────────────────────────────────────────────────────────────────── */
+/* ── SEARCH ─────────────────────────────────────────────────────────────────── 
 #search-box {
   position: fixed;
   top: calc(var(--navbar-h) + 0.75rem);
@@ -478,7 +478,7 @@ html, body {
   cursor: pointer;
   font-size: 0.8rem;
 }
-
+*/
 /* ── LEAFLET OVERRIDES ──────────────────────────────────────────────────────── */
 .leaflet-control-layers {
   border-radius: var(--panel-radius) !important;
