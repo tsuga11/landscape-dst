@@ -24,6 +24,41 @@
 
     html { scroll-behavior: smooth; }
 
+	<script>
+	  // ── Parallax hero ────────────────────────────────────────
+	  const hero        = document.querySelector('.hero');
+	  const heroContent = document.querySelector('.hero-content');
+	
+	  window.addEventListener('scroll', () => {
+	    const scrollY = window.scrollY;
+	    const heroH   = hero.offsetHeight;
+	
+	    // Background moves at half scroll speed
+	    hero.style.backgroundPositionY = `${scrollY * 0.5}px`;
+	
+	    // Content fades and lifts as you scroll out of hero
+	    const progress = Math.min(scrollY / heroH, 1);
+	    heroContent.style.opacity   = 1 - progress * 1.5;
+	    heroContent.style.transform = `translateY(${scrollY * 0.25}px)`;
+	  }, { passive: true });
+	
+	  // ── Card reveal on scroll ────────────────────────────────
+	  const cards = document.querySelectorAll('.project-card');
+	
+	  const observer = new IntersectionObserver(entries => {
+	    entries.forEach((entry, i) => {
+	      if (entry.isIntersecting) {
+	        // Stagger each card slightly
+	        setTimeout(() => entry.target.classList.add('visible'),
+	                   i * 80);
+	        observer.unobserve(entry.target);
+	      }
+	    });
+	  }, { threshold: 0.1 });
+	
+	  cards.forEach(card => observer.observe(card));
+	</script>	  
+
     body {
       font-family: 'DM Sans', sans-serif;
       background: var(--cream);
