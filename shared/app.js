@@ -896,44 +896,66 @@ function drawWeightChart(restoreWeights, protectWeights, restoreLabels, protectL
 
   const allData = [
     ...restoreWeights.map((w, i) => ({ label: restoreLabels[i], value: w, group: 'Restore' })),
+    { label: '', value: 0, group: 'spacer' },   // gap between sections
     ...protectWeights.map((w, i) => ({ label: protectLabels[i], value: w, group: 'Protect' }))
   ];
 
-  const margin = { top: 8, right: 10, bottom: 4, left: 8 };
-  const width  = svgEl.getBoundingClientRect().width || 280;
-  const height = 160;
-  const barH   = (height - margin.top - margin.bottom) / allData.length - 3;
+  const labelWidth = 130;   // wider label column
+  const barH      = 14;
+  const rowH      = barH + 5;
+  const margin    = { top: 8, right: 45, bottom: 4, left: 8 };
+  const svgWidth  = svgEl.getBoundingClientRect().width || 290;
+  const barWidth  = svgWidth - margin.left - margin.right - labelWidth;
+  const svgHeight = allData.length * rowH + 30;
 
   const xScale = d3.scaleLinear()
     .domain([0, d3.max(allData, d => d.value) * 1.15])
-    .range([0, width - margin.left - margin.right - 100]);
+    .range([0, barWidth]);
 
   const colorScale = d3.scaleOrdinal()
     .domain(['Restore', 'Protect'])
     .range(['#c4963a', '#4682b4']);
 
+  d3.select(svgEl).attr('height', svgHeight);
+
   const svg = d3.select(svgEl)
-    .attr('height', height)
     .append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
-  // Group labels
   let lastGroup = null;
-  allData.forEach((d, i) => {
-    const y = i * (barH + 3);
+  let yOffset = 0;
+
+  allData.forEach((d) => {
+    if (d.group === 'spacer') { yOffset += rowH; return; }
+
+    // Group header — printed once per group with a gap above
     if (d.group !== lastGroup) {
       svg.append('text')
-        .attr('x', 0).attr('y', y - 1)
+        .attr('x', labelWidth)
+        .attr('y', yOffset - 2)
         .attr('font-size', '0.6rem')
         .attr('fill', 'rgba(255,255,255,0.35)')
         .attr('letter-spacing', '0.1em')
         .text(d.group.toUpperCase());
       lastGroup = d.group;
+      yOffset += 10;  // small gap after header
     }
+
+    const y = yOffset;
+
+    // Label — full text, right-aligned
+    svg.append('text')
+      .attr('x', labelWidth - 6)
+      .attr('y', y + barH * 0.78)
+      .attr('text-anchor', 'end')
+      .attr('font-size', '0.68rem')
+      .attr('fill', 'rgba(255,255,255,0.65)')
+      .text(d.label);
 
     // Bar
     svg.append('rect')
-      .attr('x', 80).attr('y', y)
+      .attr('x', labelWidth)
+      .attr('y', y)
       .attr('height', barH)
       .attr('width', 0)
       .attr('fill', colorScale(d.group))
@@ -941,21 +963,15 @@ function drawWeightChart(restoreWeights, protectWeights, restoreLabels, protectL
       .transition().duration(500)
       .attr('width', xScale(d.value));
 
-    // Label (truncated)
-    const shortLabel = d.label.length > 14 ? d.label.slice(0, 13) + '…' : d.label;
-    svg.append('text')
-      .attr('x', 78).attr('y', y + barH * 0.75)
-      .attr('text-anchor', 'end')
-      .attr('font-size', '0.65rem')
-      .attr('fill', 'rgba(255,255,255,0.6)')
-      .text(shortLabel);
-
     // Value
     svg.append('text')
-      .attr('x', 82 + xScale(d.value)).attr('y', y + barH * 0.75)
+      .attr('x', labelWidth + xScale(d.value) + 4)
+      .attr('y', y + barH * 0.78)
       .attr('font-size', '0.65rem')
       .attr('fill', 'rgba(255,255,255,0.5)')
       .text(d.value.toFixed(3));
+
+    yOffset += rowH;
   });
 }
 
