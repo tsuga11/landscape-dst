@@ -78,13 +78,18 @@
     .hero-scroll:hover { color: var(--gold-light); }
     .hero-scroll svg { animation: bounce 2s infinite; }
     @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
-    #projects { background: var(--cream); padding: 6rem 4rem; position: relative; z-index: 1;}
+    #projects {
+      background: rgba(245, 240, 232, 0.85);  /* ← was var(--cream), now semi-transparent */
+      padding: 6rem 4rem;
+      position: relative;
+      z-index: 1;
+    }
     .section-header { margin-bottom: 3.5rem; }
     .section-eyebrow { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--green-light); margin-bottom: 0.75rem; }
     .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 700; color: var(--green-deep); line-height: 1.2; }
     .section-sub { margin-top: 0.75rem; font-size: 0.95rem; font-weight: 300; color: var(--text-mid); max-width: 520px; line-height: 1.65; }
     .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
-    .project-card { background: #fff; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.05); position: relative; opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.25s ease; }
+    .project-card { background: rgba(255, 255, 255, 0.85); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.05); position: relative; opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.25s ease; }
     .project-card:hover { transform: translateY(-4px); box-shadow: 0 8px 40px rgba(27,58,47,0.15); }
     .project-card.visible { opacity: 1; transform: translateY(0); }
     .project-card.wip { cursor: default; }
@@ -103,7 +108,7 @@
     .card-link { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; background: var(--green-deep); color: #fff; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.06em; text-decoration: none; border-radius: 2px; align-self: flex-start; transition: background 0.2s; }
     .card-link:hover { background: var(--green-light); }
     .card-link.disabled { background: #ccc; cursor: default; pointer-events: none; }
-    footer { background: var(--green-deep); color: rgba(255,255,255,0.4); text-align: center; padding: 2rem; font-size: 0.8rem; letter-spacing: 0.05em; }
+    footer {background: rgba(27, 58, 47, 0.85); color: rgba(255,255,255,0.4); text-align: center; padding: 2rem; font-size: 0.8rem; letter-spacing: 0.05em; }
     footer a { color: rgba(255,255,255,0.55); }
     @media (max-width: 768px) {
       .hero-nav, .hero-content, #projects { padding-left: 1.5rem; padding-right: 1.5rem; }
