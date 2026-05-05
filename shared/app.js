@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAllLayers();
   buildOpacityControl();
   buildInfoBox();
-  buildSearchBox();
+  //buildSearchBox();
   if (CONFIG.dst?.enabled) {
     buildDSTPanel();
   }
@@ -545,7 +545,7 @@ function buildLegendHTML(lyrDef) {
 // =============================================================================
 // SEARCH / ZOOM
 // =============================================================================
-function buildSearchBox() {
+/*function buildSearchBox() {
   const box = document.getElementById('search-box');
   if (!box || !CONFIG.searchField) return;
 
@@ -581,7 +581,7 @@ function buildSearchBox() {
   document.getElementById('search-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') doSearch();
   });
-}
+}*/
 
 // =============================================================================
 // DST PANEL — UI BUILD
