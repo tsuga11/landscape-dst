@@ -1026,7 +1026,7 @@
       border-radius: 50%;
       background: radial-gradient(ellipse, rgba(90,70,45,0.28) 0%, transparent 70%);
       pointer-events: none;
-      transition: width 0.3s ease;
+      width: 70%; /* fallback */
     }
 
 
@@ -3107,27 +3107,43 @@
     // ── Responsive: update size AND zoom on resize ────────
     const shadow = document.getElementById('globe-shadow');
 
+    // Shadow scales with both container size AND zoom level (altitude)
+    function updateShadow() {
+      if (!shadow) return;
+      const size = Math.min(container.offsetWidth, container.offsetHeight);
+      if (size === 0) return;
+      // Globe fills more of the container at lower altitudes
+      // At alt=2.2 → ~75% of size; scales inversely with altitude
+      const fraction = 1.2 / (currentAltitude + 0.8);
+      const w = Math.round(size * Math.min(fraction, 0.95) * 1.4);
+      shadow.style.width = w + 'px';
+    }
+
     const ro = new ResizeObserver(() => {
       const w = container.offsetWidth;
       const h = container.offsetHeight;
       globe.width(w).height(h);
       globe.pointOfView({ altitude: getAltitude() }, 600);
-
-      // Shadow = ~80% of globe diameter
-      if (shadow) {
-        const diam = Math.min(w, h) * 0.8;
-        shadow.style.width = `${diam}px`;
-      }
+      updateShadow();
     });
     ro.observe(container);
+    setTimeout(updateShadow, 500); // fire after globe textures load
 
 
 
     // ── Wire up zoom buttons (already in HTML) ────────────────
     const zoomIn  = document.getElementById('globe-zoom-in');
     const zoomOut = document.getElementById('globe-zoom-out');
-    if (zoomIn)  zoomIn.addEventListener('click',  () => { currentAltitude = Math.max(0.8, currentAltitude * 0.72);  globe.pointOfView({ altitude: currentAltitude }, 400); });
-    if (zoomOut) zoomOut.addEventListener('click', () => { currentAltitude = Math.min(5.5, currentAltitude * 1.38); globe.pointOfView({ altitude: currentAltitude }, 400); });
+    if (zoomIn)  zoomIn.addEventListener('click',  () => {
+      currentAltitude = Math.max(0.8, currentAltitude * 0.72);
+      globe.pointOfView({ altitude: currentAltitude }, 400);
+      updateShadow();
+    });
+    if (zoomOut) zoomOut.addEventListener('click', () => {
+      currentAltitude = Math.min(5.5, currentAltitude * 1.38);
+      globe.pointOfView({ altitude: currentAltitude }, 400);
+      updateShadow();
+    });
 
     // ── Ctrl+scroll zoom ──────────────────────────────────────
     container.addEventListener('wheel', e => {
@@ -3136,6 +3152,7 @@
         const delta = e.deltaY > 0 ? 1.15 : 0.87;
         currentAltitude = Math.min(5.5, Math.max(0.8, currentAltitude * delta));
         globe.pointOfView({ altitude: currentAltitude }, 200);
+        updateShadow();
       }
     }, { passive: false });
 
