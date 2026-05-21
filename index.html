@@ -1007,11 +1007,6 @@
     }
 
 
-    /* Shadow on wrapper (not container) so it's never clipped */
-    .globe-wrapper::after {
-      display: none;
-    }    
-
     /* ── Globe canvas container ──────────────────────────────── */
     .globe-container {
       position: relative;
@@ -1024,18 +1019,14 @@
     }
 
 
-    .globe-container::after {
-      content: '';
-      position: absolute;
-      bottom: -18px;
-      left: var(--shadow-x, 50%);
-      transform: translateX(-50%);
-      width: var(--shadow-w, 55%);   /* ← driven by JS */
-      height: 22px;
-      background: radial-gradient(ellipse, rgba(90,70,45,0.22) 0%, transparent 70%);
+    .globe-shadow {
+      display: block;
+      margin: 0 auto;
+      height: 18px;
       border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(90,70,45,0.28) 0%, transparent 70%);
       pointer-events: none;
-      z-index: 0;
+      transition: width 0.3s ease;
     }
 
 
@@ -2449,6 +2440,7 @@
 
         <div class="globe-wrapper">
           <div class="globe-container" id="globe-container"></div>
+          <div class="globe-shadow" id="globe-shadow"></div>
           <p class="globe-hint desktop-hint">Drag to spin &nbsp;·&nbsp; Ctrl+scroll to zoom &nbsp;·&nbsp; Click a dot to open
           </p>
           <p class="globe-hint mobile-hint">Drag to spin &nbsp;·&nbsp; Tap a dot to open</p>
@@ -3113,19 +3105,23 @@
     }, { passive: true });    
  
     // ── Responsive: update size AND zoom on resize ────────
+    const shadow = document.getElementById('globe-shadow');
+
     const ro = new ResizeObserver(() => {
       const w = container.offsetWidth;
       const h = container.offsetHeight;
       globe.width(w).height(h);
       globe.pointOfView({ altitude: getAltitude() }, 600);
 
-      // ── Scale shadow to globe size ──────────────────────────
-      // Globe radius ≈ 45% of the smaller container dimension
-      const globeRadius = Math.min(w, h) * 0.45;
-      container.style.setProperty('--shadow-w', `${globeRadius * 1.6}px`);
-      container.style.setProperty('--shadow-x', `${w / 2}px`);
+      // Shadow = ~80% of globe diameter
+      if (shadow) {
+        const diam = Math.min(w, h) * 0.8;
+        shadow.style.width = `${diam}px`;
+      }
     });
     ro.observe(container);
+
+
 
     // ── Wire up zoom buttons (already in HTML) ────────────────
     const zoomIn  = document.getElementById('globe-zoom-in');
