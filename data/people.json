@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Nicholas Povak",
+    "title": "Research Ecologist",
+    "affiliation": "Spatial Informatics Group",
+    "bio": "<p>Nick Povak is a Senior Research Scientist in the Forest and Agriculture domain with expertise in landscape ecology, climate change adaptation, and machine learning in landscape management. Broadly, he is interested in using landscape modeling to understand how landscapes change over time under management and climate change and applying this knowledge into actionable science through the development of interactive decision support models. Prior to working with SIG, Nick spent the first 18 years of his career with the US Forest Service Pacific Northwest and Southwest Research stations studying landscapes across the western US, Hawaii, and Palau.</p>\n<p>Nick’s research falls into three broad categories: decision support modeling, landscape simulation, and machine learning. He co-developed PROMOTE, a climate-informed decision support model that incorporates future resource vulnerability under climate change into landscape planning, which will soon be available through Planscape. Through this work, Nick has leveraged dynamic landscape models, such as LANDIS-II, and climate analog modeling to help characterize potential vulnerability of ecosystem resources under mid-century climate. He is also a co-developer of the REBURN model (link), which pairs state-and-transition models and spatial wildfire simulations to improve our understanding of long-term wildfire-vegetation feedbacks. He also used machine learning to quantify local effects of topography, fuels, and management on mitigating wildfire severity across extreme wildfire events.</p>\n<p>Nick holds Forestry degrees from Virginia Tech (BS), University of Wisconsin – Madison (MS), and University of Washington (PhD).</p>",
+    "photo": "assets/nick.jpg",
+    "links": [
+      {
+        "label": "Google Scholar",
+        "url": "https://scholar.google.com/citations?user=o-sf2DEAAAAJ&hl=en&oi=ao"
+      },
+      {
+        "label": "LinkedIn",
+        "url": "https://www.linkedin.com/in/nicholas-povak-22ba7062/"
+      },
+      {
+        "label": "northcoastxy.com",
+        "url": "https://northcoastxy.com"
+      }
+    ]
+  },
+  {
+    "name": "Patricia Manley",
+    "title": "Research Ecologist",
+    "affiliation": "USFS | PSW Research",
+    "bio": "<p>Patricia Manley has over 30 years experience with the USFS.</p>",
+    "photo": "assets/pat.jpg",
+    "links": [
+      {
+        "label": "Google Scholar",
+        "url": "https://scholar.google.com/citations?user=LnozMwEAAAAJ&hl=en&oi=ao"
+      },
+      {
+        "label": "LinkedIn",
+        "url": "https://www.linkedin.com/in/patricia-manley-498861bb/"
+      }
+    ]
+  },
+  {
+    "name": "Bryan Fuentes",
+    "title": "Senior Data Scientist",
+    "affiliation": "Spatial Informatics Group",
+    "bio": "<p>Bryan Fuentes is a Senior Data Scientist specializing in quantitative ecology and geospatial informatics.\n\nWith over a decade of experience, Bryan Fuentes has supported applied research and data production across government, academia, the private sector, and international efforts for the public good. His core contributions include developing spatial information systems, building scalable workflows for quantitative ecology, leading capacity building for interdisciplinary teams, authoring peer-reviewed scientific articles, and developing open-source software for ecological data analysis.\n\nEquipped with a Bachelor’s degree in Forest Science and a Master’s degree in Soil Science, Bryan takes a holistic approach to uncovering the relationships, trends, and patterns hidden in complex environmental data.</p>",
+    "photo": "assets/bryan.jpg",
+    "links": [
+      {
+        "label": "Google Scholar",
+        "url": "https://scholar.google.com/citations?user=XFNZWOsAAAAJ&hl=en&oi=ao"
+      }
+    ]
+  }
+]
