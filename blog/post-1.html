@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Climate analogs and the future of western conifers — Nicholas Povak</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #141210;
+      --bg-mid:     #1c1916;
+      --gold:       #c4963a;
+      --gold-light: #e8c46a;
+      --text:       rgba(235, 228, 215, 0.9);
+      --text-dim:   rgba(235, 228, 215, 0.45);
+      --border:     rgba(180, 160, 120, 0.15);
+      --green:      #3d7a5e;
+      --max-width:  680px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── TOP NAV ─────────────────────────────────────────────── */
+    .post-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: rgba(20, 18, 16, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      z-index: 100;
+    }
+
+    .post-nav a {
+      text-decoration: none;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .post-nav a:hover { color: var(--gold-light); }
+
+    .post-nav .site-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* ── HERO IMAGE ──────────────────────────────────────────── */
+    .post-hero {
+      width: 100%;
+      height: 55vh;
+      min-height: 320px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 52px;
+    }
+
+    .post-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 40%;
+      filter: brightness(0.55);
+    }
+
+    .post-hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent 40%,
+        rgba(20, 18, 16, 0.85) 100%
+      );
+    }
+
+    /* ── READING COLUMN ──────────────────────────────────────── */
+    .post-container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 1.5rem 6rem;
+    }
+
+    /* Post header overlaps hero slightly */
+    .post-header {
+      padding-top: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2.5rem;
+    }
+
+    .post-eyebrow {
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+
+    .post-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 700;
+      line-height: 1.1;
+      color: #fff;
+      margin-bottom: 1.25rem;
+    }
+
+    .post-meta {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    .post-meta .author {
+      color: rgba(235,228,215,0.7);
+      font-weight: 500;
+    }
+
+    .post-meta .dot { opacity: 0.3; }
+
+    /* ── BODY TYPOGRAPHY ─────────────────────────────────────── */
+    .post-body {
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.85;
+      color: var(--text);
+    }
+
+    .post-body p {
+      margin-bottom: 1.6rem;
+    }
+
+    .post-body h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 2.5rem 0 1rem;
+      line-height: 1.2;
+    }
+
+    .post-body h3 {
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 2rem 0 0.75rem;
+    }
+
+    .post-body blockquote {
+      border-left: 2px solid var(--gold);
+      padding: 0.5rem 0 0.5rem 1.5rem;
+      margin: 2rem 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      font-style: italic;
+      color: rgba(235,228,215,0.75);
+      line-height: 1.5;
+    }
+
+    .post-body a {
+      color: var(--gold-light);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .post-body a:hover { color: #fff; }
+
+    .post-body ul, .post-body ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .post-body li { margin-bottom: 0.5rem; }
+
+    /* Pull quote / callout */
+    .callout {
+      background: rgba(196, 150, 58, 0.08);
+      border: 1px solid rgba(196, 150, 58, 0.2);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      margin: 2rem 0;
+      font-size: 0.92rem;
+      color: rgba(235,228,215,0.8);
+    }
+
+    /* ── FOOTER ──────────────────────────────────────────────── */
+    .post-footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .post-footer a {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.2s;
+    }
+
+    .post-footer a:hover { color: var(--gold-light); }
+
+    /* ── SCROLL PROGRESS BAR ─────────────────────────────────── */
+    #progress-bar {
+      position: fixed;
+      top: 52px;
+      left: 0;
+      height: 2px;
+      background: var(--gold);
+      width: 0%;
+      z-index: 200;
+      transition: width 0.1s linear;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <!-- ── NAV ───────────────────────────────────────────────── -->
+  <nav class="post-nav">
+    <a href="/">
+      ← <span>northcoastxy.com</span>
+    </a>
+    <span class="site-name">Nicholas Povak</span>
+    <a href="mailto:napovak@gmail.com">napovak@gmail.com</a>
+  </nav>
+
+  <!-- ── HERO IMAGE ─────────────────────────────────────────── -->
+  <div class="post-hero">
+    <img src="/assets/washington.jpeg" alt="Burning forest">
+  </div>
+
+  <!-- ── READING COLUMN ────────────────────────────────────── -->
+  <main class="post-container">
+
+    <header class="post-header">
+      <p class="post-eyebrow">Research update · Climate adaptation</p>
+      <h1 class="post-title">Climate analogs and the future of western conifers</h1>
+      <div class="post-meta">
+        <span class="author">Nicholas Povak</span>
+        <span class="dot">·</span>
+        <span>May 2025</span>
+        <span class="dot">·</span>
+        <span>8 min read</span>
+      </div>
+    </header>
+
+    <article class="post-body">
+
+      <p>
+        Where does a forest go when its climate disappears? This is not a metaphorical question.
+        As temperatures rise and precipitation patterns shift across the western United States,
+        the climatic conditions that define today's conifer forests are migrating — elevationally,
+        latitudinally, and in some cases, out of the region entirely.
+      </p>
+
+      <p>
+        Climate analog modeling offers one way to answer this question. By identifying locations
+        whose current climate resembles the projected future climate of a target site, we can ask:
+        what grows there now? And how does that compare to what grows here today?
+      </p>
+
+      <blockquote>
+        The question is not just whether a species can survive a warmer climate — it's whether
+        the ecological community it depends on can reassemble fast enough to matter.
+      </blockquote>
+
+      <h2>The Mahalanobis approach</h2>
+
+      <p>
+        At the core of the PROMOTE framework is a climate analog search using Mahalanobis distance —
+        a multivariate measure that accounts for the correlation structure among climate variables.
+        Unlike Euclidean distance, Mahalanobis distance is scale-invariant and treats correlated
+        variables appropriately, making it well-suited for comparing climate spaces defined by
+        temperature, precipitation, and moisture deficit.
+      </p>
+
+      <p>
+        We use five ClimateNA variables: mean coldest month temperature (MCMT), mean warmest month
+        temperature (MWMT), summer precipitation (PPT_sm), winter precipitation (PPT_wt), and
+        climatic moisture deficit (CMD). Precipitation variables are log-transformed to normalize
+        their distributions. The inverse covariance matrix is calculated from the historical
+        (1950–2000) climate record — a choice that ensures the distance metric reflects baseline
+        variability rather than projected future conditions.
+      </p>
+
+      <div class="callout">
+        <strong>Key methodological decision:</strong> Using historical rather than future climate
+        data for the inverse covariance matrix produces unbiased analog distance estimates and
+        dramatically improves matrix conditioning across diverse climate provinces.
+      </div>
+
+      <h2>What the analogs reveal</h2>
+
+      <p>
+        Across the Sierra Nevada and Cascades, analog locations for mid-century projections
+        (2041–2070, SSP5-8.5) typically fall 300–800 m lower in elevation and 200–600 km
+        south of target sites. In practical terms, this means a lodgepole pine forest in the
+        central Sierra might have its best climate analog in a ponderosa pine woodland in the
+        southern Sierra or northern Baja California.
+      </p>
+
+      <p>
+        This finding — consistent across nine GCMs — has significant implications for
+        management. It suggests not just species turnover, but structural reorganization:
+        a shift from closed-canopy, moisture-limited systems toward more open, fire-adapted
+        woodlands with fundamentally different disturbance regimes.
+      </p>
+
+      <h2>Ecological vulnerability across the RAD framework</h2>
+
+      <p>
+        The Resist-Accept-Direct (RAD) framework provides a useful lens for interpreting
+        these analog distances. High climate change magnitude combined with high ecological
+        transformation (as measured by phylogenetic distance metrics) suggests conditions
+        where resistance strategies are unlikely to succeed — the window for managing toward
+        historical conditions is closing.
+      </p>
+
+      <p>
+        Counterintuitively, we find that some of the highest climate change magnitude areas
+        — the Colorado Plateau, Great Basin — show relatively lower phylogenetic transformation
+        in their analogs. Meanwhile, moderate-change coastal forests show high ecological
+        distance, suggesting that proximity to physiological thresholds matters as much as
+        the magnitude of change itself.
+      </p>
+
+      <p>
+        More on this in a future post. The code and data underlying the PROMOTE framework
+        are being prepared for public release alongside the companion manuscript.
+      </p>
+
+    </article>
+
+    <footer class="post-footer">
+      <a href="/">← Back to northcoastxy.com</a>
+      <a href="mailto:napovak@gmail.com">Questions? Get in touch</a>
+    </footer>
+
+  </main>
+
+  <script>
+    // Reading progress bar
+    window.addEventListener('scroll', () => {
+      const doc    = document.documentElement;
+      const total  = doc.scrollHeight - doc.clientHeight;
+      const pct    = (window.scrollY / total) * 100;
+      document.getElementById('progress-bar').style.width = pct + '%';
+    }, { passive: true });
+  </script>
+
+</body>
+</html>
