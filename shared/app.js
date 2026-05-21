@@ -1,125 +1,116 @@
 /**
- * app.js — Generic Decision Support Tool Map Application
+ * app.js — MapLibre GL JS port of the DST Map Application
  *
- * This file is driven entirely by the CONFIG object defined in config.js.
- * You should NEVER need to edit this file when adapting to a new geography.
- * All geography-specific data and settings live in config.js.
+ * Drop-in replacement for the Leaflet version.
+ * CONFIG object in config.js is unchanged.
+ *
+ * New capabilities vs. Leaflet version:
+ *   - Right-click drag  → pitch/tilt (0–85°)
+ *   - Two-finger rotate → bearing
+ *   - 3D terrain        → enable CONFIG.terrain: true
+ *   - Hardware-accelerated WebGL rendering
+ *   - Native COG/raster support via addSource type:'raster'
  *
  * Dependencies (loaded via CDN in index.html):
- *   - Leaflet 1.9
+ *   - MapLibre GL JS 4.x
  *   - D3 v7
- *   - numeric.js (for AHP eigenvalue calculation)
- *   - georaster + georaster-layer-for-leaflet (for COG/GeoTIFF raster layers)
+ *   - numeric.js
  */
 
 'use strict';
 
 // =============================================================================
-// AHP LOOKUP TABLES  (replaces the old eval() pattern)
+// AHP LOOKUP TABLES
 // =============================================================================
-// The 17 discrete slider positions map to standard Saaty scale values
 const AHP_STEPS  = [0,6,13,19,25,31,38,44,50,56,63,69,75,81,88,94,100];
 const AHP_VALUES = [1/9,1/8,1/7,1/6,1/5,1/4,1/3,1/2,1,2,3,4,5,6,7,8,9];
 const AHP_LABELS = [
-  'absolutely less important than',
-  'critically less important than',
-  'very strongly less important than',
-  'strongly less important than',
-  'definitely less important than',
-  'moderately less important than',
-  'weakly less important than',
-  'barely less important than',
-  'equal to',
-  'barely more important than',
-  'weakly more important than',
-  'moderately more important than',
-  'definitely more important than',
-  'strongly more important than',
-  'very strongly more important than',
-  'critically more important than',
-  'absolutely more important than'
+  'absolutely less important than','critically less important than',
+  'very strongly less important than','strongly less important than',
+  'definitely less important than','moderately less important than',
+  'weakly less important than','barely less important than','equal to',
+  'barely more important than','weakly more important than',
+  'moderately more important than','definitely more important than',
+  'strongly more important than','very strongly more important than',
+  'critically more important than','absolutely more important than'
 ];
 
-function sliderPctToAhpValue(pct) {
-  const idx = AHP_STEPS.indexOf(Math.round(pct));
-  return idx >= 0 ? AHP_VALUES[idx] : 1;
+function sliderToIndex(val) {
+  // val is now 0-16 directly — no lookup needed
+  return Math.max(0, Math.min(16, Math.round(val)));
 }
 
-function sliderPctToAhpLabel(pct) {
-  const idx = AHP_STEPS.indexOf(Math.round(pct));
-  return idx >= 0 ? AHP_LABELS[idx] : 'equal to';
+function sliderPctToAhpValue(val) {
+  return AHP_VALUES[sliderToIndex(val)];
 }
 
-function sliderPctToDisplayStr(pct) {
-  const val = sliderPctToAhpValue(pct);
-  if (val >= 1) return String(Math.round(val));
-  // Produce fraction string like "1/3"
-  const denom = Math.round(1 / val);
-  return `1/${denom}`;
+function sliderPctToAhpLabel(val) {
+  return AHP_LABELS[sliderToIndex(val)];
+}
+
+function sliderPctToDisplayStr(val) {
+  const v = sliderPctToAhpValue(val);
+  if (v >= 1) return String(Math.round(v));
+  return `1/${Math.round(1/v)}`;
 }
 
 // =============================================================================
-// COLOR ENGINE
+// COLOR ENGINE  (unchanged from Leaflet version)
 // =============================================================================
-
-/**
- * Returns a fill color for a single feature value given a layer definition.
- * Handles sequential (including reverse) and categorical color types.
- */
 function getColor(value, layerDef) {
   const { colorBreaks: breaks, colorPalette: palette, colorType } = layerDef;
-
   if (colorType === 'categorical') {
-    // Value is an integer category (e.g., ownership = 1..7)
+    if (value == null || isNaN(Number(value))) return palette[0]; // ← ADD THIS LINE
     const idx = Math.round(value) - 1;
     return palette[Math.min(Math.max(idx, 0), palette.length - 1)];
   }
-
-  // Sequential — find which break bin the value falls into
-  if (value === null || value === undefined || isNaN(value)) return '#ccc';
+  if (value === null || value === undefined || isNaN(value)) return '#cccccc';
   if (value <= breaks[0]) return palette[0];
   if (value >= breaks[breaks.length - 1]) return palette[palette.length - 1];
-
   for (let i = 0; i < breaks.length - 1; i++) {
     if (value >= breaks[i] && value < breaks[i + 1]) return palette[i];
   }
   return palette[palette.length - 1];
 }
 
-/**
- * Dual-ramp color for SOE / decision layers.
- * Uses paletteA (e.g. reds) when valueA >= valueB, paletteB (blues) otherwise.
- */
 function getDualColor(valueA, valueB, layerDef) {
   const { colorBreaks: breaks, colorPaletteA: palA, colorPaletteB: palB } = layerDef;
   const dominant = valueA >= valueB ? valueA : valueB;
   const palette  = valueA >= valueB ? palA : palB;
-
   if (dominant >= breaks[breaks.length - 1]) return palette[palette.length - 1];
   if (dominant <= breaks[0]) return palette[0];
-
   for (let i = 0; i < breaks.length - 1; i++) {
     if (dominant > breaks[i] && dominant <= breaks[i + 1]) return palette[i];
   }
   return palette[palette.length - 1];
 }
 
+// Build a MapLibre match expression for sequential color breaks
+function buildMatchExpression(field, breaks, palette) {
+  const expr = ['step', ['get', field]];
+  expr.push(palette[0]);
+  for (let i = 0; i < breaks.length - 1; i++) {
+    expr.push(breaks[i + 1]);
+    expr.push(palette[Math.min(i + 1, palette.length - 1)]);
+  }
+  return expr;
+}
+
 // =============================================================================
 // MODULE STATE
 // =============================================================================
-let _map            = null;  // Leaflet map instance
-let _layerControl   = null;  // Leaflet layer control
-let _leafletLayers  = {};    // id → Leaflet layer object
-let _activeLegends  = {};    // id → Leaflet control (legend)
-let _geojsonCache   = {};    // filename → GeoJSON object
-let _sortedFeatures = [];    // features sorted by CONFIG.dst.sortField
-let _amat           = null;  // AHP pairwise matrix — restoration
-let _amat_prot      = null;  // AHP pairwise matrix — protection
-let _restoreArrays  = [];    // [criterionIdx][featureIdx] = utility score
-let _protectArrays  = [];
-let _activeLayerIds = new Set(); // which overlay layers are currently on
-let _infoVisible    = false;
+let _map            = null;
+let _geojsonCache   = {};
+let _sortedFeatures = [];
+let _layerDefs      = {};      // id → layerDef (config entry)
+let _activeLayers   = new Set();
 let _currentOpacity = 0.8;
+let _amat           = null;
+let _amat_prot      = null;
+let _restoreArrays  = [];
+let _protectArrays  = [];
+let _popup          = null;
+let _legendControls = {};
 
 // =============================================================================
 // ENTRY POINT
@@ -127,17 +118,19 @@ let _currentOpacity = 0.8;
 document.addEventListener('DOMContentLoaded', async () => {
   setTitle();
   initMap();
-  await loadAllLayers();
-  buildOpacityControl();
-  buildInfoBox();
-  //buildSearchBox();
-  if (CONFIG.dst?.enabled) {
-    buildDSTPanel();
-  }
+  // Map must be loaded before adding layers
+  _map.on('load', async () => {
+    if (CONFIG.terrain) addTerrain();
+    await loadAllLayers();
+    buildLayerPanel();
+    buildOpacityControl();
+    buildInfoPopup();
+    if (CONFIG.dst?.enabled) buildDSTPanel();
+  });
 });
 
 // =============================================================================
-// TITLE / NAVBAR
+// TITLE
 // =============================================================================
 function setTitle() {
   document.title = CONFIG.title;
@@ -146,98 +139,100 @@ function setTitle() {
 }
 
 // =============================================================================
-// MAP INITIALIZATION
+// MAP INIT
 // =============================================================================
 function initMap() {
-  // ── Base layers ──────────────────────────────────────────────────────────
-  const cartoLight = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    { attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors © <a href="https://carto.com">CARTO</a>',
-      subdomains: 'abcd', maxZoom: 19 }
-  );
-
-  const satellite = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution: 'Tiles © Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP',
-      maxZoom: 19 }
-  );
-
-  const topo = L.tileLayer(
-    'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    { attribution: '© OpenStreetMap contributors, © OpenTopoMap', maxZoom: 17 }
-  );
-
-  const defaultBase = CONFIG.defaultBasemap === 'satellite' ? satellite
-                    : CONFIG.defaultBasemap === 'topo'      ? topo
-                    : cartoLight;
-
-  _map = L.map('map', {
-    center: CONFIG.center,
-    zoom:   CONFIG.zoom,
-    zoomControl: false,
-    layers: [defaultBase]
+  _map = new maplibregl.Map({
+    container: 'map',
+    style: getBaseStyle(CONFIG.defaultBasemap || 'light'),
+    center:  [CONFIG.center[1], CONFIG.center[0]], // MapLibre uses [lng, lat]
+    zoom:    CONFIG.zoom,
+    pitch:   CONFIG.defaultPitch   || 0,
+    bearing: CONFIG.defaultBearing || 0,
+    antialias: true
   });
 
-  L.control.zoom({ position: 'topright' }).addTo(_map);
-  L.control.scale({ position: 'bottomleft', metric: true, imperial: true }).addTo(_map);
+  // Navigation control (zoom + compass + pitch reset)
+  _map.addControl(new maplibregl.NavigationControl({
+    visualizePitch: true
+  }), 'top-right');
 
-  // Mouse position display (bottom of map)
-  const MousePos = L.Control.extend({
-    onAdd() {
-      const div = L.DomUtil.create('div', 'leaflet-bar');
-      div.style.cssText = 'background:rgba(255,255,255,0.85);padding:2px 8px;font-size:0.72rem;color:#555;';
-      div.id = 'mouse-pos';
-      div.textContent = 'Lat : Lon';
-      return div;
-    }
-  });
-  new MousePos({ position: 'bottomright' }).addTo(_map);
-  _map.on('mousemove', e => {
-    const el = document.getElementById('mouse-pos');
-    if (el) el.textContent = `${e.latlng.lat.toFixed(5)} : ${e.latlng.lng.toFixed(5)}`;
-  });
+  // Scale
+  _map.addControl(new maplibregl.ScaleControl({
+    unit: 'imperial'
+  }), 'bottom-left');
 
-  // Layer control (base maps registered here; overlays added as layers load)
-  _layerControl = L.control.layers(
-    { 'Light': cartoLight, 'Satellite': satellite, 'Topo': topo },
-    {},
-    { position: 'topright', collapsed: true }
-  ).addTo(_map);
+  // Fullscreen
+  _map.addControl(new maplibregl.FullscreenControl(), 'top-right');
+
+  // Popup (reused for hover)
+  _popup = new maplibregl.Popup({
+    closeButton: false,
+    closeOnClick: false,
+    className: 'dst-popup'
+  });
 
   // DST panel toggle
-  const dstToggle = document.getElementById('dst-toggle');
-  if (dstToggle) {
-    dstToggle.addEventListener('click', () => {
-      document.getElementById('dst-panel')?.classList.toggle('open');
+  document.getElementById('dst-toggle')?.addEventListener('click', () => {
+    document.getElementById('dst-panel')?.classList.toggle('open');
+  });
+
+
+
+  // Back link
+  const backLink = document.getElementById('back-link');
+  if (backLink) backLink.href = CONFIG.backLink || '/';
+}
+
+function getBaseStyle(name) {
+  const styles = {
+    light:     'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    dark:      'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    satellite: 'https://api.maptiler.com/maps/satellite/style.json?key=L9m2QvkG3KvfZEuyAa2n',
+    topo:      'https://api.maptiler.com/maps/topo-v2/style.json?key=L9m2QvkG3KvfZEuyAa2n',
+    // Free alternative that needs no API key:
+    osm:       'https://tiles.openfreemap.org/styles/liberty'
+  };
+  // Default to CartoDB light if key not set
+  return styles[name] || styles.light;
+}
+
+// =============================================================================
+// 3D TERRAIN
+// =============================================================================
+function addTerrain() {
+  // Uses MapTiler terrain tiles — swap for any DEM source
+  if (!_map.getSource('terrain-dem')) {
+    _map.addSource('terrain-dem', {
+      type: 'raster-dem',
+      url:  'https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=L9m2QvkG3KvfZEuyAa2n',
+      tileSize: 256
     });
   }
+  _map.setTerrain({ 
+      source: 'terrain-dem', 
+      exaggeration: CONFIG.terrainExaggeration || 1.5 
+  });
 }
 
 // =============================================================================
 // LAYER LOADING
 // =============================================================================
 async function loadAllLayers() {
-  // Load GeoJSON files, caching by filename so the same file isn't fetched twice
+  // Fetch all unique GeoJSON files in parallel
   const filePromises = {};
   for (const lyr of CONFIG.layers) {
-    if ((lyr.type === 'geojson' || lyr.type === 'dual' || lyr.type === 'dst') && lyr.file) {
-      if (!filePromises[lyr.file]) {
-        filePromises[lyr.file] = fetchGeoJSON(lyr.file);
-      }
+    if (lyr.file && !filePromises[lyr.file]) {
+      filePromises[lyr.file] = fetchGeoJSON(lyr.file);
     }
   }
-  // Await all fetches in parallel
   const entries = await Promise.all(
-    Object.entries(filePromises).map(([file, promise]) =>
-      promise.then(data => [file, data])
-    )
+    Object.entries(filePromises).map(([f, p]) => p.then(d => [f, d]))
   );
-  entries.forEach(([file, data]) => { _geojsonCache[file] = data; });
+  entries.forEach(([f, d]) => { _geojsonCache[f] = d; });
 
-  // Sort features by sortField (required for DST indexing to work correctly)
+  // Sort features for DST indexing
   if (CONFIG.dst?.enabled && CONFIG.dst?.sortField) {
-    const firstFile = CONFIG.layers.find(l => l.file)?.file;
-    // Use the first GeoJSON file's features as the master sorted list
     const srcFile = CONFIG.layers.find(l => l.type === 'dst' || l.type === 'dual')?.file
                  || CONFIG.layers.find(l => l.file)?.file;
     if (srcFile && _geojsonCache[srcFile]) {
@@ -246,395 +241,492 @@ async function loadAllLayers() {
     }
   }
 
-  // Now create Leaflet layers
   for (const lyrDef of CONFIG.layers) {
+    _layerDefs[lyrDef.id] = lyrDef;
     await addLayer(lyrDef);
+    if (lyrDef.defaultOn) {
+      _activeLayers.add(lyrDef.id);
+    }
   }
 }
 
 async function fetchGeoJSON(file) {
-  const response = await fetch(file);
-  if (!response.ok) throw new Error(`Failed to load ${file}: ${response.status}`);
-  return response.json();
+  const res = await fetch(file);
+  if (!res.ok) throw new Error(`Failed to load ${file}: ${res.status}`);
+  return res.json();
 }
 
 async function addLayer(lyrDef) {
   try {
-    let leafletLayer;
-
     if (lyrDef.type === 'geojson' || lyrDef.type === 'dual' || lyrDef.type === 'dst') {
-      const data = _geojsonCache[lyrDef.file];
-      if (!data) return;
-      leafletLayer = L.geoJSON(data, {
-        style: feature => styleFeature(feature, lyrDef),
-        onEachFeature: (feature, layer) => {
-          layer.on({
-            mouseover: e => onFeatureHover(e, feature),
-            mouseout:  () => onFeatureOut(),
-            click:     e => onFeatureClick(e)
-          });
-        }
-      });
-
+      await addGeoJSONLayer(lyrDef);
     } else if (lyrDef.type === 'wms') {
-      leafletLayer = L.tileLayer.wms(lyrDef.url, {
-        layers:      lyrDef.wmsLayers,
-        format:      lyrDef.wmsFormat || 'image/png',
-        transparent: true,
-        opacity:     _currentOpacity,
-        ...lyrDef.wmsOptions
-      });
-
+      addWMSLayer(lyrDef);
     } else if (lyrDef.type === 'cog') {
-      // Cloud Optimized GeoTIFF support via georaster-layer-for-leaflet
-      // Requires georaster and GeoRasterLayer to be loaded from CDN
-      if (typeof GeoRasterLayer === 'undefined') {
-        console.warn('GeoRasterLayer not loaded — skipping COG layer:', lyrDef.id);
-        return;
+      addCOGLayer(lyrDef);
+    } else if (lyrDef.type === 'hillshade') {
+      // Reuse the terrain-dem source if already loaded, otherwise add it
+      if (!_map.getSource('terrain-dem')) {
+        _map.addSource('terrain-dem', {
+          type: 'raster-dem',
+          url:  'https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=YOUR_NEW_KEY',
+          tileSize: 256
+        });
       }
-      const response = await fetch(lyrDef.file);
-      const ab = await response.arrayBuffer();
-      const georaster = await parseGeoraster(ab);
-      leafletLayer = new GeoRasterLayer({
-        georaster,
-        opacity: _currentOpacity,
-        pixelValuesToColorFn: vals => {
-          const v = vals[0];
-          if (v === null || v === undefined) return null;
-          return getColor(v, lyrDef);
-        },
-        resolution: lyrDef.cogResolution || 256
-      });
+      _map.addLayer({
+        id:     'layer-hillshade',
+        type:   'hillshade',
+        source: 'terrain-dem',
+        layout: { visibility: lyrDef.defaultOn ? 'visible' : 'none' },
+        paint: {
+          'hillshade-exaggeration':        0.6,
+          'hillshade-shadow-color':     '#3a2a1a',
+          'hillshade-highlight-color':  '#ffffff',
+          'hillshade-accent-color':     '#5a4a3a',
+          'hillshade-illumination-direction': 315  // NW light source
+        }
+      }, 'layer-sg') // ← inserts BELOW your data layers so they show on top
     }
 
-    if (!leafletLayer) return;
-
-    _leafletLayers[lyrDef.id] = leafletLayer;
-
-    // Add to Leaflet layer control
-    _layerControl.addOverlay(leafletLayer, lyrDef.label);
-
-    // Auto-add layers that should be on by default
-    if (lyrDef.defaultOn) {
-      leafletLayer.addTo(_map);
-      _activeLayerIds.add(lyrDef.id);
-    }
-
-    // Track layer add/remove to show/hide the correct legend
-    _map.on('overlayadd', e => {
-      if (e.layer === leafletLayer) {
-        _activeLayerIds.add(lyrDef.id);
-        showLegend(lyrDef);
-      }
-    });
-    _map.on('overlayremove', e => {
-      if (e.layer === leafletLayer) {
-        _activeLayerIds.delete(lyrDef.id);
-        hideLegend(lyrDef.id);
-      }
-    });
-
-    // Show initial legend for default-on layers
-    if (lyrDef.defaultOn) showLegend(lyrDef);
 
   } catch (err) {
-    console.error(`Error loading layer "${lyrDef.id}":`, err);
+    console.error(`Error adding layer "${lyrDef.id}":`, err);
   }
 }
 
-// =============================================================================
-// FEATURE STYLING
-// =============================================================================
-function styleFeature(feature, lyrDef) {
-  const props = feature.properties;
-  let fillColor = '#cccccc';
+async function addGeoJSONLayer(lyrDef) {
+  const data = _geojsonCache[lyrDef.file];
+  if (!data) return;
 
-  if (lyrDef.type === 'dual') {
-    const valA = props[lyrDef.colorFieldA];
-    const valB = props[lyrDef.colorFieldB];
-    fillColor = getDualColor(valA, valB, lyrDef);
+  const sourceId = `source-${lyrDef.id}`;
+  const layerId  = `layer-${lyrDef.id}`;
 
-  } else if (lyrDef.type === 'dst') {
-    // DST colors are set at calculation time; use stored color or default
-    fillColor = props._dstColor || '#cccccc';
+  // Add GeoJSON with computed fill colors as a feature property
+  const colored = applyColorsToFeatures(data, lyrDef);
 
+  _map.addSource(sourceId, { type: 'geojson', data: colored });
+
+  // Determine geometry type
+  const geomType = data.features[0]?.geometry?.type || 'Polygon';
+  const isLine   = geomType.includes('LineString');
+  const isPoint  = geomType.includes('Point');
+
+  if (isLine) {
+    _map.addLayer({
+      id:     layerId,
+      type:   'line',
+      source: sourceId,
+      layout: { visibility: lyrDef.defaultOn ? 'visible' : 'none' },
+      paint: {
+        'line-color':   ['get', '_fillColor'],
+        'line-width':   lyrDef.strokeWeight || 2,
+        'line-opacity': _currentOpacity
+      }
+    });
+  } else if (isPoint) {
+    _map.addLayer({
+      id:     layerId,
+      type:   'circle',
+      source: sourceId,
+      layout: { visibility: lyrDef.defaultOn ? 'visible' : 'none' },
+      paint: {
+        'circle-color':        ['get', '_fillColor'],
+        'circle-radius':       lyrDef.pointRadius || 6,
+        'circle-opacity':      _currentOpacity,
+        'circle-stroke-width': 1,
+        'circle-stroke-color': '#fff'
+      }
+    });
   } else {
-    const val = props[lyrDef.colorField];
-    fillColor = getColor(val, lyrDef);
+    // Polygon fill
+    _map.addLayer({
+      id:     layerId,
+      type:   'fill',
+      source: sourceId,
+      layout: { visibility: lyrDef.defaultOn ? 'visible' : 'none' },
+      paint: {
+        'fill-color':   ['get', '_fillColor'],
+        'fill-opacity': _currentOpacity
+      }
+    });
+
+    // Polygon outline
+    _map.addLayer({
+      id:     `${layerId}-outline`,
+      type:   'line',
+      source: sourceId,
+      layout: { visibility: lyrDef.defaultOn ? 'visible' : 'none' },
+      paint: {
+        'line-color':   lyrDef.strokeColor || '#555',
+        'line-width':   lyrDef.strokeWeight !== undefined ? lyrDef.strokeWeight : 0.5,
+        'line-opacity': Math.min(_currentOpacity + 0.1, 1)
+      }
+    });
+
+    // Hover highlight layer
+    _map.addLayer({
+      id:     `${layerId}-hover`,
+      type:   'fill',
+      source: sourceId,
+      layout: { visibility: lyrDef.defaultOn ? 'visible' : 'none' },
+      paint: {
+        'fill-color':   '#fff',
+        'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.25, 0]
+      }
+    });
   }
 
+  // Hover interactions
+  let hoveredId = null;
+  _map.on('mousemove', layerId, e => {
+    _map.getCanvas().style.cursor = 'pointer';
+    if (e.features.length > 0) {
+      if (hoveredId !== null) {
+        _map.setFeatureState({ source: sourceId, id: hoveredId }, { hover: false });
+      }
+      hoveredId = e.features[0].id;
+      _map.setFeatureState({ source: sourceId, id: hoveredId }, { hover: true });
+      showPopup(e.lngLat, e.features[0].properties);
+    }
+  });
+
+  _map.on('mouseleave', layerId, () => {
+    _map.getCanvas().style.cursor = '';
+    if (hoveredId !== null) {
+      _map.setFeatureState({ source: sourceId, id: hoveredId }, { hover: false });
+    }
+    hoveredId = null;
+    _popup.remove();
+  });
+
+  _map.on('click', layerId, e => {
+    _map.fitBounds(
+      turf_bbox(e.features[0].geometry),
+      { padding: 60, maxZoom: 14 }
+    );
+  });
+}
+
+function addWMSLayer(lyrDef) {
+  _map.addSource(`source-${lyrDef.id}`, {
+    type:  'raster',
+    tiles: [`${lyrDef.url}?bbox={bbox-epsg-3857}&format=${lyrDef.wmsFormat || 'image/png'}&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&transparent=true&width=256&height=256&layers=${lyrDef.wmsLayers}`],
+    tileSize: 256
+  });
+  _map.addLayer({
+    id:     `layer-${lyrDef.id}`,
+    type:   'raster',
+    source: `source-${lyrDef.id}`,
+    layout: { visibility: lyrDef.defaultOn ? 'visible' : 'none' },
+    paint:  { 'raster-opacity': _currentOpacity }
+  });
+}
+
+function addCOGLayer(lyrDef) {
+  // COG via raster tile protocol — works for any HTTP-accessible GeoTIFF
+  // For local files, use a tile server or convert to MBTiles
+  _map.addSource(`source-${lyrDef.id}`, {
+    type: 'raster',
+    url:  lyrDef.file,
+    tileSize: 256
+  });
+  _map.addLayer({
+    id:     `layer-${lyrDef.id}`,
+    type:   'raster',
+    source: `source-${lyrDef.id}`,
+    layout: { visibility: lyrDef.defaultOn ? 'visible' : 'none' },
+    paint:  { 'raster-opacity': _currentOpacity }
+  });
+}
+
+// Reload all layers after basemap style change
+function reloadLayers() {
+  for (const lyrDef of CONFIG.layers) {
+    addLayer(lyrDef).catch(console.error);
+  }
+  updateAllLayerVisibility();
+}
+
+// =============================================================================
+// COLOR APPLICATION
+// =============================================================================
+function applyColorsToFeatures(geojson, lyrDef) {
   return {
-    fillColor,
-    color:        lyrDef.strokeColor || '#555',
-    weight:       lyrDef.strokeWeight !== undefined ? lyrDef.strokeWeight : 0.5,
-    opacity:      _currentOpacity,
-    fillOpacity:  _currentOpacity
+    ...geojson,
+    features: geojson.features.map((feat, idx) => {
+      const props = feat.properties;
+      let fillColor = '#cccccc';
+
+      if (lyrDef.type === 'dual') {
+        fillColor = getDualColor(props[lyrDef.colorFieldA], props[lyrDef.colorFieldB], lyrDef);
+      } else if (lyrDef.type === 'dst') {
+        fillColor = props._dstColor || '#cccccc';
+      } else {
+        fillColor = getColor(props[lyrDef.colorField], lyrDef);
+      }
+
+      return {
+        ...feat,
+        id: idx,  // required for feature-state (hover)
+        properties: { ...props, _fillColor: fillColor }
+      };
+    })
   };
+}
+
+// Recolor a layer after DST calculation
+function recolorLayer(lyrDef) {
+  const sourceId = `source-${lyrDef.id}`;
+  if (!_map.getSource(sourceId)) return;
+  const data    = _geojsonCache[lyrDef.file];
+  const colored = applyColorsToFeatures(data, lyrDef);
+  _map.getSource(sourceId).setData(colored);
+}
+
+// =============================================================================
+// LAYER PANEL  (custom — replaces Leaflet layer control)
+// =============================================================================
+function buildLayerPanel() {
+  const panel = document.getElementById('layer-panel-inner');  // ← changed
+  if (!panel) return;
+
+  // Basemap switcher
+  let html = `
+    <div class="lp-section">
+      <div class="lp-title">Base map</div>
+      <select id="basemap-select" class="lp-select">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="osm">OpenStreetMap</option>
+        <option value="satellite">Satellite</option>
+        <option value="topo">Topo</option>
+      </select>
+    </div>
+    <div class="lp-section">
+      <div class="lp-title">Layers</div>
+  `;
+
+  for (const lyrDef of CONFIG.layers) {
+    const checked = lyrDef.defaultOn ? 'checked' : '';
+    html += `
+      <label class="lp-row">
+        <input type="checkbox" class="lp-check" data-layer="${lyrDef.id}" ${checked}>
+        <span>${lyrDef.label}</span>
+      </label>
+    `;
+  }
+
+  html += `</div>`;
+  panel.innerHTML = html;
+
+  panel.querySelectorAll('.lp-check').forEach(cb => {
+    cb.addEventListener('change', e => {
+      const id  = e.target.dataset.layer;
+      const vis = e.target.checked ? 'visible' : 'none';
+      setLayerVisibility(id, vis);
+      e.target.checked ? _activeLayers.add(id) : _activeLayers.delete(id);
+      e.target.checked ? showLegend(_layerDefs[id]) : hideLegend(id);
+    });
+  });
+
+  // Show initial legends
+  CONFIG.layers.filter(l => l.defaultOn).forEach(showLegend);
+
+  document.getElementById('basemap-select').addEventListener('change', e => {
+    _map.setStyle(getBaseStyle(e.target.value));
+    _map.once('styledata', () => {
+      if (CONFIG.terrain) addTerrain();
+      reloadLayers();
+    });
+  });
+}
+
+function setLayerVisibility(id, visibility) {
+  const layerId = `layer-${id}`;
+  ['', '-outline', '-hover'].forEach(suffix => {
+    if (_map.getLayer(layerId + suffix)) {
+      _map.setLayoutProperty(layerId + suffix, 'visibility', visibility);
+    }
+  });
+}
+
+function updateAllLayerVisibility() {
+  CONFIG.layers.forEach(l => {
+    setLayerVisibility(l.id, _activeLayers.has(l.id) ? 'visible' : 'none');
+  });
 }
 
 // =============================================================================
 // OPACITY CONTROL
 // =============================================================================
 function buildOpacityControl() {
-  // Inject opacity slider into bottom of the layer control panel
-  const list = _layerControl.getContainer()
-                             .querySelector('.leaflet-control-layers-list');
-  if (!list) return;
+  const panel = document.getElementById('layer-panel-inner');  // ← changed
+  if (!panel) return;
 
-  // Divider line
-  L.DomUtil.create('div', 'leaflet-control-layers-separator', list);
-
-  // Slider container
-  const wrap = L.DomUtil.create('div', '', list);
-  wrap.style.cssText = 'padding: 6px 10px 4px;';
+  const wrap = document.createElement('div');
+  wrap.className = 'lp-section';
   wrap.innerHTML = `
-    <div style="font-size:11px;color:#555;font-weight:500;margin-bottom:5px;">
-      Opacity
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;">
-      <input type="range" id="opacity-slider"
-        min="0" max="1" step="0.05" value="${_currentOpacity}"
-        style="flex:1;height:3px;cursor:pointer;">
-      <span id="opacity-val"
-        style="font-size:11px;width:28px;color:#555;text-align:right;">
-        ${Math.round(_currentOpacity * 100)}%
-      </span>
+    <div class="lp-title">Opacity</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input type="range" id="opacity-slider" min="0" max="1" step="0.05"
+        value="${_currentOpacity}" style="flex:1;">
+      <span id="opacity-val" style="font-size:11px;width:30px;">${Math.round(_currentOpacity*100)}%</span>
     </div>
   `;
+  panel.appendChild(wrap);
 
-  // Prevent map interactions while using the slider
-  L.DomEvent.disableClickPropagation(wrap);
-  L.DomEvent.disableScrollPropagation(wrap);
-
-  wrap.querySelector('#opacity-slider').addEventListener('input', e => {
+  document.getElementById('opacity-slider').addEventListener('input', e => {
     _currentOpacity = parseFloat(e.target.value);
-    wrap.querySelector('#opacity-val').textContent =
-      Math.round(_currentOpacity * 100) + '%';
-    Object.values(_leafletLayers).forEach(lyr => {
-      if (typeof lyr.setStyle === 'function')
-        lyr.setStyle({ fillOpacity: _currentOpacity, opacity: _currentOpacity });
-      else if (typeof lyr.setOpacity === 'function')
-        lyr.setOpacity(_currentOpacity);
+    document.getElementById('opacity-val').textContent = Math.round(_currentOpacity * 100) + '%';
+    CONFIG.layers.forEach(l => {
+      const lid = `layer-${l.id}`;
+      if (_map.getLayer(lid)) {
+        const type = _map.getLayer(lid).type;
+        if      (type === 'fill')   _map.setPaintProperty(lid, 'fill-opacity', _currentOpacity);
+        else if (type === 'line')   _map.setPaintProperty(lid, 'line-opacity', _currentOpacity);
+        else if (type === 'circle') _map.setPaintProperty(lid, 'circle-opacity', _currentOpacity);
+        else if (type === 'raster') _map.setPaintProperty(lid, 'raster-opacity', _currentOpacity);
+      }
     });
   });
 }
 
 // =============================================================================
-// HOVER INFO BOX
+// HOVER POPUP
 // =============================================================================
-function buildInfoBox() {
-  const box = document.getElementById('info-box');
-  if (!box) return;
-
-  document.addEventListener('mousemove', e => {
-    box.style.left = (e.clientX + 18) + 'px';
-    box.style.top  = (e.clientY - 40) + 'px';
-  });
+function buildInfoPopup() {
+  // Popup CSS injected dynamically
+  const style = document.createElement('style');
+  style.textContent = `
+    .dst-popup .maplibregl-popup-content {
+      background: rgba(255,255,255,0.97);
+      border-radius: 4px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      padding: 0;
+      min-width: 200px;
+      max-width: 280px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      overflow: hidden;
+    }
+    .dst-popup .maplibregl-popup-tip { border-top-color: rgba(255,255,255,0.97); }
+    .popup-header { background:#555;color:#fff;padding:5px 10px;font-weight:500; }
+    .popup-row { display:flex;justify-content:space-between;padding:3px 10px;border-bottom:1px solid #f0f0f0; }
+    .popup-row:last-child { border-bottom:none; }
+    .popup-key { color:#666; }
+    .popup-val { font-weight:500;color:#222; }
+  `;
+  document.head.appendChild(style);
 }
 
-function onFeatureHover(e, feature) {
-  const box = document.getElementById('info-box');
-  if (!box) return;
-
-  const props = feature.properties;
+function showPopup(lngLat, props) {
   const fields = CONFIG.hoverFields || [];
-
-  // Header row uses first field or a default
-  const idField = CONFIG.dst?.sortField || (fields[0]?.field);
+  const idField = CONFIG.dst?.sortField || fields[0]?.field;
   const idVal   = idField ? props[idField] : '';
-  const idLabel = CONFIG.searchLabel || 'ID';
 
   let rows = fields.map(f => {
     let val = props[f.field];
     if (val === null || val === undefined) return '';
-    if (f.format === 'pct')     val = (val * 100).toFixed(1) + '%';
-    else if (f.format === 'int') val = Math.round(val).toLocaleString();
-    else if (f.format === 'dec') val = val.toFixed(f.decimals || 2);
+    if      (f.format === 'pct')     val = (val * 100).toFixed(1) + '%';
+    else if (f.format === 'int')     val = Math.round(val).toLocaleString();
     else if (f.format === 'gallons') val = (val / 1e6).toFixed(2) + 'M gal';
-    else if (f.decimals !== undefined) val = val.toFixed(f.decimals);
-    return `<div class="info-row"><span class="info-key">${f.label}</span><span class="info-val">${val}</span></div>`;
+    else if (f.decimals !== undefined) val = Number(val).toFixed(f.decimals);
+    return `<div class="popup-row"><span class="popup-key">${f.label}</span><span class="popup-val">${val}</span></div>`;
   }).join('');
 
-  box.innerHTML = `
-    <div class="info-header">
-      <span>${idLabel}</span><span>${idVal}</span>
-    </div>
-    <div class="info-body">${rows}</div>
-  `;
-  box.classList.add('visible');
-
-  // Highlight hovered feature
-  e.target.setStyle({ weight: 2, color: '#333', fillOpacity: Math.min(_currentOpacity + 0.1, 1) });
-  if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) e.target.bringToFront();
-}
-
-function onFeatureOut() {
-  const box = document.getElementById('info-box');
-  if (box) box.classList.remove('visible');
-  // Reset styles on all overlay layers
-  Object.values(_leafletLayers).forEach(lyr => {
-    if (typeof lyr.resetStyle === 'function') lyr.resetStyle();
-  });
-}
-
-function onFeatureClick(e) {
-  _map.fitBounds(e.target.getBounds());
+  _popup
+    .setLngLat(lngLat)
+    .setHTML(`<div class="popup-header">${CONFIG.searchLabel || 'ID'}: ${idVal}</div><div>${rows}</div>`)
+    .addTo(_map);
 }
 
 // =============================================================================
-// LEGEND SYSTEM
+// LEGEND SYSTEM  (unchanged logic, rendered as custom HTML controls)
 // =============================================================================
 function showLegend(lyrDef) {
-  if (_activeLegends[lyrDef.id]) return; // already showing
+  if (lyrDef.type === 'hillshade') return;  // ← add this line
+  if (_legendControls[lyrDef.id]) return;
 
-  const ctrl = L.control({ position: lyrDef.legendPosition || 'bottomright' });
-  ctrl.onAdd = () => {
-    const div = L.DomUtil.create('div', 'map-legend');
-    div.innerHTML = buildLegendHTML(lyrDef);
-    return div;
-  };
-  ctrl.addTo(_map);
-  _activeLegends[lyrDef.id] = ctrl;
+  const container = document.getElementById('legend-container');
+  if (!container) return;
+
+  const div = document.createElement('div');
+  div.className  = 'map-legend';
+  div.dataset.id = lyrDef.id;
+  div.innerHTML  = buildLegendHTML(lyrDef);
+  container.appendChild(div);
+  _legendControls[lyrDef.id] = div;
 }
 
 function hideLegend(layerId) {
-  if (_activeLegends[layerId]) {
-    _map.removeControl(_activeLegends[layerId]);
-    delete _activeLegends[layerId];
-  }
+  const el = _legendControls[layerId];
+  if (el) { el.remove(); delete _legendControls[layerId]; }
 }
 
 function buildLegendHTML(lyrDef) {
   const title = `<div class="legend-title">${lyrDef.legendTitle || lyrDef.label}</div>`;
-
   if (lyrDef.type === 'dual') {
-    // Two-column legend: restore (A) and protect (B)
-    const headA = lyrDef.legendHeadA || 'Restore';
-    const headB = lyrDef.legendHeadB || 'Protect';
-    const makeCol = (palette, labels) => palette.map((col, i) =>
-      `<div class="legend-item">
-         <div class="legend-swatch" style="background:${col}"></div>
-         <span class="legend-label">${labels ? labels[i] || '' : ''}</span>
-       </div>`
-    ).join('');
+    const headA  = lyrDef.legendHeadA || 'Restore';
+    const headB  = lyrDef.legendHeadB || 'Protect';
+    const labels = lyrDef.legendLabels || [];
+    const col    = (palette) => palette.map((c, i) => `
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:${c}"></div>
+        <span class="legend-label">${labels[i] || ''}</span>
+      </div>`).join('');
     return `${title}
       <div class="legend-dual">
-        <div>
-          <div class="legend-dual-head">${headA}</div>
-          ${makeCol(lyrDef.colorPaletteA, lyrDef.legendLabels)}
-        </div>
-        <div>
-          <div class="legend-dual-head">${headB}</div>
-          ${makeCol(lyrDef.colorPaletteB, lyrDef.legendLabels)}
-        </div>
+        <div><div class="legend-dual-head">${headA}</div>${col(lyrDef.colorPaletteA)}</div>
+        <div><div class="legend-dual-head">${headB}</div>${col(lyrDef.colorPaletteB)}</div>
       </div>`;
   }
-
-  // Standard sequential or categorical
   const palette = lyrDef.colorPalette || [];
   const labels  = lyrDef.legendLabels || palette.map(() => '');
-  const items   = palette.map((col, i) =>
-    `<div class="legend-item">
-       <div class="legend-swatch" style="background:${col}"></div>
-       <span class="legend-label">${labels[i] || ''}</span>
-     </div>`
-  ).join('');
-  return title + items;
+  return title + palette.map((c, i) => `
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:${c}"></div>
+      <span class="legend-label">${labels[i]}</span>
+    </div>`).join('');
 }
 
 // =============================================================================
-// SEARCH / ZOOM
-// =============================================================================
-/*function buildSearchBox() {
-  const box = document.getElementById('search-box');
-  if (!box || !CONFIG.searchField) return;
-
-  box.innerHTML = `
-    <input id="search-input" type="text"
-      placeholder="${CONFIG.searchLabel || 'Search ID'}…"
-      autocomplete="off">
-    <button id="search-btn">→</button>
-  `;
-
-  function doSearch() {
-    const val = document.getElementById('search-input').value.trim();
-    if (!val) return;
-    // Search through all GeoJSON layers
-    let found = false;
-    for (const lyrDef of CONFIG.layers) {
-      const data = _geojsonCache[lyrDef.file];
-      if (!data) continue;
-      const feature = data.features.find(f =>
-        String(f.properties[CONFIG.searchField]) === val
-      );
-      if (feature) {
-        const bounds = L.geoJSON(feature).getBounds();
-        _map.fitBounds(bounds, { maxZoom: 14 });
-        found = true;
-        break;
-      }
-    }
-    if (!found) alert(`No feature found with ${CONFIG.searchLabel} = "${val}"`);
-  }
-
-  document.getElementById('search-btn').addEventListener('click', doSearch);
-  document.getElementById('search-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doSearch();
-  });
-}*/
-
-// =============================================================================
-// DST PANEL — UI BUILD
+// DST PANEL  (identical to Leaflet version)
 // =============================================================================
 function buildDSTPanel() {
   const panel = document.getElementById('dst-panel');
   if (!panel || !CONFIG.dst) return;
 
   const dst = CONFIG.dst;
-  const nRestoreCriteria = dst.restoration.criteria.length;
-  const nProtectCriteria = dst.protection.criteria.length;
 
-  // 1. Initialize the matrices first!
-  initAHPMatrices(dst.restoration.criteria.length, dst.protection.criteria.length);
-
-
-  // ── Build pairwise comparison slider rows ──────────────────────────────────
-  // There are (n-1) sequential comparisons for n criteria (abbreviated AHP)
   function buildSliderSection(criteria, prefix) {
     return criteria.slice(0, -1).map((c, i) => `
       <div class="criterion-row">
         <div class="criterion-label" id="${prefix}-label-${i}">
-          <strong>${c}</strong> is <strong>equal to</strong> ${criteria[i + 1]}.
+          <strong>${c}</strong> is <strong>equal to</strong> ${criteria[i+1]}.
         </div>
         <div class="slider-wrap">
-          <input type="range" class="ahp-slider"
-            id="${prefix}-slider-${i}"
-            data-prefix="${prefix}"
-            data-idx="${i}"
-            min="0" max="100" step="1" value="50">
+          <input type="range" class="ahp-slider" id="${prefix}-slider-${i}"
+            data-prefix="${prefix}" data-idx="${i}"
+            min="0" max="16" step="1" value="8">
           <span class="slider-val" id="${prefix}-val-${i}">1</span>
         </div>
-      </div>
-    `).join('');
+      </div>`).join('');
   }
 
   panel.innerHTML = `
     <div class="dst-header">
       <h2>Decision Tool</h2>
-      <p>Adjust pairwise importance weights. Click <em>Calculate</em> to update the map.</p>
+      <p>Adjust pairwise importance weights, then click <em>Calculate</em>.</p>
     </div>
     <div class="dst-body">
-
       <div class="dst-section">
         <div class="dst-section-title">Restoration criteria</div>
         ${buildSliderSection(dst.restoration.criteria, 'rest')}
       </div>
-
       <div class="dst-section">
         <div class="dst-section-title">Protection criteria</div>
         ${buildSliderSection(dst.protection.criteria, 'prot')}
       </div>
-
       <div class="dst-section">
         <div class="dst-section-title">Consistency indices</div>
         <div class="consistency-row">
@@ -649,12 +741,10 @@ function buildDSTPanel() {
           CR &lt; 0.10 = acceptable consistency
         </p>
       </div>
-
       <div class="dst-section" id="dst-chart-section" style="display:none;">
         <div class="dst-section-title">Priority weights</div>
         <svg id="dst-chart" width="100%" height="160"></svg>
       </div>
-
     </div>
     <div class="dst-footer">
       <button id="btn-reset">Reset</button>
@@ -662,20 +752,17 @@ function buildDSTPanel() {
     </div>
   `;
 
-  // Attach slider event listeners
-  panel.querySelectorAll('.ahp-slider').forEach(slider => {
-    slider.addEventListener('input', onSliderMove);
-    // Set initial label
-    onSliderMove({ target: slider });
-  });
+   panel.querySelectorAll('.ahp-slider').forEach(s => {
+     s.addEventListener('input', onSliderMove);
+     // Defer initial call until DOM is fully ready
+     setTimeout(() => onSliderMove({ target: s }), 0);
+   });
 
   document.getElementById('btn-reset').addEventListener('click', resetDST);
   document.getElementById('btn-calculate').addEventListener('click', runDSTCalculation);
 
-  // Initialize AHP matrices
-  initAHPMatrices(nRestoreCriteria, nProtectCriteria);
+  initAHPMatrices(dst.restoration.criteria.length, dst.protection.criteria.length);
 
-  // Pre-compute criterion utility arrays
   if (typeof CONFIG.dst.computeCriteriaArrays === 'function' && _sortedFeatures.length) {
     const result = CONFIG.dst.computeCriteriaArrays(_sortedFeatures);
     _restoreArrays = result.restoreArrays;
@@ -688,98 +775,70 @@ function onSliderMove(e) {
   const prefix = slider.dataset.prefix;
   const idx    = parseInt(slider.dataset.idx);
   const pct    = parseInt(slider.value);
+  const val    = sliderPctToAhpValue(pct);
+  const label  = sliderPctToAhpLabel(pct);
+  const disp   = sliderPctToDisplayStr(pct);
 
-  const val   = sliderPctToAhpValue(pct);
-  const label = sliderPctToAhpLabel(pct);
-  const disp  = sliderPctToDisplayStr(pct);
-
-  // Update display value
   document.getElementById(`${prefix}-val-${idx}`).textContent = disp;
-
-  // Update label sentence
-  const dst = CONFIG.dst;
-  const criteria = prefix === 'rest' ? dst.restoration.criteria : dst.protection.criteria;
-  const c1 = criteria[idx], c2 = criteria[idx + 1];
+  const criteria = prefix === 'rest'
+    ? CONFIG.dst.restoration.criteria
+    : CONFIG.dst.protection.criteria;
   document.getElementById(`${prefix}-label-${idx}`).innerHTML =
-    `<strong>${c1}</strong> is <strong>${label}</strong> ${c2}.`;
+    `<strong>${criteria[idx]}</strong> is <strong>${label}</strong> ${criteria[idx+1]}.`;
 
-  console.log('Prefix:', prefix, 'Idx:', idx, 'Val:', val);
-  console.log('Matrix:', prefix === 'rest' ? _amat : _amat_prot);
-
-  // Update AHP matrix
-  if (prefix === 'rest') {
-    _amat[idx][idx + 1] = val;
-    _amat[idx + 1][idx] = 1 / val;
-  } else {
-    _amat_prot[idx][idx + 1] = val;
-    _amat_prot[idx + 1][idx] = 1 / val;
-  }
+  if (prefix === 'rest') { _amat[idx][idx+1] = val; _amat[idx+1][idx] = 1/val; }
+  else { _amat_prot[idx][idx+1] = val; _amat_prot[idx+1][idx] = 1/val; }
 }
 
 function resetDST() {
   document.querySelectorAll('.ahp-slider').forEach(s => {
-    s.value = 50;
+    s.value = 8;   // ← was 50
     onSliderMove({ target: s });
   });
-  const n = CONFIG.dst.restoration.criteria.length;
-  const p = CONFIG.dst.protection.criteria.length;
-  initAHPMatrices(n, p);
+  initAHPMatrices(CONFIG.dst.restoration.criteria.length, CONFIG.dst.protection.criteria.length);
 }
 
 // =============================================================================
-// AHP MATH  (cleaned-up port of decisionSupportFunctions.js)
+// AHP MATH  (unchanged)
 // =============================================================================
-function initAHPMatrices(nRestore, nProtect) {
-  _amat      = makeIdentityMatrix(nRestore);
-  _amat_prot = makeIdentityMatrix(nProtect);
+function initAHPMatrices(nR, nP) {
+  _amat      = makeIdentityMatrix(nR);
+  _amat_prot = makeIdentityMatrix(nP);
 }
 
 function makeIdentityMatrix(n) {
   return Array.from({ length: n }, (_, i) =>
-    Array.from({ length: n }, (_, j) => (i === j ? 1 : i < j ? 1 : 1))
+    Array.from({ length: n }, (_, j) => (i === j ? 1 : 1))
   );
 }
 
-/**
- * saatyIndex — compute AHP weights and Consistency Ratio from a full
- * pairwise comparison matrix.
- * Returns { weights, CR }
- */
 function saatyIndex(matrix, simSize = 500) {
   const n = matrix.length;
-
-  // Geometric-mean method for weights
   const weights = matrix.map(row => {
-    const geoMean = Math.pow(row.reduce((acc, v) => acc * v, 1), 1 / n);
+    const geoMean = Math.pow(row.reduce((a, v) => a * v, 1), 1/n);
     return geoMean;
   });
-  const weightSum = weights.reduce((a, b) => a + b, 0);
-  weights.forEach((_, i) => (weights[i] /= weightSum));
+  const wSum = weights.reduce((a,b) => a+b, 0);
+  weights.forEach((_, i) => (weights[i] /= wSum));
 
-  // Largest eigenvalue (lambda_max) via numeric.js
-  let lambdaMax = n;
   let CI = 0;
   try {
     const eig = numeric.eig(matrix);
-    lambdaMax = Math.max(...eig.lambda.x);
+    const lambdaMax = Math.max(...eig.lambda.x);
     CI = (lambdaMax - n) / (n - 1);
-  } catch (err) {
-    // If eigenvalue fails, CR will be 0 (no penalty)
-  }
+  } catch (_) {}
 
-  // Random Index (RI) via Monte Carlo simulation
   const RI_arr = [];
-  for (let sim = 0; sim < simSize; sim++) {
-    const rnd = buildRandomMatrix(n);
+  for (let s = 0; s < simSize; s++) {
     try {
+      const rnd  = buildRandomMatrix(n);
       const eigR = numeric.eig(rnd);
       const lMax = Math.max(...eigR.lambda.x);
       RI_arr.push((lMax - n) / (n - 1));
     } catch (_) {}
   }
-  const RI = RI_arr.length ? RI_arr.reduce((a, b) => a + b, 0) / RI_arr.length : 1;
+  const RI = RI_arr.length ? RI_arr.reduce((a,b) => a+b, 0) / RI_arr.length : 1;
   const CR = RI > 0 ? CI / RI : 0;
-
   return { weights, CR };
 }
 
@@ -790,45 +849,32 @@ function buildRandomMatrix(n) {
       if (i === j) { m[i][j] = 1; continue; }
       if (i < j) {
         let v = Math.floor(Math.random() * 9) + 1;
-        if (Math.random() < 0.5) v = 1 / v;
-        m[i][j] = v;
-        m[j][i] = 1 / v;
+        if (Math.random() < 0.5) v = 1/v;
+        m[i][j] = v; m[j][i] = 1/v;
       }
     }
   }
   return m;
 }
 
-/**
- * abbr2full — expand an abbreviated AHP matrix (only adjacent pairs filled in
- * the upper triangle) to a full pairwise matrix via sequential products.
- * This matches the original abbr2full logic.
- */
 function abbr2full(inmat) {
   const n = inmat.length;
-  const m = inmat.map(row => [...row]); // deep copy
-
-  // Fill upper triangle diagonals beyond the first
+  const m = inmat.map(row => [...row]);
   for (let diag = 2; diag < n; diag++) {
     for (let row = 0; row < n - diag; row++) {
       const col = row + diag;
-      // Product of adjacent comparisons along the path
       let prod = 1;
-      for (let k = row; k < col; k++) prod *= m[k][k + 1];
-      // Clamp to Saaty scale bounds [1/9, 9]
-      if (prod >= 1)  prod = Math.min(Math.round(prod), 9);
-      else            prod = 1 / Math.min(Math.round(1 / prod), 9);
+      for (let k = row; k < col; k++) prod *= m[k][k+1];
+      if (prod >= 1) prod = Math.min(Math.round(prod), 9);
+      else           prod = 1 / Math.min(Math.round(1/prod), 9);
       m[row][col] = prod;
     }
   }
-
-  // Fill lower triangle as reciprocals
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < n; i++)
     for (let j = 0; j < n; j++) {
-      if (i > j) m[i][j] = 1 / m[j][i];
+      if (i > j) m[i][j] = 1/m[j][i];
       if (i === j) m[i][j] = 1;
     }
-  }
   return m;
 }
 
@@ -836,34 +882,23 @@ function abbr2full(inmat) {
 // DST CALCULATION
 // =============================================================================
 function runDSTCalculation() {
-  if (!CONFIG.dst?.enabled) return;
+  if (!CONFIG.dst?.enabled || !_sortedFeatures.length) return;
 
-  if (!_sortedFeatures.length) {
-    alert('Features not yet loaded. Please wait a moment and try again.');
-    return;
-  }
-
-  // Re-compute criteria arrays if not yet done (safety check)
   if (!_restoreArrays.length && typeof CONFIG.dst.computeCriteriaArrays === 'function') {
-    const result = CONFIG.dst.computeCriteriaArrays(_sortedFeatures);
-    _restoreArrays = result.restoreArrays;
-    _protectArrays = result.protectArrays;
+    const r = CONFIG.dst.computeCriteriaArrays(_sortedFeatures);
+    _restoreArrays = r.restoreArrays;
+    _protectArrays = r.protectArrays;
   }
 
-  // Expand abbreviated AHP matrices and compute weights
-  const fullRestore = abbr2full(_amat);
-  const fullProtect = abbr2full(_amat_prot);
-  const resResult   = saatyIndex(fullRestore);
-  const protResult  = saatyIndex(fullProtect);
+  const resResult  = saatyIndex(abbr2full(_amat));
+  const protResult = saatyIndex(abbr2full(_amat_prot));
 
-  // Update consistency index display
   updateCRDisplay('cr-restore', resResult.CR);
   updateCRDisplay('cr-protect', protResult.CR);
 
-  // Weighted sum of utility scores → decision score per feature
-  const nFeatures = _sortedFeatures.length;
-  const impVals  = new Array(nFeatures).fill(0);
-  const protVals = new Array(nFeatures).fill(0);
+  const nF      = _sortedFeatures.length;
+  const impVals = new Array(nF).fill(0);
+  const prtVals = new Array(nF).fill(0);
 
   resResult.weights.forEach((w, ci) => {
     if (!_restoreArrays[ci]) return;
@@ -871,28 +906,20 @@ function runDSTCalculation() {
   });
   protResult.weights.forEach((w, ci) => {
     if (!_protectArrays[ci]) return;
-    _protectArrays[ci].forEach((v, fi) => { protVals[fi] += v * w; });
+    _protectArrays[ci].forEach((v, fi) => { prtVals[fi] += v * w; });
   });
 
-  // Map decision scores to colors using the dual-color scheme
-  const decBreaks  = CONFIG.dst.decisionBreaks  || [0,0.125,0.25,0.375,0.5,0.625,0.75,0.875];
-  const decPalA    = CONFIG.dst.decisionPaletteA || ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#990000'];
-  const decPalB    = CONFIG.dst.decisionPaletteB || ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'];
-
+  const decBreaks = CONFIG.dst.decisionBreaks  || [0,0.125,0.25,0.375,0.5,0.625,0.75,0.875];
+  const decPalA   = CONFIG.dst.decisionPaletteA || ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#990000'];
+  const decPalB   = CONFIG.dst.decisionPaletteB || ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'];
   const dstLyrDef = { colorBreaks: decBreaks, colorPaletteA: decPalA, colorPaletteB: decPalB };
 
-  // Store computed colors in feature properties and redraw DST layers
   _sortedFeatures.forEach((feat, fi) => {
-    feat.properties._dstColor = getDualColor(impVals[fi], protVals[fi], dstLyrDef);
+    feat.properties._dstColor = getDualColor(impVals[fi], prtVals[fi], dstLyrDef);
   });
 
-  // Redraw all 'dst' type layers
-  CONFIG.layers.filter(l => l.type === 'dst').forEach(lyrDef => {
-    const lyr = _leafletLayers[lyrDef.id];
-    if (lyr) lyr.setStyle(feature => styleFeature(feature, lyrDef));
-  });
+  CONFIG.layers.filter(l => l.type === 'dst').forEach(recolorLayer);
 
-  // Draw weight chart
   drawWeightChart(resResult.weights, protResult.weights,
     CONFIG.dst.restoration.criteria, CONFIG.dst.protection.criteria);
 }
@@ -901,110 +928,69 @@ function updateCRDisplay(elId, CR) {
   const el = document.getElementById(elId);
   if (!el) return;
   el.textContent = Math.abs(CR).toFixed(3);
-  el.className = 'cr-value ' + (CR > 0.10 ? 'cr-bad' : 'cr-good');
+  el.className   = 'cr-value ' + (CR > 0.10 ? 'cr-bad' : 'cr-good');
 }
 
 // =============================================================================
-// D3 WEIGHT CHART  (D3 v7)
+// D3 WEIGHT CHART  (unchanged from Leaflet version)
 // =============================================================================
-function drawWeightChart(restoreWeights, protectWeights, restoreLabels, protectLabels) {
+function drawWeightChart(rW, pW, rL, pL) {
   const section = document.getElementById('dst-chart-section');
   if (section) section.style.display = '';
-
   const svgEl = document.getElementById('dst-chart');
   if (!svgEl || typeof d3 === 'undefined') return;
-
   d3.select(svgEl).selectAll('*').remove();
 
   const allData = [
-    ...restoreWeights.map((w, i) => ({ label: restoreLabels[i], value: w, group: 'Restore' })),
-    { label: '', value: 0, group: 'spacer' },   // gap between sections
-    ...protectWeights.map((w, i) => ({ label: protectLabels[i], value: w, group: 'Protect' }))
+    ...rW.map((w,i) => ({ label: rL[i], value: w, group: 'Restore' })),
+    { label: '', value: 0, group: 'spacer' },
+    ...pW.map((w,i) => ({ label: pL[i], value: w, group: 'Protect' }))
   ];
 
-  const labelWidth = 130;   // wider label column
-  const barH      = 14;
-  const rowH      = barH + 5;
+  const labelWidth = 130, barH = 14, rowH = barH + 5;
   const margin = { top: 20, right: 45, bottom: 4, left: 8 };
-  const svgWidth  = svgEl.getBoundingClientRect().width || 290;
-  const barWidth  = svgWidth - margin.left - margin.right - labelWidth;
+  const svgWidth = svgEl.getBoundingClientRect().width || 290;
+  const barWidth = svgWidth - margin.left - margin.right - labelWidth;
   const svgHeight = allData.length * rowH + 30;
 
   const xScale = d3.scaleLinear()
     .domain([0, d3.max(allData, d => d.value) * 1.15])
     .range([0, barWidth]);
-
   const colorScale = d3.scaleOrdinal()
-    .domain(['Restore', 'Protect'])
-    .range(['#c4963a', '#4682b4']);
+    .domain(['Restore','Protect'])
+    .range(['#c4963a','#4682b4']);
 
   d3.select(svgEl).attr('height', svgHeight);
-
-  const svg = d3.select(svgEl)
-    .append('g')
+  const svg = d3.select(svgEl).append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
-  let lastGroup = null;
-  let yOffset = 0;
-
-  allData.forEach((d) => {
+  let lastGroup = null, yOffset = 0;
+  allData.forEach(d => {
     if (d.group === 'spacer') { yOffset += rowH; return; }
-
-    // Group header — printed once per group with a gap above
     if (d.group !== lastGroup) {
-      svg.append('text')
-        .attr('x', labelWidth)
-        .attr('y', yOffset - 2)
-        .attr('font-size', '0.6rem')
-        .attr('fill', 'rgba(255,255,255,0.35)')
-        .attr('letter-spacing', '0.1em')
-        .text(d.group.toUpperCase());
-      lastGroup = d.group;
-      yOffset += 10;  // small gap after header
+      svg.append('text').attr('x', labelWidth).attr('y', yOffset - 2)
+        .attr('font-size','0.6rem').attr('fill','rgba(255,255,255,0.35)')
+        .attr('letter-spacing','0.1em').text(d.group.toUpperCase());
+      lastGroup = d.group; yOffset += 10;
     }
-
     const y = yOffset;
-
-    // Label — full text, right-aligned
-    svg.append('text')
-      .attr('x', labelWidth - 6)
-      .attr('y', y + barH * 0.78)
-      .attr('text-anchor', 'end')
-      .attr('font-size', '0.68rem')
-      .attr('fill', 'rgba(255,255,255,0.65)')
-      .text(d.label);
-
-    // Bar
-    svg.append('rect')
-      .attr('x', labelWidth)
-      .attr('y', y)
-      .attr('height', barH)
-      .attr('width', 0)
-      .attr('fill', colorScale(d.group))
-      .attr('opacity', 0.85)
-      .transition().duration(500)
-      .attr('width', xScale(d.value));
-
-    // Value
-    svg.append('text')
-      .attr('x', labelWidth + xScale(d.value) + 4)
-      .attr('y', y + barH * 0.78)
-      .attr('font-size', '0.65rem')
-      .attr('fill', 'rgba(255,255,255,0.5)')
-      .text(d.value.toFixed(3));
-
+    svg.append('text').attr('x', labelWidth - 6).attr('y', y + barH * 0.78)
+      .attr('text-anchor','end').attr('font-size','0.68rem')
+      .attr('fill','rgba(255,255,255,0.65)').text(d.label);
+    svg.append('rect').attr('x', labelWidth).attr('y', y)
+      .attr('height', barH).attr('width', 0)
+      .attr('fill', colorScale(d.group)).attr('opacity', 0.85)
+      .transition().duration(500).attr('width', xScale(d.value));
+    svg.append('text').attr('x', labelWidth + xScale(d.value) + 4)
+      .attr('y', y + barH * 0.78).attr('font-size','0.65rem')
+      .attr('fill','rgba(255,255,255,0.5)').text(d.value.toFixed(3));
     yOffset += rowH;
   });
 }
 
 // =============================================================================
-// UTILITY FUNCTIONS  (used by config.js in computeCriteriaArrays)
+// UTILITY
 // =============================================================================
-
-/**
- * utility — linear rescale from [inMin, inMax] to [outMin, outMax].
- * Equivalent to the original utility() function.
- */
 function utility(array, inMin, inMax, outMin, outMax) {
   return array.map(x => {
     const scaled = ((x - inMin) / (inMax - inMin)) * (outMax - outMin) + outMin;
@@ -1012,5 +998,17 @@ function utility(array, inMin, inMax, outMin, outMax) {
   });
 }
 
-// Expose globally so config.js can use it
+// Simple bbox without Turf dependency
+function turf_bbox(geometry) {
+  let minLng=Infinity, minLat=Infinity, maxLng=-Infinity, maxLat=-Infinity;
+  const coords = geometry.type === 'Polygon' ? geometry.coordinates[0]
+               : geometry.type === 'MultiPolygon' ? geometry.coordinates.flat(2)
+               : [geometry.coordinates];
+  coords.forEach(([lng, lat]) => {
+    if (lng < minLng) minLng = lng; if (lat < minLat) minLat = lat;
+    if (lng > maxLng) maxLng = lng; if (lat > maxLat) maxLat = lat;
+  });
+  return [[minLng, minLat], [maxLng, maxLat]];
+}
+
 window.utility = utility;
