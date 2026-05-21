@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>TCSI Blueprint v3 — PROMOTE DST</title>
+
+  <!-- MapLibre GL JS 4.7.1 -->
+  <link href="https://unpkg.com/maplibre-gl@5.2.0/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://unpkg.com/maplibre-gl@5.2.0/dist/maplibre-gl.js"></script>
+
+  <!-- PMTiles protocol adapter for MapLibre -->
+  <script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
+
+  <!-- Font Awesome (icons) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    /* ── RESET & BASE ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #111;
+      --surface:  #1a1a1a;
+      --border:   #2a2a2a;
+      --text-dim: #818181;
+      --text:     #c8c8c8;
+      --text-hi:  #f1f1f1;
+      --accent:   #315b7d;
+      --eco:      #6e6112;
+      --sidebar-w: 330px;
+      --nav-h:    52px;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    a:hover { color: var(--text-hi); }
+
+    .hidden { display: none !important; }
+
+    /* ── NAVBAR ────────────────────────────────────────────── */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      z-index: 9000;
+    }
+
+    .navbar-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-hi);
+      letter-spacing: 0.05em;
+      flex: 1;
+    }
+
+    /* ── HAMBURGER ──────────────────────────────────────────── */
+    .hamburger {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: var(--accent);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .hamburger span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: currentColor;
+      transition: 0.2s;
+    }
+    .hamburger.is-active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.is-active span:nth-child(2) { opacity: 0; }
+    .hamburger.is-active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ── RIGHT MINI-SIDEBAR ─────────────────────────────────── */
+    .right-sidebar {
+      position: fixed;
+      top: 70px;
+      right: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 10px;
+      z-index: 8000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .right-sidebar a {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+    .right-sidebar a:hover { color: var(--text-hi); }
+    .right-sidebar hr {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    /* MapLibre nav control position */
+    .maplibregl-ctrl-top-right { top: 70px !important; right: 75px !important; }
+
+    /* ── LEFT SIDEBAR ───────────────────────────────────────── */
+    .sidebar {
+      position: fixed;
+      top: var(--nav-h);
+      left: 0;
+      width: var(--sidebar-w);
+      height: calc(100vh - var(--nav-h));
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      overflow-x: hidden;
+      z-index: 8500;
+      transition: width 0.25s ease;
+      padding-bottom: 60px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+
+    /* Prevent page scroll when hovering sidebar */
+    .sidebar:hover { overscroll-behavior: contain; }
+
+    /* ── ACCORDION ──────────────────────────────────────────── */
+    .sidebar-section { border-bottom: 1px solid var(--border); }
+
+    .accordion, .sub-accordion {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 10px 14px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s;
+    }
+    .accordion:hover, .sub-accordion:hover { color: var(--text-hi); }
+    .accordion.active, .sub-accordion.active { color: var(--text-hi); }
+    .accordion::after { content: '+'; margin-left: auto; font-size: 1rem; color: var(--text-dim); }
+    .accordion.active::after { content: '−'; }
+
+    .panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease;
+    }
+
+    .sub-group { border-top: 1px solid var(--border); }
+    .sub-accordion { font-size: 0.85rem; padding: 8px 14px 8px 24px; font-weight: 500; }
+    .sub-accordion::after { content: '+'; margin-left: auto; font-size: 0.9rem; color: var(--text-dim); }
+    .sub-accordion.active::after { content: '−'; }
+    .sub-panel { max-height: 0; overflow: hidden; transition: max-height 0.2s ease; }
+
+    /* ── BASEMAP BUTTONS ────────────────────────────────────── */
+    .basemap-btn {
+      display: block;
+      width: calc(100% - 28px);
+      margin: 5px 14px;
+      padding: 6px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-align: left;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .basemap-btn:hover { color: var(--text-hi); border-color: var(--accent); }
+    .basemap-btn.active { color: var(--text-hi); border-color: var(--accent); background: #1d2e3d; }
+
+    /* ── LAYER TABLE ────────────────────────────────────────── */
+    .layer-table {
+      width: 100%;
+      border-collapse: collapse;
+      padding: 2px 0;
+    }
+    .layer-table tr { border-bottom: 1px solid #1e1e1e; }
+    .layer-table tr:last-child { border-bottom: none; }
+    .layer-table td { padding: 4px 4px; vertical-align: middle; }
+
+    .col-label { width: 55%; padding-left: 14px !important; }
+    .col-ctrl  { width: 30%; }
+    .col-info  { width: 15%; text-align: center; }
+
+    .toc-link {
+      font-size: 0.82rem;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toc-off { color: var(--text-dim); }
+    .toc-on  { color: var(--text-hi); }
+    .toc-off:hover { color: var(--text-hi); }
+
+    /* ── SLIDERS ────────────────────────────────────────────── */
+    .opacity-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+    }
+    .opacity-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+    }
+
+    /* ── COLOR PICKER ───────────────────────────────────────── */
+    .color-picker {
+      width: 28px; height: 22px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    /* ── DOWNLOAD / INFO ICONS ──────────────────────────────── */
+    .dl-icon, .header-dl {
+      color: var(--text-dim);
+      opacity: 0.7;
+    }
+    .dl-icon:hover, .header-dl:hover { opacity: 1; color: var(--text-hi); }
+
+    .info-tip {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      cursor: help;
+    }
+    .info-tip:hover { color: var(--text-hi); }
+
+    /* ── MAP CONTAINER ──────────────────────────────────────── */
+    #map {
+      position: fixed;
+      top: var(--nav-h);
+      left: 0; right: 0;
+      bottom: 0;
+      z-index: 0;
+    }
+
+    /* ── PITCH HINT ─────────────────────────────────────────── */
+    #pitch-hint {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.65);
+      color: var(--text);
+      font-size: 0.75rem;
+      padding: 5px 12px;
+      border-radius: 20px;
+      pointer-events: none;
+      z-index: 500;
+      transition: opacity 0.5s;
+    }
+    #pitch-hint.hidden { opacity: 0; }
+
+    /* ── LEGEND ─────────────────────────────────────────────── */
+    #legend-container {
+      position: fixed;
+      bottom: 36px;
+      right: 10px;
+      background: rgba(17,17,17,0.92);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      min-width: 130px;
+      max-width: 200px;
+      z-index: 7000;
+      font-size: 0.75rem;
+    }
+    .legend-title { font-weight: 600; color: var(--text-hi); margin-bottom: 8px; }
+    .legend-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+    .legend-gradient {
+      height: 14px;
+      border-radius: 2px;
+      margin: 4px 0;
+    }
+    .legend-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+    }
+
+    /* ── HOVER INFO BOX ─────────────────────────────────────── */
+    #info-box {
+      position: fixed;
+      background: rgba(17,17,17,0.92);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      max-width: 220px;
+      z-index: 7500;
+      pointer-events: none;
+      line-height: 1.5;
+    }
+    #info-box small { color: var(--text-dim); font-size: 0.68rem; }
+
+    /* ── INFO PANEL (bottom) ─────────────────────────────────── */
+    #info-panel {
+      position: fixed;
+      left: 0; right: 0;
+      bottom: 0;
+      height: 40px;
+      background: var(--bg);
+      border-top: 2px solid var(--accent);
+      z-index: 8000;
+      overflow: hidden;
+      transition: height 0.3s ease;
+    }
+    #info-panel.expanded { height: 40vh; overflow-y: auto; }
+
+    #info-arrow {
+      position: absolute;
+      right: 16px;
+      top: 8px;
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 1.2rem;
+      transition: transform 0.3s;
+    }
+    #info-arrow.flipped { transform: rotate(180deg); }
+
+    .info-panel-inner {
+      padding: 44px 24px 16px;
+      max-width: 900px;
+      column-count: 2;
+      column-gap: 40px;
+      font-size: 0.83rem;
+      line-height: 1.65;
+      color: var(--text);
+    }
+    .info-panel-inner p { margin-bottom: 0.8em; break-inside: avoid; }
+    .info-panel-inner ol { margin-bottom: 0.8em; padding-left: 1em; break-inside: avoid; }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      .sidebar { width: 100%; }
+      .info-panel-inner { column-count: 1; }
+      #legend-container { right: 5px; bottom: 44px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── NAVBAR ─────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <button class="hamburger is-active" id="hamburger-btn" aria-label="Toggle sidebar">
+      <span></span><span></span><span></span>
+    </button>
+    <h1 class="navbar-title">TCSI BLUEPRINT v3</h1>
+  </nav>
+
+  <!-- ── RIGHT MINI-SIDEBAR ────────────────────────────────── -->
+  <div class="right-sidebar">
+    <a id="tools-btn" href="#" title="About">&#9432;</a>
+    <hr>
+    <!-- MapLibre zoom controls inject here via CSS offset -->
+  </div>
+
+  <!-- ── LEFT SIDEBAR (built by tcsi_app.js) ──────────────── -->
+  <div id="mySidebar" class="sidebar"></div>
+
+  <!-- ── MAP ───────────────────────────────────────────────── -->
+  <div id="map"></div>
+
+  <!-- ── PITCH HINT ────────────────────────────────────────── -->
+  <div id="pitch-hint">Right-click drag to tilt · Two-finger rotate</div>
+
+  <!-- ── LEGEND ────────────────────────────────────────────── -->
+  <div id="legend-container" class="hidden"></div>
+
+  <!-- ── HOVER INFO ────────────────────────────────────────── -->
+  <div id="info-box" class="hidden"></div>
+
+  <!-- ── INFO PANEL ────────────────────────────────────────── -->
+  <div id="info-panel">
+    <span id="info-arrow">&#9650;</span>
+    <div class="info-panel-inner">
+
+      <p>The <strong style="color:#f1f1f1">Tahoe Central Sierra Initiative (TCSI) Blueprint</strong> is a set of
+      strategy maps identifying opportunities for forest protection and adaptation across a 2.4-million-acre
+      region of the central Sierra Nevada. Its aim is to improve resilience to anticipated climate change and
+      wildfire-, beetle-, and drought-caused tree mortality.</p>
+
+      <p>This application is powered by the <strong>PROMOTE</strong> decision support framework (RAD: Resist–Accept–Direct)
+      and uses the <strong>MapLibre GL JS</strong> mapping engine with Cloud-Optimized GeoTIFF data served as PMTiles.
+      Color ramps are applied client-side with GPU shaders — no pre-rendered tile colors.</p>
+
+      <p>Blueprint v3 includes five pillars: Forest Resilience, Fire Dynamics, Fire Adapted Communities,
+      Carbon Sequestration, and Biodiversity. Pillar outputs are combined into the Ecosystem-level assessment.</p>
+
+      <ol><em style="color:#273871">Monitor</em> — Good condition now and into the future; management intervention
+      may not be necessary in the short term.</ol>
+
+      <ol><em style="color:#802A07">Protect</em> — Currently in good condition but conditions deteriorate over time;
+      treatments may help maintain them.</ol>
+
+      <ol><em style="color:#3D1778">Adapt</em> — Currently in poor condition but demonstrate capacity to achieve
+      desired conditions in the future under natural disturbance processes.</ol>
+
+      <ol><em style="color:#6D0026">Transform</em> — In poor condition now and remain so over time;
+      these areas may not be first in line for treatment given high uncertainty in management effectiveness.</ol>
+
+      <p><em style="color:#6e6112">Impact scores</em> reflect the maximum level of support for either Adapt or
+      Protect strategies — areas where management investment has the highest expected return.</p>
+
+    </div>
+  </div>
+
+  <!-- ── CONFIG (layer definitions) ──────────────────────── -->
+  <script src="config.js"></script>
+
+  <!-- ── APP LOGIC ──────────────────────────────────────────── -->
+  <script src="app.js"></script>
+
+</body>
+</html>
