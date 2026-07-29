@@ -14,45 +14,9 @@
  * Dependencies (loaded via CDN in index.html):
  *   - MapLibre GL JS 4.x
  *   - D3 v7
- *   - numeric.js
  */
 
 'use strict';
-
-// =============================================================================
-// AHP LOOKUP TABLES
-// =============================================================================
-const AHP_STEPS  = [0,6,13,19,25,31,38,44,50,56,63,69,75,81,88,94,100];
-const AHP_VALUES = [1/9,1/8,1/7,1/6,1/5,1/4,1/3,1/2,1,2,3,4,5,6,7,8,9];
-const AHP_LABELS = [
-  'absolutely less important than','critically less important than',
-  'very strongly less important than','strongly less important than',
-  'definitely less important than','moderately less important than',
-  'weakly less important than','barely less important than','equal to',
-  'barely more important than','weakly more important than',
-  'moderately more important than','definitely more important than',
-  'strongly more important than','very strongly more important than',
-  'critically more important than','absolutely more important than'
-];
-
-function sliderToIndex(val) {
-  // val is now 0-16 directly — no lookup needed
-  return Math.max(0, Math.min(16, Math.round(val)));
-}
-
-function sliderPctToAhpValue(val) {
-  return AHP_VALUES[sliderToIndex(val)];
-}
-
-function sliderPctToAhpLabel(val) {
-  return AHP_LABELS[sliderToIndex(val)];
-}
-
-function sliderPctToDisplayStr(val) {
-  const v = sliderPctToAhpValue(val);
-  if (v >= 1) return String(Math.round(v));
-  return `1/${Math.round(1/v)}`;
-}
 
 // =============================================================================
 // COLOR ENGINE  (unchanged from Leaflet version)
@@ -105,8 +69,10 @@ let _sortedFeatures = [];
 let _layerDefs      = {};      // id → layerDef (config entry)
 let _activeLayers   = new Set();
 let _currentOpacity = 0.8;
-let _amat           = null;
-let _amat_prot      = null;
+let _swing          = { rest: null, prot: null };  // swing-weight elicitation state
+let _spread         = { rest: [], prot: [] };     // per-criterion utility spread
+let _hasCalculated  = false;                      // live map updates after first Calculate
+let _drag           = null;                       // in-flight row drag
 let _restoreArrays  = [];
 let _protectArrays  = [];
 let _popup          = null;
@@ -690,197 +656,520 @@ function buildLegendHTML(lyrDef) {
 }
 
 // =============================================================================
-// DST PANEL  (identical to Leaflet version)
+// DST PANEL — SWING WEIGHTING (replaces abbreviated AHP)
+//
+// Elicitation is two steps:
+//   1. The user drags one criterion into the anchor slot. That criterion's
+//      swing — the change in outcome from its worst to its best value across
+//      this landscape — is the reference, pinned at 100.
+//   2. Every other criterion is rated 0-100 against that reference.
+// Weights are raw / sum(raw). No pairwise ratios, so no chaining and no
+// consistency ratio: each criterion's weight rests on its own judgment.
+// =============================================================================
+
+const SWING_DEFAULT = 100;   // non-anchor sliders start tied to the anchor
+
+function critList(prefix) {
+  return prefix === 'rest'
+    ? CONFIG.dst.restoration.criteria
+    : CONFIG.dst.protection.criteria;
+}
+
+// Criteria may be plain strings (legacy) or objects {label, units, worst, best}
+function critLabel(prefix, i) {
+  const c = critList(prefix)[i];
+  return typeof c === 'string' ? c : (c.label || `Criterion ${i + 1}`);
+}
+
+function critEndpoints(prefix, i) {
+  const c = critList(prefix)[i];
+  if (typeof c !== 'object') return null;
+  if (c.worst == null && c.best == null) return null;
+  const u = c.units ? ' ' + c.units : '';
+  return `${c.worst}${u} → ${c.best}${u}`;
+}
+
+function utilArrays(prefix) {
+  return prefix === 'rest' ? _restoreArrays : _protectArrays;
+}
+
+// Raw 0-100 rating; the anchor is always 100
+function swingRaw(prefix, i) {
+  return _swing[prefix].anchor === i ? 100 : _swing[prefix].values[i];
+}
+
+// Normalised weights, or null while no anchor has been set
+function swingWeights(prefix) {
+  if (_swing[prefix].anchor === null) return null;
+  const raws = critList(prefix).map((_, i) => swingRaw(prefix, i));
+  const tot  = raws.reduce((a, b) => a + b, 0);
+  if (!(tot > 0)) return null;
+  return raws.map(v => v / tot);
+}
+
+function swingReady() {
+  return !!(swingWeights('rest') && swingWeights('prot'));
+}
+
+// -----------------------------------------------------------------------------
+// Utility spread — how much of the 0-1 scale each criterion actually occupies.
+// span  = full observed range (min → max)
+// core  = middle 80% (p10 → p90), which is what most features really see
+// -----------------------------------------------------------------------------
+function computeSwingSpreads() {
+  ['rest', 'prot'].forEach(prefix => {
+    const arrs = utilArrays(prefix) || [];
+    _spread[prefix] = critList(prefix).map((_, i) => {
+      const a = arrs[i];
+      if (!a || !a.length) return null;
+      const v = a.filter(Number.isFinite).slice().sort((x, y) => x - y);
+      if (!v.length) return null;
+      const q = p => v[Math.min(v.length - 1, Math.max(0, Math.round(p * (v.length - 1))))];
+      const min = v[0], max = v[v.length - 1], p10 = q(0.10), p90 = q(0.90);
+      return { min, max, p10, p90, span: max - min, core: p90 - p10 };
+    });
+  });
+}
+
+// =============================================================================
+// PANEL BUILD
 // =============================================================================
 function buildDSTPanel() {
   const panel = document.getElementById('dst-panel');
   if (!panel || !CONFIG.dst) return;
 
-  const dst = CONFIG.dst;
-
-  function buildSliderSection(criteria, prefix) {
-    return criteria.slice(0, -1).map((c, i) => `
-      <div class="criterion-row">
-        <div class="criterion-label" id="${prefix}-label-${i}">
-          <strong>${c}</strong> is <strong>equal to</strong> ${criteria[i+1]}.
-        </div>
-        <div class="slider-wrap">
-          <input type="range" class="ahp-slider" id="${prefix}-slider-${i}"
-            data-prefix="${prefix}" data-idx="${i}"
-            min="0" max="16" step="1" value="8">
-          <span class="slider-val" id="${prefix}-val-${i}">1</span>
-        </div>
-      </div>`).join('');
+  // Utility arrays must exist before the panel renders — the swing bars read them
+  if (typeof CONFIG.dst.computeCriteriaArrays === 'function' && _sortedFeatures.length) {
+    const r = CONFIG.dst.computeCriteriaArrays(_sortedFeatures);
+    _restoreArrays = r.restoreArrays;
+    _protectArrays = r.protectArrays;
   }
+  computeSwingSpreads();
+
+  ['rest', 'prot'].forEach(prefix => {
+    _swing[prefix] = {
+      order:  critList(prefix).map((_, i) => i),
+      anchor: null,
+      values: critList(prefix).map(() => SWING_DEFAULT)
+    };
+  });
+  _hasCalculated = false;
 
   panel.innerHTML = `
     <div class="dst-header">
       <h2>Decision Tool</h2>
-      <p>Adjust pairwise importance weights, then click <em>Calculate</em>.</p>
+      <p>Set the <em>anchor</em> — the criterion whose worst-to-best swing moves
+         the decision most — then rate the others against it.</p>
     </div>
     <div class="dst-body">
-      <div class="dst-section">
-        <div class="dst-section-title">Restoration criteria</div>
-        ${buildSliderSection(dst.restoration.criteria, 'rest')}
-      </div>
-      <div class="dst-section">
-        <div class="dst-section-title">Protection criteria</div>
-        ${buildSliderSection(dst.protection.criteria, 'prot')}
-      </div>
-      <div class="dst-section">
-        <div class="dst-section-title">Consistency indices</div>
-        <div class="consistency-row">
-          <span>Restoration</span>
-          <span class="cr-value cr-good" id="cr-restore">0.000</span>
+      <div class="dst-section" data-prefix="rest">
+        <div class="dst-section-title">
+          <span>Restoration criteria</span><span class="dst-step" data-step="rest"></span>
         </div>
-        <div class="consistency-row">
-          <span>Protection</span>
-          <span class="cr-value cr-good" id="cr-protect">0.000</span>
-        </div>
-        <p style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-top:0.5rem;">
-          CR &lt; 0.10 = acceptable consistency
-        </p>
+        <div class="anchor-slot" data-prefix="rest"></div>
+        <div class="crit-list"  data-prefix="rest"></div>
       </div>
+
+      <div class="dst-section" data-prefix="prot">
+        <div class="dst-section-title">
+          <span>Protection criteria</span><span class="dst-step" data-step="prot"></span>
+        </div>
+        <div class="anchor-slot" data-prefix="prot"></div>
+        <div class="crit-list"  data-prefix="prot"></div>
+      </div>
+
+      <div class="dst-section">
+        <div class="dst-section-title"><span>Weight tally</span></div>
+        <div id="swing-tally"></div>
+      </div>
+
       <div class="dst-section" id="dst-chart-section" style="display:none;">
-        <div class="dst-section-title">Priority weights</div>
+        <div class="dst-section-title"><span>Priority weights</span></div>
         <svg id="dst-chart" width="100%" height="160"></svg>
       </div>
     </div>
     <div class="dst-footer">
-      <button id="btn-reset">Reset</button>
-      <button id="btn-calculate">Calculate</button>
+      <button id="btn-reset">Start over</button>
+      <button id="btn-calculate" disabled>Calculate</button>
     </div>
   `;
 
-   panel.querySelectorAll('.ahp-slider').forEach(s => {
-     s.addEventListener('input', onSliderMove);
-     // Defer initial call until DOM is fully ready
-     setTimeout(() => onSliderMove({ target: s }), 0);
-   });
+  renderSwingSet('rest');
+  renderSwingSet('prot');
+  renderSwingTally();
 
   document.getElementById('btn-reset').addEventListener('click', resetDST);
   document.getElementById('btn-calculate').addEventListener('click', runDSTCalculation);
 
-  initAHPMatrices(dst.restoration.criteria.length, dst.protection.criteria.length);
-
-  if (typeof CONFIG.dst.computeCriteriaArrays === 'function' && _sortedFeatures.length) {
-    const result = CONFIG.dst.computeCriteriaArrays(_sortedFeatures);
-    _restoreArrays = result.restoreArrays;
-    _protectArrays = result.protectArrays;
+  if (!panel.dataset.swingBound) {
+    panel.addEventListener('input',        onSwingSlider);
+    panel.addEventListener('pointerdown',  onSwingPointerDown);
+    panel.addEventListener('pointermove',  onSwingPointerMove);
+    panel.addEventListener('pointerup',    onSwingPointerUp);
+    panel.addEventListener('pointercancel', onSwingPointerUp);
+    panel.addEventListener('keydown',      onSwingKeyDown);
+    panel.dataset.swingBound = '1';
   }
 }
 
-function onSliderMove(e) {
-  const slider = e.target;
-  const prefix = slider.dataset.prefix;
-  const idx    = parseInt(slider.dataset.idx);
-  const pct    = parseInt(slider.value);
-  const val    = sliderPctToAhpValue(pct);
-  const label  = sliderPctToAhpLabel(pct);
-  const disp   = sliderPctToDisplayStr(pct);
+// -----------------------------------------------------------------------------
+// Row markup
+// -----------------------------------------------------------------------------
+function swingBarHTML(sp) {
+  if (!sp) return '<div class="swing-meta"></div>';
+  const pc = n => (Math.max(n, 0) * 100).toFixed(1);
+  const flag = sp.span < 0.999 ? ' truncated' : '';
+  return `
+    <div class="swing-meta">
+      <div class="swing-bar${flag}"
+           title="Utility spans ${sp.min.toFixed(2)}–${sp.max.toFixed(2)} of the 0–1 scale. Middle 80% of features spans ${sp.core.toFixed(2)}.">
+        <i class="sb-span" style="left:${pc(sp.min)}%;width:${pc(Math.max(sp.span, 0.008))}%"></i>
+        <i class="sb-core" style="left:${pc(sp.p10)}%;width:${pc(Math.max(sp.core, 0.008))}%"></i>
+      </div>
+      <span class="swing-num">${sp.span.toFixed(2)}</span>
+    </div>`;
+}
 
-  document.getElementById(`${prefix}-val-${idx}`).textContent = disp;
-  const criteria = prefix === 'rest'
-    ? CONFIG.dst.restoration.criteria
-    : CONFIG.dst.protection.criteria;
-  document.getElementById(`${prefix}-label-${idx}`).innerHTML =
-    `<strong>${criteria[idx]}</strong> is <strong>${label}</strong> ${criteria[idx+1]}.`;
+function swingRowHTML(prefix, i, isAnchor) {
+  const val = swingRaw(prefix, i);
+  const w   = swingWeights(prefix);
+  const pct = w ? (w[i] * 100).toFixed(1) + '%' : '—';
+  const dis = (_swing[prefix].anchor === null || isAnchor) ? 'disabled' : '';
+  const ends = critEndpoints(prefix, i);
+  return `
+    <button class="grip" data-prefix="${prefix}" data-idx="${i}"
+            aria-label="Reorder ${critLabel(prefix, i)}"
+            title="Drag to reorder — drop on the anchor slot to make it the reference"></button>
+    <div class="crit-main">
+      <div class="crit-top">
+        <span class="crit-name">${critLabel(prefix, i)}</span>
+        ${isAnchor ? '<span class="anchor-pill">Anchor</span>' : ''}
+      </div>
+      ${ends ? `<div class="crit-ends">${ends}</div>` : ''}
+      ${swingBarHTML(_spread[prefix][i])}
+      <div class="slider-wrap">
+        <input type="range" class="swing-slider" min="0" max="100" step="1" value="${val}"
+               data-prefix="${prefix}" data-idx="${i}" ${dis}
+               aria-label="${critLabel(prefix, i)} swing rating">
+        <span class="swing-nums"><span class="sw-raw">${val}</span><span class="sw-pct">${pct}</span></span>
+      </div>
+    </div>`;
+}
 
-  if (prefix === 'rest') { _amat[idx][idx+1] = val; _amat[idx+1][idx] = 1/val; }
-  else { _amat_prot[idx][idx+1] = val; _amat_prot[idx+1][idx] = 1/val; }
+function makeSwingRow(prefix, i, isAnchor) {
+  const el = document.createElement('div');
+  el.className = 'criterion-row swing-row'
+    + (isAnchor ? ' is-anchor' : '')
+    + (_swing[prefix].anchor === null && !isAnchor ? ' locked-out' : '');
+  el.dataset.prefix = prefix;
+  el.dataset.idx    = i;
+  el.innerHTML      = swingRowHTML(prefix, i, isAnchor);
+  return el;
+}
+
+function renderSwingSet(prefix) {
+  const s = _swing[prefix];
+  critList(prefix).forEach((_, i) => { if (!s.order.includes(i)) s.order.push(i); });
+
+  const slot = document.querySelector(`.anchor-slot[data-prefix="${prefix}"]`);
+  const list = document.querySelector(`.crit-list[data-prefix="${prefix}"]`);
+  if (!slot || !list) return;
+
+  slot.innerHTML = '';
+  if (s.anchor === null) {
+    slot.innerHTML = `
+      <div class="anchor-empty">
+        <strong>Set the anchor</strong>
+        <span>Drag the criterion whose full range across these units moves the
+              decision most. It sets the 100-point scale.</span>
+      </div>`;
+  } else {
+    slot.appendChild(makeSwingRow(prefix, s.anchor, true));
+  }
+
+  list.innerHTML = '';
+  s.order.filter(i => i !== s.anchor)
+         .forEach(i => list.appendChild(makeSwingRow(prefix, i, false)));
+
+  const step = document.querySelector(`.dst-step[data-step="${prefix}"]`);
+  if (step) step.textContent = s.anchor === null ? 'Step 1 of 2' : 'Step 2 of 2';
+}
+
+// Cheap path while a slider is moving — numbers only, no DOM rebuild
+function refreshSwingNumbers(prefix) {
+  const w = swingWeights(prefix);
+  document.querySelectorAll(`.swing-row[data-prefix="${prefix}"]`).forEach(row => {
+    const i = +row.dataset.idx;
+    row.querySelector('.sw-raw').textContent = swingRaw(prefix, i);
+    row.querySelector('.sw-pct').textContent = w ? (w[i] * 100).toFixed(1) + '%' : '—';
+  });
+  renderSwingTally();
+}
+
+function renderSwingTally() {
+  const host = document.getElementById('swing-tally');
+  if (!host) return;
+
+  host.innerHTML = ['rest', 'prot'].map(prefix => {
+    const s = _swing[prefix], w = swingWeights(prefix);
+    const name = prefix === 'rest' ? 'Restoration' : 'Protection';
+
+    if (!w) {
+      return `<div class="tally-block">
+                <div class="tally-head"><span class="tally-name">${name}</span>
+                  <span class="tally-sum pending">no anchor yet</span></div>
+                <div class="tally-bar"></div>
+                <div class="tally-note">Set an anchor to start rating.</div>
+              </div>`;
+    }
+
+    const sum  = critList(prefix).reduce((a, _, i) => a + swingRaw(prefix, i), 0);
+    const bars = s.order.map(i => {
+      const t = swingRaw(prefix, i) / 100;
+      return `<i style="width:${(w[i] * 100).toFixed(2)}%;
+                        background:hsl(${42 - t * 8} ${26 + t * 44}% ${30 + t * 28}%)"
+                 title="${critLabel(prefix, i)} — ${(w[i] * 100).toFixed(1)}%"></i>`;
+    }).join('');
+
+    const ties = critList(prefix)
+      .filter((_, i) => i !== s.anchor && swingRaw(prefix, i) >= 100).length;
+    const note = ties
+      ? `<div class="tally-note">${ties} criteri${ties > 1 ? 'a tie' : 'on ties'} the anchor — judged equally influential.</div>`
+      : `<div class="tally-note">Σ ${sum} raw points → weights sum to 1.000.</div>`;
+
+    return `<div class="tally-block">
+              <div class="tally-head"><span class="tally-name">${name}</span>
+                <span class="tally-sum">Σ ${sum}</span></div>
+              <div class="tally-bar">${bars}</div>
+              ${note}
+            </div>`;
+  }).join('');
+
+  const calc = document.getElementById('btn-calculate');
+  if (calc) calc.disabled = !swingReady();
+}
+
+// =============================================================================
+// INTERACTION — sliders
+// =============================================================================
+function onSwingSlider(e) {
+  const el = e.target;
+  if (!el.classList || !el.classList.contains('swing-slider')) return;
+  const prefix = el.dataset.prefix, i = +el.dataset.idx;
+  _swing[prefix].values[i] = +el.value;
+  refreshSwingNumbers(prefix);
+  if (_hasCalculated && swingReady()) applySwingToMap();
+}
+
+// =============================================================================
+// INTERACTION — drag to reorder / anchor
+// =============================================================================
+function onSwingPointerDown(e) {
+  const grip = e.target.closest && e.target.closest('.grip');
+  if (!grip) return;
+  e.preventDefault();
+
+  const row    = grip.closest('.swing-row');
+  const prefix = row.dataset.prefix, idx = +row.dataset.idx;
+
+  const ghost = document.createElement('div');
+  ghost.id = 'swing-ghost';
+  ghost.innerHTML = `<div class="crit-name">${critLabel(prefix, idx)}</div>
+                     <div class="gv">rating ${swingRaw(prefix, idx)}</div>`;
+  document.body.appendChild(ghost);
+
+  _drag = { prefix, idx, row, ghost, fromAnchor: _swing[prefix].anchor === idx };
+  row.classList.add('dragging');
+  grip.setPointerCapture(e.pointerId);
+  moveSwingGhost(e);
+}
+
+function moveSwingGhost(e) {
+  _drag.ghost.style.left = (e.clientX - 150) + 'px';
+  _drag.ghost.style.top  = (e.clientY - 18)  + 'px';
+}
+
+function swingHit(el, e) {
+  const b = el.getBoundingClientRect();
+  return e.clientX >= b.left && e.clientX <= b.right &&
+         e.clientY >= b.top - 6 && e.clientY <= b.bottom + 6;
+}
+
+function onSwingPointerMove(e) {
+  if (!_drag) return;
+  moveSwingGhost(e);
+
+  const slot = document.querySelector(`.anchor-slot[data-prefix="${_drag.prefix}"]`);
+  const list = document.querySelector(`.crit-list[data-prefix="${_drag.prefix}"]`);
+  const overSlot = swingHit(slot, e) && !_drag.fromAnchor;
+  slot.classList.toggle('drop-active', overSlot);
+  if (overSlot || _drag.fromAnchor) return;
+
+  const rows = [...list.children].filter(r => r !== _drag.row);
+  let before = null;
+  for (const r of rows) {
+    const b = r.getBoundingClientRect();
+    if (e.clientY < b.top + b.height / 2) { before = r; break; }
+  }
+  before ? list.insertBefore(_drag.row, before) : list.appendChild(_drag.row);
+}
+
+function onSwingPointerUp(e) {
+  if (!_drag) return;
+  const { prefix, idx, row, ghost, fromAnchor } = _drag;
+  const slot = document.querySelector(`.anchor-slot[data-prefix="${prefix}"]`);
+  const list = document.querySelector(`.crit-list[data-prefix="${prefix}"]`);
+  const onSlot = swingHit(slot, e) && !fromAnchor;
+  const onList = fromAnchor && swingHit(list, e);
+
+  ghost.remove();
+  row.classList.remove('dragging');
+  slot.classList.remove('drop-active');
+
+  const s = _swing[prefix];
+  const oldAnchor = s.anchor;
+  let pool = [...list.children].map(r => +r.dataset.idx);
+
+  if (onSlot) {
+    // Promote. The outgoing anchor keeps its 100 and rejoins the pool, unlocked.
+    pool = pool.filter(i => i !== idx);
+    if (oldAnchor !== null && oldAnchor !== idx) {
+      s.values[oldAnchor] = 100;
+      pool.unshift(oldAnchor);
+    }
+    s.anchor = idx;
+    s.values[idx] = 100;
+  } else if (onList) {
+    // Demote — slider unlocks at its last value
+    s.anchor = null;
+    pool.unshift(idx);
+  }
+  // A plain reorder needs nothing: the DOM already holds the new order
+
+  s.order = s.anchor === null ? pool : [s.anchor, ...pool.filter(i => i !== s.anchor)];
+  _drag = null;
+
+  renderSwingSet(prefix);
+  renderSwingTally();
+  if (_hasCalculated && swingReady()) applySwingToMap();
+}
+
+// Keyboard: ↑/↓ reorder, Enter/Space promotes or demotes the anchor
+function onSwingKeyDown(e) {
+  const grip = e.target.closest && e.target.closest('.grip');
+  if (!grip) return;
+  const prefix = grip.dataset.prefix, idx = +grip.dataset.idx, s = _swing[prefix];
+
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    if (s.anchor === idx) {
+      s.anchor = null;
+    } else {
+      if (s.anchor !== null) s.values[s.anchor] = 100;
+      s.anchor = idx;
+      s.values[idx] = 100;
+      s.order = [idx, ...s.order.filter(i => i !== idx)];
+    }
+  } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (s.anchor === idx) return;
+    const pool = s.order.filter(i => i !== s.anchor);
+    const at = pool.indexOf(idx), to = at + (e.key === 'ArrowUp' ? -1 : 1);
+    if (to < 0 || to >= pool.length) return;
+    pool.splice(at, 1);
+    pool.splice(to, 0, idx);
+    s.order = s.anchor === null ? pool : [s.anchor, ...pool];
+  } else return;
+
+  renderSwingSet(prefix);
+  renderSwingTally();
+  if (_hasCalculated && swingReady()) applySwingToMap();
+  const again = document.querySelector(`.grip[data-prefix="${prefix}"][data-idx="${idx}"]`);
+  if (again) again.focus();
+}
+
+// FLIP so the post-Calculate re-rank reads as movement, not a jump cut
+function flipSwingReorder(container, mutate) {
+  if (!container) { mutate(); return; }
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const before = new Map([...container.children]
+    .map(el => [el.dataset.idx, el.getBoundingClientRect().top]));
+  mutate();
+  if (reduce) return;
+  [...container.children].forEach(el => {
+    const y0 = before.get(el.dataset.idx);
+    if (y0 == null) return;
+    const dy = y0 - el.getBoundingClientRect().top;
+    if (!dy) return;
+    el.style.transition = 'none';
+    el.style.transform  = `translateY(${dy}px)`;
+    requestAnimationFrame(() => {
+      el.style.transition = 'transform .38s cubic-bezier(.2,.8,.2,1)';
+      el.style.transform  = '';
+    });
+  });
 }
 
 function resetDST() {
-  document.querySelectorAll('.ahp-slider').forEach(s => {
-    s.value = 8;   // ← was 50
-    onSliderMove({ target: s });
+  ['rest', 'prot'].forEach(prefix => {
+    _swing[prefix] = {
+      order:  critList(prefix).map((_, i) => i),
+      anchor: null,
+      values: critList(prefix).map(() => SWING_DEFAULT)
+    };
+    renderSwingSet(prefix);
   });
-  initAHPMatrices(CONFIG.dst.restoration.criteria.length, CONFIG.dst.protection.criteria.length);
-}
+  _hasCalculated = false;
+  renderSwingTally();
 
-// =============================================================================
-// AHP MATH  (unchanged)
-// =============================================================================
-function initAHPMatrices(nR, nP) {
-  _amat      = makeIdentityMatrix(nR);
-  _amat_prot = makeIdentityMatrix(nP);
-}
+  // Blank the decision layer
+  _sortedFeatures.forEach(f => { delete f.properties._dstColor; });
+  CONFIG.layers.filter(l => l.type === 'dst').forEach(recolorLayer);
 
-function makeIdentityMatrix(n) {
-  return Array.from({ length: n }, (_, i) =>
-    Array.from({ length: n }, (_, j) => (i === j ? 1 : 1))
-  );
-}
-
-function saatyIndex(matrix, simSize = 500) {
-  const n = matrix.length;
-  const weights = matrix.map(row => {
-    const geoMean = Math.pow(row.reduce((a, v) => a * v, 1), 1/n);
-    return geoMean;
-  });
-  const wSum = weights.reduce((a,b) => a+b, 0);
-  weights.forEach((_, i) => (weights[i] /= wSum));
-
-  let CI = 0;
-  try {
-    const eig = numeric.eig(matrix);
-    const lambdaMax = Math.max(...eig.lambda.x);
-    CI = (lambdaMax - n) / (n - 1);
-  } catch (_) {}
-
-  const RI_arr = [];
-  for (let s = 0; s < simSize; s++) {
-    try {
-      const rnd  = buildRandomMatrix(n);
-      const eigR = numeric.eig(rnd);
-      const lMax = Math.max(...eigR.lambda.x);
-      RI_arr.push((lMax - n) / (n - 1));
-    } catch (_) {}
-  }
-  const RI = RI_arr.length ? RI_arr.reduce((a,b) => a+b, 0) / RI_arr.length : 1;
-  const CR = RI > 0 ? CI / RI : 0;
-  return { weights, CR };
-}
-
-function buildRandomMatrix(n) {
-  const m = Array.from({ length: n }, () => new Array(n).fill(0));
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < n; j++) {
-      if (i === j) { m[i][j] = 1; continue; }
-      if (i < j) {
-        let v = Math.floor(Math.random() * 9) + 1;
-        if (Math.random() < 0.5) v = 1/v;
-        m[i][j] = v; m[j][i] = 1/v;
-      }
-    }
-  }
-  return m;
-}
-
-function abbr2full(inmat) {
-  const n = inmat.length;
-  const m = inmat.map(row => [...row]);
-  for (let diag = 2; diag < n; diag++) {
-    for (let row = 0; row < n - diag; row++) {
-      const col = row + diag;
-      let prod = 1;
-      for (let k = row; k < col; k++) prod *= m[k][k+1];
-      if (prod >= 1) prod = Math.min(Math.round(prod), 9);
-      else           prod = 1 / Math.min(Math.round(1/prod), 9);
-      m[row][col] = prod;
-    }
-  }
-  for (let i = 0; i < n; i++)
-    for (let j = 0; j < n; j++) {
-      if (i > j) m[i][j] = 1/m[j][i];
-      if (i === j) m[i][j] = 1;
-    }
-  return m;
+  const chart = document.getElementById('dst-chart-section');
+  if (chart) chart.style.display = 'none';
 }
 
 // =============================================================================
 // DST CALCULATION
 // =============================================================================
+
+// Score every feature from the current swing weights and repaint the map.
+// Called by Calculate, and again on every slider move once Calculate has run.
+function applySwingToMap() {
+  const wRest = swingWeights('rest');
+  const wProt = swingWeights('prot');
+  if (!wRest || !wProt || !_sortedFeatures.length) return null;
+
+  const nF      = _sortedFeatures.length;
+  const impVals = new Array(nF).fill(0);
+  const prtVals = new Array(nF).fill(0);
+
+  wRest.forEach((w, ci) => {
+    if (!_restoreArrays[ci]) return;
+    _restoreArrays[ci].forEach((v, fi) => { impVals[fi] += v * w; });
+  });
+  wProt.forEach((w, ci) => {
+    if (!_protectArrays[ci]) return;
+    _protectArrays[ci].forEach((v, fi) => { prtVals[fi] += v * w; });
+  });
+
+  const decBreaks = CONFIG.dst.decisionBreaks   || [0,0.125,0.25,0.375,0.5,0.625,0.75,0.875];
+  const decPalA   = CONFIG.dst.decisionPaletteA || ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#990000'];
+  const decPalB   = CONFIG.dst.decisionPaletteB || ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'];
+  const dstLyrDef = { colorBreaks: decBreaks, colorPaletteA: decPalA, colorPaletteB: decPalB };
+
+  _sortedFeatures.forEach((feat, fi) => {
+    feat.properties._dstScoreRestore = impVals[fi];
+    feat.properties._dstScoreProtect = prtVals[fi];
+    feat.properties._dstDirection    = impVals[fi] >= prtVals[fi] ? 'Restore' : 'Protect';
+    feat.properties._dstColor        = getDualColor(impVals[fi], prtVals[fi], dstLyrDef);
+  });
+
+  CONFIG.layers.filter(l => l.type === 'dst').forEach(recolorLayer);
+  return { wRest, wProt };
+}
+
 function runDSTCalculation() {
   if (!CONFIG.dst?.enabled || !_sortedFeatures.length) return;
 
@@ -888,47 +1177,40 @@ function runDSTCalculation() {
     const r = CONFIG.dst.computeCriteriaArrays(_sortedFeatures);
     _restoreArrays = r.restoreArrays;
     _protectArrays = r.protectArrays;
+    computeSwingSpreads();
   }
 
-  const resResult  = saatyIndex(abbr2full(_amat));
-  const protResult = saatyIndex(abbr2full(_amat_prot));
+  const res = applySwingToMap();
+  if (!res) return;
+  _hasCalculated = true;
 
-  updateCRDisplay('cr-restore', resResult.CR);
-  updateCRDisplay('cr-protect', protResult.CR);
-
-  const nF      = _sortedFeatures.length;
-  const impVals = new Array(nF).fill(0);
-  const prtVals = new Array(nF).fill(0);
-
-  resResult.weights.forEach((w, ci) => {
-    if (!_restoreArrays[ci]) return;
-    _restoreArrays[ci].forEach((v, fi) => { impVals[fi] += v * w; });
-  });
-  protResult.weights.forEach((w, ci) => {
-    if (!_protectArrays[ci]) return;
-    _protectArrays[ci].forEach((v, fi) => { prtVals[fi] += v * w; });
+  // Turn the decision layer on so the result is actually visible
+  CONFIG.layers.filter(l => l.type === 'dst').forEach(l => {
+    if (!_activeLayers.has(l.id)) {
+      _activeLayers.add(l.id);
+      setLayerVisibility(l.id, 'visible');
+      showLegend(l);
+      const cb = document.querySelector(`.lp-check[data-layer="${l.id}"]`);
+      if (cb) cb.checked = true;
+    }
   });
 
-  const decBreaks = CONFIG.dst.decisionBreaks  || [0,0.125,0.25,0.375,0.5,0.625,0.75,0.875];
-  const decPalA   = CONFIG.dst.decisionPaletteA || ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#990000'];
-  const decPalB   = CONFIG.dst.decisionPaletteB || ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'];
-  const dstLyrDef = { colorBreaks: decBreaks, colorPaletteA: decPalA, colorPaletteB: decPalB };
-
-  _sortedFeatures.forEach((feat, fi) => {
-    feat.properties._dstColor = getDualColor(impVals[fi], prtVals[fi], dstLyrDef);
+  // Re-rank rows high → low so the panel mirrors the weights
+  ['rest', 'prot'].forEach(prefix => {
+    const s = _swing[prefix];
+    const pool = s.order.filter(i => i !== s.anchor)
+                        .sort((a, b) => swingRaw(prefix, b) - swingRaw(prefix, a));
+    s.order = [s.anchor, ...pool];
+    flipSwingReorder(document.querySelector(`.crit-list[data-prefix="${prefix}"]`),
+                     () => renderSwingSet(prefix));
   });
+  renderSwingTally();
 
-  CONFIG.layers.filter(l => l.type === 'dst').forEach(recolorLayer);
-
-  drawWeightChart(resResult.weights, protResult.weights,
-    CONFIG.dst.restoration.criteria, CONFIG.dst.protection.criteria);
-}
-
-function updateCRDisplay(elId, CR) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  el.textContent = Math.abs(CR).toFixed(3);
-  el.className   = 'cr-value ' + (CR > 0.10 ? 'cr-bad' : 'cr-good');
+  drawWeightChart(
+    res.wRest, res.wProt,
+    critList('rest').map((_, i) => critLabel('rest', i)),
+    critList('prot').map((_, i) => critLabel('prot', i))
+  );
 }
 
 // =============================================================================

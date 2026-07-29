@@ -17,7 +17,7 @@
   --gold:          #c4963a;
   --cream:         #f5f0e8;
   --sidebar-bg:    #1e2d28;
-  --sidebar-width: 340px;
+  --sidebar-width: 372px;
   --navbar-h:      52px;
   --panel-radius:  4px;
   --shadow-sm:     0 2px 8px rgba(0,0,0,0.12);
@@ -126,7 +126,7 @@ html, body {
 }
 
 .dst-header h2 {
-  font-family: 'DM Sans', monospace; */'Cormorant Garamond', serif;*/
+  font-family: 'DM Sans', sans-serif; /* 'Cormorant Garamond', serif; */
   font-size: 1.2rem;
   font-weight: 700;
   color: #fff;
@@ -232,23 +232,288 @@ html, body {
   flex-shrink: 0;
 }
 
-/* Consistency index display */
-.consistency-row {
+/* ── SWING WEIGHTING — step indicator ───────────────────────────────────────── */
+.dst-section-title {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  align-items: center;
+}
+
+.dst-step {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.3);
+}
+
+/* ── ANCHOR SLOT ────────────────────────────────────────────────────────────── */
+.anchor-slot { margin-bottom: 0.6rem; }
+
+.anchor-empty {
+  border: 1.5px dashed rgba(196,150,58,0.45);
+  border-radius: var(--panel-radius);
+  padding: 0.9rem 0.8rem;
+  text-align: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.anchor-empty strong {
+  display: block;
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.6);
-  margin-bottom: 0.4rem;
-}
-
-.cr-value {
   font-weight: 500;
-  font-family: monospace;
+  color: rgba(255,255,255,0.85);
 }
 
-.cr-good  { color: #5dbf7a; }
-.cr-bad   { color: #e06b6b; }
+.anchor-empty span {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.5;
+  margin-top: 0.3rem;
+}
+
+.anchor-slot.drop-active .anchor-empty,
+.anchor-slot.drop-active .criterion-row {
+  border-color: var(--gold);
+  background: rgba(196,150,58,0.14);
+}
+
+/* ── CRITERION ROWS ─────────────────────────────────────────────────────────── */
+.criterion-row.swing-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-bottom: 0.35rem;
+  padding: 0.5rem 0.55rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: var(--panel-radius);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.criterion-row.swing-row:hover { background: rgba(255,255,255,0.035); }
+
+.criterion-row.swing-row.is-anchor {
+  border-color: rgba(196,150,58,0.5);
+  background: rgba(196,150,58,0.09);
+  margin-bottom: 0;
+}
+
+.criterion-row.swing-row.dragging  { opacity: 0.28; }
+.criterion-row.swing-row.locked-out .crit-name { color: rgba(255,255,255,0.35); }
+
+/* Drag handle */
+.grip {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 24px;
+  margin-top: 1px;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 3px;
+  cursor: grab;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grip:active { cursor: grabbing; }
+
+.grip::before {
+  content: "";
+  width: 8px;
+  height: 13px;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1.1px);
+  background-size: 4px 4.4px;
+}
+
+.grip:hover::before {
+  background-image: radial-gradient(circle, var(--gold) 1px, transparent 1.1px);
+}
+
+.grip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.crit-main { flex: 1 1 auto; min-width: 0; }
+
+.crit-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.crit-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.35;
+}
+
+.crit-ends {
+  font-size: 0.66rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.38);
+  margin-top: 0.15rem;
+}
+
+.anchor-pill {
+  flex: 0 0 auto;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #1e2d28;
+  background: var(--gold);
+  border-radius: 2px;
+  padding: 0.12rem 0.32rem;
+}
+
+/* ── SWING SPREAD BAR ───────────────────────────────────────────────────────── */
+/* How much of the 0-1 utility scale this criterion actually occupies.
+   Faint outer band = full min-max span; solid inner = middle 80% of features. */
+.swing-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.35rem 0 0.1rem;
+  min-height: 7px;
+}
+
+.swing-bar {
+  position: relative;
+  flex: 1 1 auto;
+  height: 5px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+}
+
+.swing-bar i { position: absolute; top: 0; height: 100%; display: block; }
+.sb-span { background: rgba(255,255,255,0.16); }
+.sb-core { background: rgba(196,150,58,0.62); border-radius: 2px; }
+.swing-bar.truncated .sb-span { background: rgba(224,107,107,0.28); }
+
+.swing-num {
+  flex: 0 0 auto;
+  font-family: monospace;
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.35);
+}
+
+/* ── SLIDER ─────────────────────────────────────────────────────────────────── */
+.swing-row .slider-wrap { margin-top: 0.3rem; }
+
+.swing-row input[type=range] {
+  flex: 1;
+  height: 3px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.swing-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.swing-row input[type=range]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+}
+
+.swing-row input[type=range]:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.swing-row input[type=range]:disabled { cursor: not-allowed; opacity: 0.45; }
+.swing-row input[type=range]:disabled::-webkit-slider-thumb { background: rgba(255,255,255,0.3); cursor: not-allowed; }
+.swing-row input[type=range]:disabled::-moz-range-thumb    { background: rgba(255,255,255,0.3); cursor: not-allowed; }
+
+/* the anchor's slider is locked but must still read as active, not greyed out */
+.swing-row.is-anchor input[type=range]:disabled { opacity: 0.9; }
+.swing-row.is-anchor input[type=range]:disabled::-webkit-slider-thumb { background: var(--gold); }
+.swing-row.is-anchor input[type=range]:disabled::-moz-range-thumb    { background: var(--gold); }
+
+.swing-nums {
+  flex: 0 0 auto;
+  width: 42px;
+  text-align: right;
+  font-family: monospace;
+  line-height: 1.15;
+}
+
+.swing-nums .sw-raw { font-size: 0.78rem; color: var(--gold); }
+.swing-nums .sw-pct { display: block; font-size: 0.6rem; color: rgba(255,255,255,0.35); margin-top: 0.1rem; }
+
+/* ── DRAG GHOST ─────────────────────────────────────────────────────────────── */
+#swing-ghost {
+  position: fixed;
+  z-index: 1200;
+  pointer-events: none;
+  width: 300px;
+  padding: 0.5rem 0.7rem;
+  background: #2a3b34;
+  border: 1px solid var(--gold);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--shadow-md);
+  opacity: 0.96;
+}
+
+#swing-ghost .crit-name { font-size: 0.8rem; font-weight: 500; color: #fff; }
+#swing-ghost .gv { font-family: monospace; font-size: 0.65rem; color: var(--gold); margin-top: 0.15rem; }
+
+/* ── WEIGHT TALLY  (replaces the consistency indices) ───────────────────────── */
+.tally-block { margin-bottom: 0.9rem; }
+
+.tally-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+
+.tally-name { font-weight: 500; color: rgba(255,255,255,0.7); }
+.tally-sum  { font-family: monospace; font-size: 0.75rem; color: var(--gold); }
+.tally-sum.pending { color: rgba(255,255,255,0.3); }
+
+.tally-bar {
+  display: flex;
+  height: 8px;
+  margin-top: 0.4rem;
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.06);
+}
+
+.tally-bar i {
+  display: block;
+  height: 100%;
+  border-right: 1px solid var(--sidebar-bg);
+  transition: width 0.28s ease;
+}
+
+.tally-note {
+  font-size: 0.68rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.35);
+  line-height: 1.5;
+  margin-top: 0.35rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .criterion-row.swing-row, .tally-bar i { transition: none !important; }
+}
 
 /* DST footer buttons */
 .dst-footer {
