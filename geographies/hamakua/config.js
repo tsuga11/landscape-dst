@@ -254,134 +254,160 @@ const CONFIG = {
   ],
 
   // ══════════════════════════════════════════════════════════
-  // DECISION SUPPORT TOOL (AHP)  [OPTIONAL — set enabled:false to hide]
+  // DECISION SUPPORT TOOL — swing weighting
   //
-  // The DST uses Saaty's Analytic Hierarchy Process.
-  // Pairwise comparisons are made between ADJACENT criteria
-  // (abbreviated AHP), then expanded to a full matrix.
+  // The user drags one criterion into the anchor slot (its worst-to-best
+  // swing becomes the reference, pinned at 100), then rates every other
+  // criterion 0-100 against it. Weights are raw / sum(raw).
   //
-  // restoreArrays and protectArrays are the per-feature utility
-  // scores for each criterion, computed in computeCriteriaArrays().
+  // Each criterion declares:
+  //   label      display name
+  //   units      native units, for the swing line ('$', 'min', '' …)
+  //   direction  'higher' or 'lower' — which end of the raw scale is better
+  //   raw        f => native value, BEFORE any transform or rescaling.
+  //              app.js reads the observed min/max from this to render the
+  //              real-unit swing under the label. This is the number the
+  //              user is actually rating.
+  //   bounds     [inMin,inMax] ONLY when utility() is given fixed bounds.
+  //              Omit for min-max rescaled criteria; the observed range is
+  //              then the swing by definition.
+  //   transform  'log' when the value is logged before rescaling, so the
+  //              row can note that the scale is not linear in these units.
   // ══════════════════════════════════════════════════════════
   dst: {
     enabled: true,
 
-    // Field used to sort features before indexing (must be numeric, sequential)
+    // Field used to sort features before indexing (must be numeric, unique)
     sortField: 'hydroUnit',
 
-    // Color breaks and palettes for the decision score output layer
     // Warm ramp = restore priority; cool ramp = protect priority
     decisionBreaks:   [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875],
     decisionPaletteA: ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#990000'],
     decisionPaletteB: ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'],
 
-    // Pairwise comparison criteria lists.
-    // Sliders compare criteria[i] vs criteria[i+1] for i = 0..n-2.
-    // Changing these labels for a new geography is all that's needed here.
+    // ── Shared raw accessors ──────────────────────────────────
+    // Defined once so the swing display and computeCriteriaArrays() can
+    // never drift apart. Costs are returned in DOLLARS here; the log
+    // transform is applied later, inside computeCriteriaArrays().
+    raw: {
+      // Travel cost: weighted mean of initial + maintenance transport
+      travelCost: f => ((f.properties.Transport_Cost * 0.8554) +
+                        (f.properties.Maintenance_Travel * 0.1446)) / 1.0,
+
+      // Labor cost: weighted mean of initial + maintenance materials
+      laborCost: f => ((Math.abs(f.properties.Materials_Cost_Total) * 0.8554) +
+                       (Math.abs(f.properties.Maintenance_Materials) * 0.1446)) / 1.0,
+
+      fenceCost:  f => f.properties.Fenceline_Cost,
+      travelTime: f => f.properties.Hours * 60,
+      streamDeg:  f => f.properties.streamDeg,
+      wsOutput:   f => f.properties.WSoutput,
+
+      // Land designation: weighted mean of conservation score + critical habitat
+      landDesig: f => ((f.properties.conScore * 0.6747) +
+                       (f.properties.critHab  * 0.3373)) / 1.012,
+    },
+
+    // ── Criteria ──────────────────────────────────────────────
+    // Order MUST match the utility arrays in computeCriteriaArrays().
     restoration: {
       criteria: [
-        'EcoLogic score',
-        'Travel costs',
-        'Labor costs',
-        'Stream habitat quality',
-        'Conservation status',
-        'Watershed output',
+        { label: 'EcoLogic score', direction: 'higher', bounds: [-1, 1],
+          raw: f => f.properties.SOE_wsImprove11 },
+
+        { label: 'Travel costs', units: '$', direction: 'lower', transform: 'log',
+          raw: f => CONFIG.dst.raw.travelCost(f) },
+
+        { label: 'Labor costs', units: '$', direction: 'lower', transform: 'log',
+          raw: f => CONFIG.dst.raw.laborCost(f) },
+
+        { label: 'Stream habitat quality', direction: 'lower', bounds: [0, 0.63],
+          raw: f => CONFIG.dst.raw.streamDeg(f) },
+
+        { label: 'Conservation status', direction: 'higher',
+          raw: f => CONFIG.dst.raw.landDesig(f) },
+
+        { label: 'Watershed output', direction: 'higher', bounds: [0, 100],
+          raw: f => CONFIG.dst.raw.wsOutput(f) },
       ]
     },
+
     protection: {
       criteria: [
-        'EcoLogic score',
-        'Fencing costs',
-        'Travel time',
-        'Stream habitat quality',
-        'Conservation status',
-        'Watershed output',
+        { label: 'EcoLogic score', direction: 'higher', bounds: [-1, 1],
+          raw: f => f.properties.SOE_wsProtect11 },
+
+        { label: 'Fencing costs', units: '$', direction: 'lower',
+          raw: f => CONFIG.dst.raw.fenceCost(f) },
+
+        { label: 'Travel time', units: 'min', direction: 'lower',
+          raw: f => CONFIG.dst.raw.travelTime(f) },
+
+        { label: 'Stream habitat quality', direction: 'lower', bounds: [0, 0.63],
+          raw: f => CONFIG.dst.raw.streamDeg(f) },
+
+        { label: 'Conservation status', direction: 'higher',
+          raw: f => CONFIG.dst.raw.landDesig(f) },
+
+        { label: 'Watershed output', direction: 'higher', bounds: [0, 100],
+          raw: f => CONFIG.dst.raw.wsOutput(f) },
       ]
     },
 
     // ──────────────────────────────────────────────────────────
     // computeCriteriaArrays(features)
     //
-    // This function is called once after the GeoJSON is loaded.
-    // It receives the sorted feature array and must return:
-    //   {
-    //     restoreArrays: [[utilityScore_c0_f0, ..._f1, ...], [c1_f0, ...], ...],
-    //     protectArrays: same structure for protection criteria
-    //   }
+    // Returns one utility array per criterion, each value in [0,1], in the
+    // SAME ORDER as the criteria above.
     //
-    // Each inner array has one utility value per feature, in [0,1].
-    // The order must match the criteria arrays above.
-    //
-    // The utility() helper is available globally (from app.js):
     //   utility(array, inMin, inMax, outMin, outMax)
-    //   → linearly rescales values from [inMin,inMax] to [outMin,outMax]
-    //   → use outMin=1, outMax=0 to INVERT (lower raw = higher utility)
+    //   → rescales linearly and clamps
+    //   → outMin=1, outMax=0 INVERTS (lower raw value scores higher)
+    //
+    // Anywhere a fixed inMin/inMax is used here, the matching criterion
+    // above must declare the same pair as `bounds`.
     // ──────────────────────────────────────────────────────────
     computeCriteriaArrays(features) {
 
-      // ── Extract raw property arrays ───────────────────────
-      const soe_wsImp   = features.map(f => f.properties.SOE_wsImprove11);
-      const soe_unitImp = features.map(f => f.properties.SOE_unitImprove11);
-      const soe_wsProt  = features.map(f => f.properties.SOE_wsProtect11);
-      const soe_unitProt = features.map(f => f.properties.SOE_unitProtect11);
+      const R    = CONFIG.dst.raw;
+      const get  = fn => features.map(fn);
+      const span = a => [Math.min(...a), Math.max(...a)];
 
-      // Travel cost: weighted mean of initial + maintenance transport
-      const trans = features.map(f => {
-        const p = f.properties;
-        return Math.log(
-          ((p.Transport_Cost * 0.8554) + (p.Maintenance_Travel * 0.1446)) /
-          (0.8554 + 0.1446)
-        );
-      });
+      const soe_wsImp  = get(f => f.properties.SOE_wsImprove11);
+      const soe_wsProt = get(f => f.properties.SOE_wsProtect11);
 
-      // Labor cost: weighted mean of initial + maintenance materials
-      const effort = features.map(f => {
-        const p = f.properties;
-        return Math.log(
-          ((Math.abs(p.Materials_Cost_Total) * 0.8554) +
-           (Math.abs(p.Maintenance_Materials) * 0.1446)) /
-          (0.8554 + 0.1446)
-        );
-      });
+      // Costs are log-transformed before rescaling: without it a single
+      // extreme unit compresses every other unit into a narrow band.
+      const trans   = get(f => Math.log(R.travelCost(f)));
+      const effort  = get(f => Math.log(R.laborCost(f)));
+      const fence   = get(R.fenceCost);
+      const minutes = get(R.travelTime);
+      const landd   = get(R.landDesig);
+      const streamdeg = get(R.streamDeg);
+      const wsout     = get(R.wsOutput);
 
-      const streamdeg = features.map(f => f.properties.streamDeg);
+      const [minTrans,  maxTrans ] = span(trans);
+      const [minEffort, maxEffort] = span(effort);
+      const [minFence,  maxFence ] = span(fence);
+      const [minMin,    maxMin   ] = span(minutes);
+      const [minLandd,  maxLandd ] = span(landd);
 
-      // Land designation: weighted mean of conScore + critical habitat
-      const landd = features.map(f => {
-        const p = f.properties;
-        return ((p.conScore * 0.6747) + (p.critHab * 0.3373)) / (0.6747 + 0.3373);
-      });
-
-      const wsout = features.map(f => f.properties.WSoutput);
-      const fence = features.map(f => f.properties.Fenceline_Cost);
-      const minutes = features.map(f => f.properties.Hours * 60);
-
-      const minTrans  = Math.min(...trans),  maxTrans  = Math.max(...trans);
-      const minEffort = Math.min(...effort), maxEffort = Math.max(...effort);
-      const minLandd  = Math.min(...landd),  maxLandd  = Math.max(...landd);
-      const minFence  = Math.min(...fence),  maxFence  = Math.max(...fence);
-      const minMin    = Math.min(...minutes),maxMin    = Math.max(...minutes);
-
-      // ── Restoration criteria utility arrays ──────────────
-      // Order must match restoration.criteria above!
       const restoreArrays = [
-        utility(soe_wsImp,  -1, 1, 0, 1),     // EcoLogic score
-        utility(trans,  minTrans,  maxTrans,  1, 0),  // Travel costs (inverted)
-        utility(effort, minEffort, maxEffort, 1, 0),  // Labor costs (inverted)
-        utility(streamdeg, 0, 0.63, 1, 0),           // Stream habitat quality (inverted)
-        utility(landd, minLandd, maxLandd, 0, 1),     // Conservation status
-        utility(wsout, 0, 100, 0, 1),                 // Watershed output
+        utility(soe_wsImp, -1, 1, 0, 1),                 // EcoLogic score
+        utility(trans,  minTrans,  maxTrans,  1, 0),     // Travel costs (inverted)
+        utility(effort, minEffort, maxEffort, 1, 0),     // Labor costs (inverted)
+        utility(streamdeg, 0, 0.63, 1, 0),               // Stream habitat quality (inverted)
+        utility(landd, minLandd, maxLandd, 0, 1),        // Conservation status
+        utility(wsout, 0, 100, 0, 1),                    // Watershed output
       ];
 
-      // ── Protection criteria utility arrays ───────────────
-      // Order must match protection.criteria above!
       const protectArrays = [
-        utility(soe_wsProt, -1, 1, 0, 1),            // EcoLogic score
-        utility(fence,  minFence, maxFence,  1, 0),   // Fencing costs (inverted)
-        utility(minutes, minMin,  maxMin,   1, 0),    // Travel time (inverted)
-        utility(streamdeg, 0, 0.63, 1, 0),            // Stream habitat quality (inverted)
-        utility(landd, minLandd, maxLandd, 0, 1),     // Conservation status
-        utility(wsout, 0, 100, 0, 1),                 // Watershed output
+        utility(soe_wsProt, -1, 1, 0, 1),                // EcoLogic score
+        utility(fence,   minFence, maxFence, 1, 0),      // Fencing costs (inverted)
+        utility(minutes, minMin,   maxMin,   1, 0),      // Travel time (inverted)
+        utility(streamdeg, 0, 0.63, 1, 0),               // Stream habitat quality (inverted)
+        utility(landd, minLandd, maxLandd, 0, 1),        // Conservation status
+        utility(wsout, 0, 100, 0, 1),                    // Watershed output
       ];
 
       return { restoreArrays, protectArrays };
