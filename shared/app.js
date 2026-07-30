@@ -73,6 +73,7 @@ let _models         = [];                         // resolved DST criteria model
 let _critArrays     = {};                         // model key → [criterion][feature]
 let _swing          = {};                         // model key → elicitation state
 let _spread         = {};                         // model key → per-criterion spread
+let _scaleCache     = {};                         // 'model:idx' → resolved scaling
 let _hasCalculated  = false;                      // live map updates after first Calculate
 let _drag           = null;                       // in-flight row drag
 let _restoreArrays  = [];
@@ -682,6 +683,154 @@ function buildLegendHTML(lyrDef) {
 }
 
 // =============================================================================
+// CRITERION SCALING
+//
+// How raw values become utility in [0,1]. Declared in config rather than
+// written imperatively, so the scaling choice is visible, reviewable, and
+// drives BOTH the computed utility and the swing shown in the panel — the
+// two can no longer disagree.
+//
+// Resolution order for a criterion's scaling spec:
+//   criterion.scaling  →  CONFIG.dst.scaling  →  DEFAULT_SCALING
+//
+// Methods:
+//   percentile  {method:'percentile', lower:0.05, upper:0.95}
+//               Endpoints at data quantiles. THE DEFAULT. Robust to the
+//               single extreme unit that otherwise compresses everything.
+//   minmax      {method:'minmax'}
+//               Endpoints at observed min/max. Hostage to outliers.
+//   fixed       {method:'fixed', bounds:[lo,hi]}
+//               Externally meaningful scale, in RAW units. Use when
+//               comparability across geographies or time matters.
+//   ramp        {method:'ramp', points:[[raw,util], …]}
+//               Piecewise-linear membership function in RAW units — the
+//               same shape as a fuzzy logic ramp. Allows plateaus, S-curves,
+//               and thresholds. `direction` is ignored; the points carry it.
+//
+// Values outside the endpoints clamp to 0 or 1. The share of units clamped
+// is reported in the panel so an over-tight ramp is visible rather than silent.
+// =============================================================================
+
+const DEFAULT_SCALING = { method: 'percentile', lower: 0.05, upper: 0.95 };
+
+const TRANSFORMS = {
+  log:   { fwd: v => Math.log(Math.max(v, 1e-9)),  inv: v => Math.exp(v) },
+  log1p: { fwd: v => Math.log1p(Math.max(v, 0)),   inv: v => Math.expm1(v) },
+  sqrt:  { fwd: v => Math.sqrt(Math.max(v, 0)),    inv: v => v * v },
+};
+
+function transformOf(name) {
+  return TRANSFORMS[name] || { fwd: v => v, inv: v => v };
+}
+
+function quantile(sorted, p) {
+  if (!sorted.length) return NaN;
+  const idx = (sorted.length - 1) * Math.min(Math.max(p, 0), 1);
+  const lo  = Math.floor(idx), hi = Math.ceil(idx);
+  return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+function resolveScaling(key, i) {
+  const c = critList(key)[i];
+  const spec = (c && typeof c === 'object' && c.scaling)
+    || CONFIG.dst.scaling
+    || DEFAULT_SCALING;
+  if (typeof spec === 'string') return { method: spec };
+  return spec;
+}
+
+// Piecewise-linear interpolation through raw-unit control points
+function rampValue(v, points) {
+  if (!points || points.length < 2) return 0;
+  if (v <= points[0][0]) return points[0][1];
+  const last = points[points.length - 1];
+  if (v >= last[0]) return last[1];
+  for (let k = 1; k < points.length; k++) {
+    const [x0, y0] = points[k - 1], [x1, y1] = points[k];
+    if (v <= x1) {
+      return x1 === x0 ? y1 : y0 + (y1 - y0) * ((v - x0) / (x1 - x0));
+    }
+  }
+  return last[1];
+}
+
+// Everything the panel and the scorer need for one criterion.
+// Returns null when the criterion is not declaratively specified.
+function criterionScale(key, i) {
+  const c = critList(key)[i];
+  if (!c || typeof c !== 'object' || typeof c.raw !== 'function') return null;
+  if (!_sortedFeatures.length) return null;
+
+  const cacheKey = `${key}:${i}`;
+  if (_scaleCache[cacheKey]) return _scaleCache[cacheKey];
+
+  const tf   = transformOf(c.transform);
+  const spec = resolveScaling(key, i);
+  const lower = c.direction === 'lower';
+
+  // Raw values, in native units
+  const raw = _sortedFeatures.map(f => {
+    let v; try { v = +c.raw(f); } catch (e) { v = NaN; }
+    return Number.isFinite(v) ? v : NaN;
+  });
+  const finite = raw.filter(Number.isFinite);
+  if (!finite.length) return null;
+
+  let utilities, rawLo, rawHi, clamped = 0;
+
+  if (spec.method === 'ramp') {
+    const pts = (spec.points || []).slice().sort((a, b) => a[0] - b[0]);
+    utilities = raw.map(v => Number.isFinite(v) ? rampValue(v, pts) : 0);
+    rawLo = pts.length ? pts[0][0] : Math.min(...finite);
+    rawHi = pts.length ? pts[pts.length - 1][0] : Math.max(...finite);
+    clamped = finite.filter(v => v < rawLo || v > rawHi).length;
+    // For a ramp, worst/best come from the points, not from `direction`
+    const first = pts[0] || [rawLo, 0], lastP = pts[pts.length - 1] || [rawHi, 1];
+    const ascending = lastP[1] >= first[1];
+    var worstRaw = ascending ? rawLo : rawHi;
+    var bestRaw  = ascending ? rawHi : rawLo;
+  } else {
+    // Work in transformed space, then report endpoints back in raw units
+    const t = raw.map(v => Number.isFinite(v) ? tf.fwd(v) : NaN);
+    const tFinite = t.filter(Number.isFinite).sort((a, b) => a - b);
+
+    let tLo, tHi;
+    if (spec.method === 'fixed') {
+      const b = spec.bounds || [Math.min(...finite), Math.max(...finite)];
+      tLo = tf.fwd(b[0]); tHi = tf.fwd(b[1]);
+    } else if (spec.method === 'minmax') {
+      tLo = tFinite[0]; tHi = tFinite[tFinite.length - 1];
+    } else {  // percentile
+      const lo = spec.lower != null ? spec.lower : DEFAULT_SCALING.lower;
+      const hi = spec.upper != null ? spec.upper : DEFAULT_SCALING.upper;
+      tLo = quantile(tFinite, lo); tHi = quantile(tFinite, hi);
+    }
+    if (!(tHi > tLo)) { tLo = tFinite[0]; tHi = tFinite[tFinite.length - 1]; }
+
+    utilities = lower
+      ? utility(t, tLo, tHi, 1, 0)
+      : utility(t, tLo, tHi, 0, 1);
+    utilities = utilities.map(v => Number.isFinite(v) ? v : 0);
+
+    clamped = tFinite.filter(v => v < tLo || v > tHi).length;
+    rawLo = tf.inv(tLo); rawHi = tf.inv(tHi);
+    var worstRaw = lower ? rawHi : rawLo;
+    var bestRaw  = lower ? rawLo : rawHi;
+  }
+
+  const out = {
+    utilities, method: spec.method || 'percentile',
+    worst: worstRaw, best: bestRaw,
+    obsMin: Math.min(...finite), obsMax: Math.max(...finite),
+    clampedFrac: clamped / finite.length,
+    units: c.units || '', transform: c.transform || null,
+    spec
+  };
+  _scaleCache[cacheKey] = out;
+  return out;
+}
+
+// =============================================================================
 // DST PANEL — SWING WEIGHTING
 //
 // Elicitation is two steps, per criteria model:
@@ -751,33 +900,19 @@ function fmtRaw(v, units) {
   return units ? `${s} ${units}` : s;
 }
 
-// The raw-unit swing a criterion is asking about.
-// Requires criterion.raw(feature); bounds are the [inMin,inMax] passed to
-// utility(), or the observed range when the criterion is min-max rescaled.
+// The raw-unit swing a criterion is asking about, taken from the resolved
+// scaling spec so the displayed endpoints are exactly the ones used to
+// compute utility.
 function critRawStats(key, i) {
-  const c = critList(key)[i];
-  if (!c || typeof c !== 'object' || typeof c.raw !== 'function') return null;
-
-  const vals = [];
-  for (const f of _sortedFeatures) {
-    let v;
-    try { v = +c.raw(f); } catch (e) { continue; }
-    if (Number.isFinite(v)) vals.push(v);
-  }
-  if (!vals.length) return null;
-
-  const obsMin = Math.min(...vals), obsMax = Math.max(...vals);
-  const fixed  = Array.isArray(c.bounds);
-  const lo = fixed ? c.bounds[0] : obsMin;
-  const hi = fixed ? c.bounds[1] : obsMax;
-  const lower = c.direction === 'lower';   // lower raw value = better outcome
-
+  const sc = criterionScale(key, i);
+  if (!sc) return null;
+  const lower = sc.worst > sc.best;
   return {
-    worst: lower ? hi : lo,
-    best:  lower ? lo : hi,
-    obsWorst: lower ? obsMax : obsMin,
-    obsBest:  lower ? obsMin : obsMax,
-    fixed, units: c.units || '', transform: c.transform || null
+    worst: sc.worst, best: sc.best,
+    obsWorst: lower ? sc.obsMax : sc.obsMin,
+    obsBest:  lower ? sc.obsMin : sc.obsMax,
+    method: sc.method, clampedFrac: sc.clampedFrac,
+    units: sc.units, transform: sc.transform
   };
 }
 
@@ -795,26 +930,26 @@ function critEndpoints(key, i) {
   const u    = st.units;
   const main = `${fmtRaw(st.worst, u)} <span class="ce-arrow">→</span> ${fmtRaw(st.best, u)}`;
 
-  const tip = [];
-  tip.push(`This is the swing you are rating: ${fmtRaw(st.worst, u)} to ${fmtRaw(st.best, u)}.`);
-  if (st.fixed) {
-    tip.push(`Scale is fixed in the config. Observed here: ${fmtRaw(st.obsWorst, u)} to ${fmtRaw(st.obsBest, u)}.`);
+  const METHOD_LABEL = {
+    percentile: 'percentile ramp', minmax: 'full min–max',
+    fixed: 'fixed scale', ramp: 'custom ramp'
+  };
+
+  const tip = [`This is the swing you are rating: ${fmtRaw(st.worst, u)} to ${fmtRaw(st.best, u)}.`];
+  tip.push(`Endpoints set by ${METHOD_LABEL[st.method] || st.method}.`);
+  tip.push(`Observed across all units: ${fmtRaw(st.obsWorst, u)} to ${fmtRaw(st.obsBest, u)}.`);
+  if (st.clampedFrac > 0) {
+    tip.push(`${(st.clampedFrac * 100).toFixed(1)}% of units fall outside and clamp to 0 or 1.`);
   }
-  if (st.transform === 'log') {
-    tip.push('Log-transformed before rescaling, so the scale is not linear in these units.');
+  if (st.transform) {
+    tip.push(`${st.transform}-transformed before rescaling, so the scale is not linear in these units.`);
   }
 
-  // Flag when the fixed scale is materially wider than what the data occupy
-  let warn = '';
-  if (st.fixed) {
-    const span = Math.abs(st.best - st.worst);
-    const obs  = Math.abs(st.obsBest - st.obsWorst);
-    if (span > 0 && obs / span < 0.95) {
-      warn = ` <span class="ce-obs">(data: ${fmtRaw(st.obsWorst, u)} → ${fmtRaw(st.obsBest, u)})</span>`;
-    }
-  }
+  // Note the tail only when a meaningful share of units is clamped
+  const tag = st.clampedFrac >= 0.005
+    ? ` <span class="ce-obs">${(st.clampedFrac * 100).toFixed(0)}% clamped</span>` : '';
 
-  return `<div class="crit-ends" title="${tip.join(' ')}">${main}${warn}</div>`;
+  return `<div class="crit-ends" title="${tip.join(' ')}">${main}${tag}</div>`;
 }
 
 // Accepts {restoreArrays, protectArrays} (legacy), {arrays: [...]} for a single
@@ -837,9 +972,34 @@ function resolveCriteriaArrays(result) {
   return map;
 }
 
+// True when every criterion declares raw + (implicitly) a scaling spec, so
+// app.js can derive the utility arrays itself.
+function isDeclarative() {
+  return _models.length > 0 && _models.every(m =>
+    m.criteria.length > 0 &&
+    m.criteria.every(c => c && typeof c === 'object' && typeof c.raw === 'function'));
+}
+
 function loadCriteriaArrays() {
-  if (typeof CONFIG.dst.computeCriteriaArrays !== 'function' || !_sortedFeatures.length) return;
-  _critArrays = resolveCriteriaArrays(CONFIG.dst.computeCriteriaArrays(_sortedFeatures));
+  if (!_sortedFeatures.length) return;
+  _scaleCache = {};
+
+  // Declarative path — scaling comes from the config spec, and the same
+  // resolved endpoints feed both the utility arrays and the swing display.
+  if (isDeclarative() && !CONFIG.dst.forceComputeFn) {
+    _critArrays = {};
+    _models.forEach(m => {
+      _critArrays[m.key] = m.criteria.map((_, i) => {
+        const sc = criterionScale(m.key, i);
+        return sc ? sc.utilities : [];
+      });
+    });
+  } else if (typeof CONFIG.dst.computeCriteriaArrays === 'function') {
+    _critArrays = resolveCriteriaArrays(CONFIG.dst.computeCriteriaArrays(_sortedFeatures));
+  } else {
+    return;
+  }
+
   // legacy globals kept in sync for any external code that reads them
   _restoreArrays = _critArrays.rest || [];
   _protectArrays = _critArrays.prot || [];
@@ -897,6 +1057,7 @@ function buildDSTPanel() {
 
   _models = resolveDstModels();
   if (!_models.length) return;
+  _scaleCache = {};
 
   // Utility arrays must exist before the panel renders — the swing bars read them
   loadCriteriaArrays();
