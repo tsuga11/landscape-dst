@@ -260,43 +260,51 @@ const CONFIG = {
   // swing becomes the reference, pinned at 100), then rates every other
   // criterion 0-100 against it. Weights are raw / sum(raw).
   //
-  // Each criterion declares:
+  // Each criterion is DECLARED, not computed. app.js derives the utility
+  // array and the displayed swing from the same declaration, so the number
+  // a user rates is always the number the model uses.
+  //
   //   label      display name
-  //   units      native units, for the swing line ('$', 'min', '' …)
-  //   direction  'higher' or 'lower' — which end of the raw scale is better
-  //   raw        f => native value, BEFORE any transform or rescaling.
-  //              app.js reads the observed min/max from this to render the
-  //              real-unit swing under the label. This is the number the
-  //              user is actually rating.
-  //   bounds     [inMin,inMax] ONLY when utility() is given fixed bounds.
-  //              Omit for min-max rescaled criteria; the observed range is
-  //              then the swing by definition.
-  //   transform  'log' when the value is logged before rescaling, so the
-  //              row can note that the scale is not linear in these units.
+  //   units      native units for the swing line ('$', 'min', '' …)
+  //   direction  'lower' or 'higher' — which end of the raw scale is better
+  //   raw        f => native value, BEFORE transform or rescaling
+  //   transform  'log' | 'log1p' | 'sqrt' | omit — applied before scaling
+  //   scaling    how raw values map to [0,1]; see below. Omit to inherit
+  //              dst.scaling.
   // ══════════════════════════════════════════════════════════
   dst: {
     enabled: true,
 
-    // Field used to sort features before indexing (must be numeric, unique)
     sortField: 'hydroUnit',
 
-    // Warm ramp = restore priority; cool ramp = protect priority
     decisionBreaks:   [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875],
     decisionPaletteA: ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#990000'],
     decisionPaletteB: ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'],
 
+    // ── Default scaling for every criterion ───────────────────
+    // Endpoints at the 5th/95th percentiles rather than min/max, so a single
+    // extreme unit cannot define the swing. Units beyond the endpoints clamp
+    // to 0 or 1; the panel reports what share that is.
+    //
+    // Override per criterion with:
+    //   scaling: { method:'minmax' }
+    //   scaling: { method:'percentile', lower:0.10, upper:0.90 }
+    //   scaling: { method:'fixed', bounds:[0,100] }        // raw units
+    //   scaling: { method:'ramp', points:[[0,0],[0.2,0.5],[0.6,1],[1,1]] }
+    //
+    // 'ramp' is a piecewise-linear membership function in raw units — the
+    // same construct as a fuzzy logic ramp, with plateaus and thresholds.
+    scaling: { method: 'percentile', lower: 0.05, upper: 0.95 },
+
     // ── Shared raw accessors ──────────────────────────────────
-    // Defined once so the swing display and computeCriteriaArrays() can
-    // never drift apart. Costs are returned in DOLLARS here; the log
-    // transform is applied later, inside computeCriteriaArrays().
     raw: {
       // Travel cost: weighted mean of initial + maintenance transport
-      travelCost: f => ((f.properties.Transport_Cost * 0.8554) +
-                        (f.properties.Maintenance_Travel * 0.1446)) / 1.0,
+      travelCost: f => (f.properties.Transport_Cost * 0.8554) +
+                       (f.properties.Maintenance_Travel * 0.1446),
 
       // Labor cost: weighted mean of initial + maintenance materials
-      laborCost: f => ((Math.abs(f.properties.Materials_Cost_Total) * 0.8554) +
-                       (Math.abs(f.properties.Maintenance_Materials) * 0.1446)) / 1.0,
+      laborCost: f => (Math.abs(f.properties.Materials_Cost_Total) * 0.8554) +
+                      (Math.abs(f.properties.Maintenance_Materials) * 0.1446),
 
       fenceCost:  f => f.properties.Fenceline_Cost,
       travelTime: f => f.properties.Hours * 60,
@@ -309,10 +317,11 @@ const CONFIG = {
     },
 
     // ── Criteria ──────────────────────────────────────────────
-    // Order MUST match the utility arrays in computeCriteriaArrays().
     restoration: {
       criteria: [
-        { label: 'EcoLogic score', direction: 'higher', bounds: [-1, 1],
+        // EcoLogic is a tuned index on a meaningful absolute scale — keep it fixed
+        { label: 'EcoLogic score', direction: 'higher',
+          scaling: { method: 'fixed', bounds: [-1, 1] },
           raw: f => f.properties.SOE_wsImprove11 },
 
         { label: 'Travel costs', units: '$', direction: 'lower', transform: 'log',
@@ -321,97 +330,45 @@ const CONFIG = {
         { label: 'Labor costs', units: '$', direction: 'lower', transform: 'log',
           raw: f => CONFIG.dst.raw.laborCost(f) },
 
-        { label: 'Stream habitat quality', direction: 'lower', bounds: [0, 0.63],
+        { label: 'Stream habitat quality', direction: 'lower',
+          scaling: { method: 'fixed', bounds: [0, 0.63] },
           raw: f => CONFIG.dst.raw.streamDeg(f) },
 
         { label: 'Conservation status', direction: 'higher',
           raw: f => CONFIG.dst.raw.landDesig(f) },
 
-        { label: 'Watershed output', direction: 'higher', bounds: [0, 100],
+        { label: 'Watershed output', direction: 'higher',
           raw: f => CONFIG.dst.raw.wsOutput(f) },
       ]
     },
 
     protection: {
       criteria: [
-        { label: 'EcoLogic score', direction: 'higher', bounds: [-1, 1],
+        { label: 'EcoLogic score', direction: 'higher',
+          scaling: { method: 'fixed', bounds: [-1, 1] },
           raw: f => f.properties.SOE_wsProtect11 },
 
-        { label: 'Fencing costs', units: '$', direction: 'lower',
+        { label: 'Fencing costs', units: '$', direction: 'lower', transform: 'log',
           raw: f => CONFIG.dst.raw.fenceCost(f) },
 
         { label: 'Travel time', units: 'min', direction: 'lower',
           raw: f => CONFIG.dst.raw.travelTime(f) },
 
-        { label: 'Stream habitat quality', direction: 'lower', bounds: [0, 0.63],
+        { label: 'Stream habitat quality', direction: 'lower',
+          scaling: { method: 'fixed', bounds: [0, 0.63] },
           raw: f => CONFIG.dst.raw.streamDeg(f) },
 
         { label: 'Conservation status', direction: 'higher',
           raw: f => CONFIG.dst.raw.landDesig(f) },
 
-        { label: 'Watershed output', direction: 'higher', bounds: [0, 100],
+        { label: 'Watershed output', direction: 'higher',
           raw: f => CONFIG.dst.raw.wsOutput(f) },
       ]
-    },
-
-    // ──────────────────────────────────────────────────────────
-    // computeCriteriaArrays(features)
-    //
-    // Returns one utility array per criterion, each value in [0,1], in the
-    // SAME ORDER as the criteria above.
-    //
-    //   utility(array, inMin, inMax, outMin, outMax)
-    //   → rescales linearly and clamps
-    //   → outMin=1, outMax=0 INVERTS (lower raw value scores higher)
-    //
-    // Anywhere a fixed inMin/inMax is used here, the matching criterion
-    // above must declare the same pair as `bounds`.
-    // ──────────────────────────────────────────────────────────
-    computeCriteriaArrays(features) {
-
-      const R    = CONFIG.dst.raw;
-      const get  = fn => features.map(fn);
-      const span = a => [Math.min(...a), Math.max(...a)];
-
-      const soe_wsImp  = get(f => f.properties.SOE_wsImprove11);
-      const soe_wsProt = get(f => f.properties.SOE_wsProtect11);
-
-      // Costs are log-transformed before rescaling: without it a single
-      // extreme unit compresses every other unit into a narrow band.
-      const trans   = get(f => Math.log(R.travelCost(f)));
-      const effort  = get(f => Math.log(R.laborCost(f)));
-      const fence   = get(R.fenceCost);
-      const minutes = get(R.travelTime);
-      const landd   = get(R.landDesig);
-      const streamdeg = get(R.streamDeg);
-      const wsout     = get(R.wsOutput);
-
-      const [minTrans,  maxTrans ] = span(trans);
-      const [minEffort, maxEffort] = span(effort);
-      const [minFence,  maxFence ] = span(fence);
-      const [minMin,    maxMin   ] = span(minutes);
-      const [minLandd,  maxLandd ] = span(landd);
-
-      const restoreArrays = [
-        utility(soe_wsImp, -1, 1, 0, 1),                 // EcoLogic score
-        utility(trans,  minTrans,  maxTrans,  1, 0),     // Travel costs (inverted)
-        utility(effort, minEffort, maxEffort, 1, 0),     // Labor costs (inverted)
-        utility(streamdeg, 0, 0.63, 1, 0),               // Stream habitat quality (inverted)
-        utility(landd, minLandd, maxLandd, 0, 1),        // Conservation status
-        utility(wsout, 0, 100, 0, 1),                    // Watershed output
-      ];
-
-      const protectArrays = [
-        utility(soe_wsProt, -1, 1, 0, 1),                // EcoLogic score
-        utility(fence,   minFence, maxFence, 1, 0),      // Fencing costs (inverted)
-        utility(minutes, minMin,   maxMin,   1, 0),      // Travel time (inverted)
-        utility(streamdeg, 0, 0.63, 1, 0),               // Stream habitat quality (inverted)
-        utility(landd, minLandd, maxLandd, 0, 1),        // Conservation status
-        utility(wsout, 0, 100, 0, 1),                    // Watershed output
-      ];
-
-      return { restoreArrays, protectArrays };
     }
+
+    // No computeCriteriaArrays() needed — app.js derives the utility arrays
+    // from the declarations above. Define one only for logic no declarative
+    // spec can express, and set dst.forceComputeFn: true to make it win.
   }
 
 };  // end CONFIG
