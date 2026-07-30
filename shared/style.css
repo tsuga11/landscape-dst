@@ -840,3 +840,34 @@ html, body {
   color: rgba(255,255,255,0.3);
   margin-top: 0.1rem;
 }
+
+/* ── RAW SWING ENDPOINTS  (the line the user is actually rating) ────────────── */
+.crit-ends {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.62);
+  margin-top: 0.18rem;
+  letter-spacing: 0.01em;
+}
+
+.crit-ends .ce-arrow { color: var(--gold); padding: 0 0.1rem; }
+
+.crit-ends .ce-obs {
+  color: rgba(224,107,107,0.75);
+  font-size: 0.64rem;
+}
+
+.criterion-row.swing-row.locked-out .crit-ends { color: rgba(255,255,255,0.3); }
+
+.sk-lead {
+  flex: 0 0 auto;
+  width: 34px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 0.15rem;
+}
+
+.sk-row b { font-weight: 500; color: rgba(255,255,255,0.7); }

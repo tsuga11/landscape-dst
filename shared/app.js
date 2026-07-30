@@ -736,12 +736,85 @@ function critLabel(key, i) {
   return typeof c === 'string' ? c : (c?.label || `Criterion ${i + 1}`);
 }
 
-function critEndpoints(key, i) {
+// Format a raw value compactly in its native units
+function fmtRaw(v, units) {
+  if (!Number.isFinite(v)) return '—';
+  const a = Math.abs(v);
+  let s;
+  if (a >= 1e9)      s = (v / 1e9).toFixed(a >= 1e10 ? 0 : 1) + 'B';
+  else if (a >= 1e6) s = (v / 1e6).toFixed(a >= 1e7  ? 0 : 1) + 'M';
+  else if (a >= 1e4) s = Math.round(v / 1e3) + 'K';
+  else if (a >= 100) s = Math.round(v).toLocaleString();
+  else if (a >= 1)   s = v.toFixed(1);
+  else               s = v.toFixed(2);
+  if (units === '$') return (v < 0 ? '-$' : '$') + s.replace('-', '');
+  return units ? `${s} ${units}` : s;
+}
+
+// The raw-unit swing a criterion is asking about.
+// Requires criterion.raw(feature); bounds are the [inMin,inMax] passed to
+// utility(), or the observed range when the criterion is min-max rescaled.
+function critRawStats(key, i) {
   const c = critList(key)[i];
-  if (typeof c !== 'object' || !c) return null;
-  if (c.worst == null && c.best == null) return null;
-  const u = c.units ? ' ' + c.units : '';
-  return `${c.worst}${u} → ${c.best}${u}`;
+  if (!c || typeof c !== 'object' || typeof c.raw !== 'function') return null;
+
+  const vals = [];
+  for (const f of _sortedFeatures) {
+    let v;
+    try { v = +c.raw(f); } catch (e) { continue; }
+    if (Number.isFinite(v)) vals.push(v);
+  }
+  if (!vals.length) return null;
+
+  const obsMin = Math.min(...vals), obsMax = Math.max(...vals);
+  const fixed  = Array.isArray(c.bounds);
+  const lo = fixed ? c.bounds[0] : obsMin;
+  const hi = fixed ? c.bounds[1] : obsMax;
+  const lower = c.direction === 'lower';   // lower raw value = better outcome
+
+  return {
+    worst: lower ? hi : lo,
+    best:  lower ? lo : hi,
+    obsWorst: lower ? obsMax : obsMin,
+    obsBest:  lower ? obsMin : obsMax,
+    fixed, units: c.units || '', transform: c.transform || null
+  };
+}
+
+function critEndpoints(key, i) {
+  const c  = critList(key)[i];
+  const st = critRawStats(key, i);
+
+  // Static worst/best declared directly on the criterion
+  if (!st) {
+    if (!c || typeof c !== 'object' || (c.worst == null && c.best == null)) return null;
+    const u = c.units ? ' ' + c.units : '';
+    return `<div class="crit-ends">${c.worst}${u} <span class="ce-arrow">→</span> ${c.best}${u}</div>`;
+  }
+
+  const u    = st.units;
+  const main = `${fmtRaw(st.worst, u)} <span class="ce-arrow">→</span> ${fmtRaw(st.best, u)}`;
+
+  const tip = [];
+  tip.push(`This is the swing you are rating: ${fmtRaw(st.worst, u)} to ${fmtRaw(st.best, u)}.`);
+  if (st.fixed) {
+    tip.push(`Scale is fixed in the config. Observed here: ${fmtRaw(st.obsWorst, u)} to ${fmtRaw(st.obsBest, u)}.`);
+  }
+  if (st.transform === 'log') {
+    tip.push('Log-transformed before rescaling, so the scale is not linear in these units.');
+  }
+
+  // Flag when the fixed scale is materially wider than what the data occupy
+  let warn = '';
+  if (st.fixed) {
+    const span = Math.abs(st.best - st.worst);
+    const obs  = Math.abs(st.obsBest - st.obsWorst);
+    if (span > 0 && obs / span < 0.95) {
+      warn = ` <span class="ce-obs">(data: ${fmtRaw(st.obsWorst, u)} → ${fmtRaw(st.obsBest, u)})</span>`;
+    }
+  }
+
+  return `<div class="crit-ends" title="${tip.join(' ')}">${main}${warn}</div>`;
 }
 
 // Accepts {restoreArrays, protectArrays} (legacy), {arrays: [...]} for a single
@@ -855,22 +928,30 @@ function buildDSTPanel() {
          the decision most — then rate the others against it.</p>
       <details class="swing-key">
         <summary>
-          <span class="sk-chip"><i class="sk-core"></i></span> Reading the range bars
+          <span class="sk-chip"><i class="sk-core"></i></span> How to read each row
         </summary>
         <div class="sk-body">
           <div class="sk-row">
+            <span class="sk-lead">Swing</span>
+            <span>The line under the name gives the worst-to-best range in real
+                  units. <b>That is what you are rating.</b> Ask how much that
+                  movement is worth next to the anchor's.</span>
+          </div>
+          <div class="sk-row">
             <span class="sk-chip"><i class="sk-span" style="left:8%;width:84%"></i><i class="sk-core" style="left:26%;width:48%"></i></span>
-            <span>Gold marks where the middle 80% of units fall; grey is the full
-                  observed range. A wide gold band means the criterion separates
-                  units well.</span>
+            <span>The bar describes the data, not the swing. Gold marks where the
+                  middle 80% of units fall — a narrow band means few units are
+                  separated. That is not a reason to lower the rating; the model
+                  already accounts for it.</span>
           </div>
           <div class="sk-row">
             <span class="sk-chip"><i class="sk-span trunc" style="left:22%;width:40%"></i><i class="sk-core" style="left:30%;width:24%"></i></span>
-            <span>Red means the values never reach the ends of their scale. That
-                  criterion shifts every unit by a similar amount, so it changes
-                  the map less than its weight suggests.</span>
+            <span>Red means the values never reach the ends of their scale, so the
+                  swing above is wider than anything that occurs here. Narrow the
+                  scale in the config rather than shading the slider down.</span>
           </div>
-          <p class="sk-note">The number at right is the full span, out of 1.00.</p>
+          <p class="sk-note">Criteria sharing units (two costs, say) should be
+             rated in proportion to their ranges.</p>
         </div>
       </details>
     </div>
@@ -914,11 +995,11 @@ function buildDSTPanel() {
 function swingBarHTML(sp) {
   if (!sp) return '<div class="swing-meta"></div>';
   const pc   = n => (Math.max(n, 0) * 100).toFixed(1);
-  const flag = sp.span < 0.999 ? ' truncated' : '';
+  const flag = sp.span < 0.995 ? ' truncated' : '';   // matches the 2-dp readout
   return `
     <div class="swing-meta">
       <div class="swing-bar${flag}"
-           title="Values cover ${sp.min.toFixed(2)}–${sp.max.toFixed(2)} of the 0–1 scale. Middle 80% of units spans ${sp.core.toFixed(2)}.">
+           title="Distribution of the normalised values — not the swing. Values cover ${sp.min.toFixed(2)}–${sp.max.toFixed(2)} of the 0–1 scale; the middle 80% of units spans ${sp.core.toFixed(2)}. Rate the swing shown above the bar, not the width of this one.">
         <i class="sb-span" style="left:${pc(sp.min)}%;width:${pc(Math.max(sp.span, 0.008))}%"></i>
         <i class="sb-core" style="left:${pc(sp.p10)}%;width:${pc(Math.max(sp.core, 0.008))}%"></i>
       </div>
@@ -941,7 +1022,7 @@ function swingRowHTML(key, i, isAnchor) {
         <span class="crit-name">${critLabel(key, i)}</span>
         ${isAnchor ? '<span class="anchor-pill">Anchor</span>' : ''}
       </div>
-      ${ends ? `<div class="crit-ends">${ends}</div>` : ''}
+      ${ends || ''}
       ${swingBarHTML(_spread[key]?.[i])}
       <div class="slider-wrap">
         <input type="range" class="swing-slider" min="0" max="100" step="1" value="${val}"
