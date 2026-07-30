@@ -69,8 +69,10 @@ let _sortedFeatures = [];
 let _layerDefs      = {};      // id → layerDef (config entry)
 let _activeLayers   = new Set();
 let _currentOpacity = 0.8;
-let _swing          = { rest: null, prot: null };  // swing-weight elicitation state
-let _spread         = { rest: [], prot: [] };     // per-criterion utility spread
+let _models         = [];                         // resolved DST criteria models
+let _critArrays     = {};                         // model key → [criterion][feature]
+let _swing          = {};                         // model key → elicitation state
+let _spread         = {};                         // model key → per-criterion spread
 let _hasCalculated  = false;                      // live map updates after first Calculate
 let _drag           = null;                       // in-flight row drag
 let _restoreArrays  = [];
@@ -631,6 +633,30 @@ function hideLegend(layerId) {
 
 function buildLegendHTML(lyrDef) {
   const title = `<div class="legend-title">${lyrDef.legendTitle || lyrDef.label}</div>`;
+
+  // The DST decision layer carries no palette of its own — it is coloured at
+  // runtime from CONFIG.dst. Dual ramp for two criteria models, single for one.
+  if (lyrDef.type === 'dst') {
+    const sd     = decisionStyleDef();
+    const labels = lyrDef.legendLabels || [];
+    const col    = palette => palette.map((c, i) => `
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:${c}"></div>
+        <span class="legend-label">${labels[i] || ''}</span>
+      </div>`).join('');
+
+    if (_models.length >= 2) {
+      const headA = lyrDef.legendHeadA || _models[0].legend;
+      const headB = lyrDef.legendHeadB || _models[1].legend;
+      return `${title}
+        <div class="legend-dual">
+          <div><div class="legend-dual-head">${headA}</div>${col(sd.colorPaletteA)}</div>
+          <div><div class="legend-dual-head">${headB}</div>${col(sd.colorPaletteB)}</div>
+        </div>`;
+    }
+    return title + col(sd.colorPalette);
+  }
+
   if (lyrDef.type === 'dual') {
     const headA  = lyrDef.legendHeadA || 'Restore';
     const headB  = lyrDef.legendHeadB || 'Protect';
@@ -656,70 +682,128 @@ function buildLegendHTML(lyrDef) {
 }
 
 // =============================================================================
-// DST PANEL — SWING WEIGHTING (replaces abbreviated AHP)
+// DST PANEL — SWING WEIGHTING
 //
-// Elicitation is two steps:
+// Elicitation is two steps, per criteria model:
 //   1. The user drags one criterion into the anchor slot. That criterion's
 //      swing — the change in outcome from its worst to its best value across
 //      this landscape — is the reference, pinned at 100.
 //   2. Every other criterion is rated 0-100 against that reference.
 // Weights are raw / sum(raw). No pairwise ratios, so no chaining and no
 // consistency ratio: each criterion's weight rests on its own judgment.
+//
+// A geography may define one model (e.g. just "Priority") or two
+// (e.g. "Restoration" + "Protection"). Two models are rendered with the
+// dual restore/protect colour ramp; one model uses a single sequential ramp.
 // =============================================================================
 
 const SWING_DEFAULT = 100;   // non-anchor sliders start tied to the anchor
 
-function critList(prefix) {
-  return prefix === 'rest'
-    ? CONFIG.dst.restoration.criteria
-    : CONFIG.dst.protection.criteria;
+// -----------------------------------------------------------------------------
+// Model resolution — supports both the legacy restoration/protection shape and
+// a generic CONFIG.dst.models array.
+// -----------------------------------------------------------------------------
+function resolveDstModels() {
+  const d = CONFIG.dst || {};
+
+  if (Array.isArray(d.models) && d.models.length) {
+    return d.models.map((m, i) => ({
+      key:      m.key   || `model${i + 1}`,
+      label:    m.label || `Criteria ${i + 1}`,
+      legend:   m.legendHead || m.label || `Model ${i + 1}`,
+      criteria: m.criteria || []
+    }));
+  }
+
+  const out = [];
+  if (d.restoration?.criteria) out.push({
+    key: 'rest', label: d.restoration.label || 'Restoration criteria',
+    legend: d.restoration.legendHead || 'Restore', criteria: d.restoration.criteria
+  });
+  if (d.protection?.criteria) out.push({
+    key: 'prot', label: d.protection.label || 'Protection criteria',
+    legend: d.protection.legendHead || 'Protect', criteria: d.protection.criteria
+  });
+  return out;
 }
+
+function modelOf(key)  { return _models.find(m => m.key === key); }
+function critList(key) { return modelOf(key)?.criteria || []; }
 
 // Criteria may be plain strings (legacy) or objects {label, units, worst, best}
-function critLabel(prefix, i) {
-  const c = critList(prefix)[i];
-  return typeof c === 'string' ? c : (c.label || `Criterion ${i + 1}`);
+function critLabel(key, i) {
+  const c = critList(key)[i];
+  return typeof c === 'string' ? c : (c?.label || `Criterion ${i + 1}`);
 }
 
-function critEndpoints(prefix, i) {
-  const c = critList(prefix)[i];
-  if (typeof c !== 'object') return null;
+function critEndpoints(key, i) {
+  const c = critList(key)[i];
+  if (typeof c !== 'object' || !c) return null;
   if (c.worst == null && c.best == null) return null;
   const u = c.units ? ' ' + c.units : '';
   return `${c.worst}${u} → ${c.best}${u}`;
 }
 
-function utilArrays(prefix) {
-  return prefix === 'rest' ? _restoreArrays : _protectArrays;
+// Accepts {restoreArrays, protectArrays} (legacy), {arrays: [...]} for a single
+// model, {arrays: {key: [...]}}, or {<key>Arrays: [...]}
+function resolveCriteriaArrays(result) {
+  const map = {};
+  if (!result) return map;
+  if (result.restoreArrays) map.rest = result.restoreArrays;
+  if (result.protectArrays) map.prot = result.protectArrays;
+  if (result.arrays) {
+    if (Array.isArray(result.arrays)) {
+      if (_models.length) map[_models[0].key] = result.arrays;
+    } else {
+      Object.assign(map, result.arrays);
+    }
+  }
+  _models.forEach(m => {
+    if (result[m.key + 'Arrays']) map[m.key] = result[m.key + 'Arrays'];
+  });
+  return map;
 }
 
-// Raw 0-100 rating; the anchor is always 100
-function swingRaw(prefix, i) {
-  return _swing[prefix].anchor === i ? 100 : _swing[prefix].values[i];
+function loadCriteriaArrays() {
+  if (typeof CONFIG.dst.computeCriteriaArrays !== 'function' || !_sortedFeatures.length) return;
+  _critArrays = resolveCriteriaArrays(CONFIG.dst.computeCriteriaArrays(_sortedFeatures));
+  // legacy globals kept in sync for any external code that reads them
+  _restoreArrays = _critArrays.rest || [];
+  _protectArrays = _critArrays.prot || [];
 }
 
-// Normalised weights, or null while no anchor has been set
-function swingWeights(prefix) {
-  if (_swing[prefix].anchor === null) return null;
-  const raws = critList(prefix).map((_, i) => swingRaw(prefix, i));
+function hasCriteriaArrays() {
+  return _models.some(m => (_critArrays[m.key] || []).length);
+}
+
+// -----------------------------------------------------------------------------
+// Weights
+// -----------------------------------------------------------------------------
+function swingRaw(key, i) {
+  return _swing[key].anchor === i ? 100 : _swing[key].values[i];
+}
+
+function swingWeights(key) {
+  const s = _swing[key];
+  if (!s || s.anchor === null) return null;
+  const raws = critList(key).map((_, i) => swingRaw(key, i));
   const tot  = raws.reduce((a, b) => a + b, 0);
   if (!(tot > 0)) return null;
   return raws.map(v => v / tot);
 }
 
 function swingReady() {
-  return !!(swingWeights('rest') && swingWeights('prot'));
+  return _models.length > 0 && _models.every(m => swingWeights(m.key));
 }
 
 // -----------------------------------------------------------------------------
 // Utility spread — how much of the 0-1 scale each criterion actually occupies.
-// span  = full observed range (min → max)
-// core  = middle 80% (p10 → p90), which is what most features really see
+// span = full observed range; core = middle 80% (p10 → p90)
 // -----------------------------------------------------------------------------
 function computeSwingSpreads() {
-  ['rest', 'prot'].forEach(prefix => {
-    const arrs = utilArrays(prefix) || [];
-    _spread[prefix] = critList(prefix).map((_, i) => {
+  _models.forEach(m => {
+    const arrs = _critArrays[m.key] || [];
+    _spread[m.key] = m.criteria.map((_, i) => {
       const a = arrs[i];
       if (!a || !a.length) return null;
       const v = a.filter(Number.isFinite).slice().sort((x, y) => x - y);
@@ -738,51 +822,64 @@ function buildDSTPanel() {
   const panel = document.getElementById('dst-panel');
   if (!panel || !CONFIG.dst) return;
 
+  _models = resolveDstModels();
+  if (!_models.length) return;
+
   // Utility arrays must exist before the panel renders — the swing bars read them
-  if (typeof CONFIG.dst.computeCriteriaArrays === 'function' && _sortedFeatures.length) {
-    const r = CONFIG.dst.computeCriteriaArrays(_sortedFeatures);
-    _restoreArrays = r.restoreArrays;
-    _protectArrays = r.protectArrays;
-  }
+  loadCriteriaArrays();
   computeSwingSpreads();
 
-  ['rest', 'prot'].forEach(prefix => {
-    _swing[prefix] = {
-      order:  critList(prefix).map((_, i) => i),
+  _swing = {};
+  _models.forEach(m => {
+    _swing[m.key] = {
+      order:  m.criteria.map((_, i) => i),
       anchor: null,
-      values: critList(prefix).map(() => SWING_DEFAULT)
+      values: m.criteria.map(() => SWING_DEFAULT)
     };
   });
   _hasCalculated = false;
+
+  const sections = _models.map(m => `
+    <div class="dst-section" data-model="${m.key}">
+      <div class="dst-section-title">
+        <span>${m.label}</span><span class="dst-step" data-step="${m.key}"></span>
+      </div>
+      <div class="anchor-slot" data-model="${m.key}"></div>
+      <div class="crit-list"  data-model="${m.key}"></div>
+    </div>`).join('');
 
   panel.innerHTML = `
     <div class="dst-header">
       <h2>Decision Tool</h2>
       <p>Set the <em>anchor</em> — the criterion whose worst-to-best swing moves
          the decision most — then rate the others against it.</p>
+      <details class="swing-key">
+        <summary>
+          <span class="sk-chip"><i class="sk-core"></i></span> Reading the range bars
+        </summary>
+        <div class="sk-body">
+          <div class="sk-row">
+            <span class="sk-chip"><i class="sk-span" style="left:8%;width:84%"></i><i class="sk-core" style="left:26%;width:48%"></i></span>
+            <span>Gold marks where the middle 80% of units fall; grey is the full
+                  observed range. A wide gold band means the criterion separates
+                  units well.</span>
+          </div>
+          <div class="sk-row">
+            <span class="sk-chip"><i class="sk-span trunc" style="left:22%;width:40%"></i><i class="sk-core" style="left:30%;width:24%"></i></span>
+            <span>Red means the values never reach the ends of their scale. That
+                  criterion shifts every unit by a similar amount, so it changes
+                  the map less than its weight suggests.</span>
+          </div>
+          <p class="sk-note">The number at right is the full span, out of 1.00.</p>
+        </div>
+      </details>
     </div>
     <div class="dst-body">
-      <div class="dst-section" data-prefix="rest">
-        <div class="dst-section-title">
-          <span>Restoration criteria</span><span class="dst-step" data-step="rest"></span>
-        </div>
-        <div class="anchor-slot" data-prefix="rest"></div>
-        <div class="crit-list"  data-prefix="rest"></div>
-      </div>
-
-      <div class="dst-section" data-prefix="prot">
-        <div class="dst-section-title">
-          <span>Protection criteria</span><span class="dst-step" data-step="prot"></span>
-        </div>
-        <div class="anchor-slot" data-prefix="prot"></div>
-        <div class="crit-list"  data-prefix="prot"></div>
-      </div>
-
+      ${sections}
       <div class="dst-section">
         <div class="dst-section-title"><span>Weight tally</span></div>
         <div id="swing-tally"></div>
       </div>
-
       <div class="dst-section" id="dst-chart-section" style="display:none;">
         <div class="dst-section-title"><span>Priority weights</span></div>
         <svg id="dst-chart" width="100%" height="160"></svg>
@@ -794,20 +891,19 @@ function buildDSTPanel() {
     </div>
   `;
 
-  renderSwingSet('rest');
-  renderSwingSet('prot');
+  _models.forEach(m => renderSwingSet(m.key));
   renderSwingTally();
 
   document.getElementById('btn-reset').addEventListener('click', resetDST);
   document.getElementById('btn-calculate').addEventListener('click', runDSTCalculation);
 
   if (!panel.dataset.swingBound) {
-    panel.addEventListener('input',        onSwingSlider);
-    panel.addEventListener('pointerdown',  onSwingPointerDown);
-    panel.addEventListener('pointermove',  onSwingPointerMove);
-    panel.addEventListener('pointerup',    onSwingPointerUp);
+    panel.addEventListener('input',         onSwingSlider);
+    panel.addEventListener('pointerdown',   onSwingPointerDown);
+    panel.addEventListener('pointermove',   onSwingPointerMove);
+    panel.addEventListener('pointerup',     onSwingPointerUp);
     panel.addEventListener('pointercancel', onSwingPointerUp);
-    panel.addEventListener('keydown',      onSwingKeyDown);
+    panel.addEventListener('keydown',       onSwingKeyDown);
     panel.dataset.swingBound = '1';
   }
 }
@@ -817,12 +913,12 @@ function buildDSTPanel() {
 // -----------------------------------------------------------------------------
 function swingBarHTML(sp) {
   if (!sp) return '<div class="swing-meta"></div>';
-  const pc = n => (Math.max(n, 0) * 100).toFixed(1);
+  const pc   = n => (Math.max(n, 0) * 100).toFixed(1);
   const flag = sp.span < 0.999 ? ' truncated' : '';
   return `
     <div class="swing-meta">
       <div class="swing-bar${flag}"
-           title="Utility spans ${sp.min.toFixed(2)}–${sp.max.toFixed(2)} of the 0–1 scale. Middle 80% of features spans ${sp.core.toFixed(2)}.">
+           title="Values cover ${sp.min.toFixed(2)}–${sp.max.toFixed(2)} of the 0–1 scale. Middle 80% of units spans ${sp.core.toFixed(2)}.">
         <i class="sb-span" style="left:${pc(sp.min)}%;width:${pc(Math.max(sp.span, 0.008))}%"></i>
         <i class="sb-core" style="left:${pc(sp.p10)}%;width:${pc(Math.max(sp.core, 0.008))}%"></i>
       </div>
@@ -830,49 +926,50 @@ function swingBarHTML(sp) {
     </div>`;
 }
 
-function swingRowHTML(prefix, i, isAnchor) {
-  const val = swingRaw(prefix, i);
-  const w   = swingWeights(prefix);
-  const pct = w ? (w[i] * 100).toFixed(1) + '%' : '—';
-  const dis = (_swing[prefix].anchor === null || isAnchor) ? 'disabled' : '';
-  const ends = critEndpoints(prefix, i);
+function swingRowHTML(key, i, isAnchor) {
+  const val  = swingRaw(key, i);
+  const w    = swingWeights(key);
+  const pct  = w ? (w[i] * 100).toFixed(1) + '%' : '—';
+  const dis  = (_swing[key].anchor === null || isAnchor) ? 'disabled' : '';
+  const ends = critEndpoints(key, i);
   return `
-    <button class="grip" data-prefix="${prefix}" data-idx="${i}"
-            aria-label="Reorder ${critLabel(prefix, i)}"
+    <button class="grip" data-model="${key}" data-idx="${i}"
+            aria-label="Reorder ${critLabel(key, i)}"
             title="Drag to reorder — drop on the anchor slot to make it the reference"></button>
     <div class="crit-main">
       <div class="crit-top">
-        <span class="crit-name">${critLabel(prefix, i)}</span>
+        <span class="crit-name">${critLabel(key, i)}</span>
         ${isAnchor ? '<span class="anchor-pill">Anchor</span>' : ''}
       </div>
       ${ends ? `<div class="crit-ends">${ends}</div>` : ''}
-      ${swingBarHTML(_spread[prefix][i])}
+      ${swingBarHTML(_spread[key]?.[i])}
       <div class="slider-wrap">
         <input type="range" class="swing-slider" min="0" max="100" step="1" value="${val}"
-               data-prefix="${prefix}" data-idx="${i}" ${dis}
-               aria-label="${critLabel(prefix, i)} swing rating">
+               data-model="${key}" data-idx="${i}" ${dis}
+               aria-label="${critLabel(key, i)} swing rating">
         <span class="swing-nums"><span class="sw-raw">${val}</span><span class="sw-pct">${pct}</span></span>
       </div>
     </div>`;
 }
 
-function makeSwingRow(prefix, i, isAnchor) {
+function makeSwingRow(key, i, isAnchor) {
   const el = document.createElement('div');
   el.className = 'criterion-row swing-row'
     + (isAnchor ? ' is-anchor' : '')
-    + (_swing[prefix].anchor === null && !isAnchor ? ' locked-out' : '');
-  el.dataset.prefix = prefix;
-  el.dataset.idx    = i;
-  el.innerHTML      = swingRowHTML(prefix, i, isAnchor);
+    + (_swing[key].anchor === null && !isAnchor ? ' locked-out' : '');
+  el.dataset.model = key;
+  el.dataset.idx   = i;
+  el.innerHTML     = swingRowHTML(key, i, isAnchor);
   return el;
 }
 
-function renderSwingSet(prefix) {
-  const s = _swing[prefix];
-  critList(prefix).forEach((_, i) => { if (!s.order.includes(i)) s.order.push(i); });
+function renderSwingSet(key) {
+  const s = _swing[key];
+  if (!s) return;
+  critList(key).forEach((_, i) => { if (!s.order.includes(i)) s.order.push(i); });
 
-  const slot = document.querySelector(`.anchor-slot[data-prefix="${prefix}"]`);
-  const list = document.querySelector(`.crit-list[data-prefix="${prefix}"]`);
+  const slot = document.querySelector(`.anchor-slot[data-model="${key}"]`);
+  const list = document.querySelector(`.crit-list[data-model="${key}"]`);
   if (!slot || !list) return;
 
   slot.innerHTML = '';
@@ -884,23 +981,23 @@ function renderSwingSet(prefix) {
               decision most. It sets the 100-point scale.</span>
       </div>`;
   } else {
-    slot.appendChild(makeSwingRow(prefix, s.anchor, true));
+    slot.appendChild(makeSwingRow(key, s.anchor, true));
   }
 
   list.innerHTML = '';
   s.order.filter(i => i !== s.anchor)
-         .forEach(i => list.appendChild(makeSwingRow(prefix, i, false)));
+         .forEach(i => list.appendChild(makeSwingRow(key, i, false)));
 
-  const step = document.querySelector(`.dst-step[data-step="${prefix}"]`);
+  const step = document.querySelector(`.dst-step[data-step="${key}"]`);
   if (step) step.textContent = s.anchor === null ? 'Step 1 of 2' : 'Step 2 of 2';
 }
 
 // Cheap path while a slider is moving — numbers only, no DOM rebuild
-function refreshSwingNumbers(prefix) {
-  const w = swingWeights(prefix);
-  document.querySelectorAll(`.swing-row[data-prefix="${prefix}"]`).forEach(row => {
+function refreshSwingNumbers(key) {
+  const w = swingWeights(key);
+  document.querySelectorAll(`.swing-row[data-model="${key}"]`).forEach(row => {
     const i = +row.dataset.idx;
-    row.querySelector('.sw-raw').textContent = swingRaw(prefix, i);
+    row.querySelector('.sw-raw').textContent = swingRaw(key, i);
     row.querySelector('.sw-pct').textContent = w ? (w[i] * 100).toFixed(1) + '%' : '—';
   });
   renderSwingTally();
@@ -910,9 +1007,9 @@ function renderSwingTally() {
   const host = document.getElementById('swing-tally');
   if (!host) return;
 
-  host.innerHTML = ['rest', 'prot'].map(prefix => {
-    const s = _swing[prefix], w = swingWeights(prefix);
-    const name = prefix === 'rest' ? 'Restoration' : 'Protection';
+  host.innerHTML = _models.map(m => {
+    const key = m.key, s = _swing[key], w = swingWeights(key);
+    const name = m.label.replace(/\s*criteria$/i, '');
 
     if (!w) {
       return `<div class="tally-block">
@@ -923,16 +1020,16 @@ function renderSwingTally() {
               </div>`;
     }
 
-    const sum  = critList(prefix).reduce((a, _, i) => a + swingRaw(prefix, i), 0);
+    const sum  = critList(key).reduce((a, _, i) => a + swingRaw(key, i), 0);
     const bars = s.order.map(i => {
-      const t = swingRaw(prefix, i) / 100;
+      const t = swingRaw(key, i) / 100;
       return `<i style="width:${(w[i] * 100).toFixed(2)}%;
                         background:hsl(${42 - t * 8} ${26 + t * 44}% ${30 + t * 28}%)"
-                 title="${critLabel(prefix, i)} — ${(w[i] * 100).toFixed(1)}%"></i>`;
+                 title="${critLabel(key, i)} — ${(w[i] * 100).toFixed(1)}%"></i>`;
     }).join('');
 
-    const ties = critList(prefix)
-      .filter((_, i) => i !== s.anchor && swingRaw(prefix, i) >= 100).length;
+    const ties = critList(key)
+      .filter((_, i) => i !== s.anchor && swingRaw(key, i) >= 100).length;
     const note = ties
       ? `<div class="tally-note">${ties} criteri${ties > 1 ? 'a tie' : 'on ties'} the anchor — judged equally influential.</div>`
       : `<div class="tally-note">Σ ${sum} raw points → weights sum to 1.000.</div>`;
@@ -955,9 +1052,9 @@ function renderSwingTally() {
 function onSwingSlider(e) {
   const el = e.target;
   if (!el.classList || !el.classList.contains('swing-slider')) return;
-  const prefix = el.dataset.prefix, i = +el.dataset.idx;
-  _swing[prefix].values[i] = +el.value;
-  refreshSwingNumbers(prefix);
+  const key = el.dataset.model, i = +el.dataset.idx;
+  _swing[key].values[i] = +el.value;
+  refreshSwingNumbers(key);
   if (_hasCalculated && swingReady()) applySwingToMap();
 }
 
@@ -969,16 +1066,16 @@ function onSwingPointerDown(e) {
   if (!grip) return;
   e.preventDefault();
 
-  const row    = grip.closest('.swing-row');
-  const prefix = row.dataset.prefix, idx = +row.dataset.idx;
+  const row = grip.closest('.swing-row');
+  const key = row.dataset.model, idx = +row.dataset.idx;
 
   const ghost = document.createElement('div');
   ghost.id = 'swing-ghost';
-  ghost.innerHTML = `<div class="crit-name">${critLabel(prefix, idx)}</div>
-                     <div class="gv">rating ${swingRaw(prefix, idx)}</div>`;
+  ghost.innerHTML = `<div class="crit-name">${critLabel(key, idx)}</div>
+                     <div class="gv">rating ${swingRaw(key, idx)}</div>`;
   document.body.appendChild(ghost);
 
-  _drag = { prefix, idx, row, ghost, fromAnchor: _swing[prefix].anchor === idx };
+  _drag = { key, idx, row, ghost, fromAnchor: _swing[key].anchor === idx };
   row.classList.add('dragging');
   grip.setPointerCapture(e.pointerId);
   moveSwingGhost(e);
@@ -999,8 +1096,8 @@ function onSwingPointerMove(e) {
   if (!_drag) return;
   moveSwingGhost(e);
 
-  const slot = document.querySelector(`.anchor-slot[data-prefix="${_drag.prefix}"]`);
-  const list = document.querySelector(`.crit-list[data-prefix="${_drag.prefix}"]`);
+  const slot = document.querySelector(`.anchor-slot[data-model="${_drag.key}"]`);
+  const list = document.querySelector(`.crit-list[data-model="${_drag.key}"]`);
   const overSlot = swingHit(slot, e) && !_drag.fromAnchor;
   slot.classList.toggle('drop-active', overSlot);
   if (overSlot || _drag.fromAnchor) return;
@@ -1016,9 +1113,9 @@ function onSwingPointerMove(e) {
 
 function onSwingPointerUp(e) {
   if (!_drag) return;
-  const { prefix, idx, row, ghost, fromAnchor } = _drag;
-  const slot = document.querySelector(`.anchor-slot[data-prefix="${prefix}"]`);
-  const list = document.querySelector(`.crit-list[data-prefix="${prefix}"]`);
+  const { key, idx, row, ghost, fromAnchor } = _drag;
+  const slot = document.querySelector(`.anchor-slot[data-model="${key}"]`);
+  const list = document.querySelector(`.crit-list[data-model="${key}"]`);
   const onSlot = swingHit(slot, e) && !fromAnchor;
   const onList = fromAnchor && swingHit(list, e);
 
@@ -1026,7 +1123,7 @@ function onSwingPointerUp(e) {
   row.classList.remove('dragging');
   slot.classList.remove('drop-active');
 
-  const s = _swing[prefix];
+  const s = _swing[key];
   const oldAnchor = s.anchor;
   let pool = [...list.children].map(r => +r.dataset.idx);
 
@@ -1049,7 +1146,7 @@ function onSwingPointerUp(e) {
   s.order = s.anchor === null ? pool : [s.anchor, ...pool.filter(i => i !== s.anchor)];
   _drag = null;
 
-  renderSwingSet(prefix);
+  renderSwingSet(key);
   renderSwingTally();
   if (_hasCalculated && swingReady()) applySwingToMap();
 }
@@ -1058,7 +1155,7 @@ function onSwingPointerUp(e) {
 function onSwingKeyDown(e) {
   const grip = e.target.closest && e.target.closest('.grip');
   if (!grip) return;
-  const prefix = grip.dataset.prefix, idx = +grip.dataset.idx, s = _swing[prefix];
+  const key = grip.dataset.model, idx = +grip.dataset.idx, s = _swing[key];
 
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault();
@@ -1081,10 +1178,10 @@ function onSwingKeyDown(e) {
     s.order = s.anchor === null ? pool : [s.anchor, ...pool];
   } else return;
 
-  renderSwingSet(prefix);
+  renderSwingSet(key);
   renderSwingTally();
   if (_hasCalculated && swingReady()) applySwingToMap();
-  const again = document.querySelector(`.grip[data-prefix="${prefix}"][data-idx="${idx}"]`);
+  const again = document.querySelector(`.grip[data-model="${key}"][data-idx="${idx}"]`);
   if (again) again.focus();
 }
 
@@ -1111,19 +1208,23 @@ function flipSwingReorder(container, mutate) {
 }
 
 function resetDST() {
-  ['rest', 'prot'].forEach(prefix => {
-    _swing[prefix] = {
-      order:  critList(prefix).map((_, i) => i),
+  _models.forEach(m => {
+    _swing[m.key] = {
+      order:  m.criteria.map((_, i) => i),
       anchor: null,
-      values: critList(prefix).map(() => SWING_DEFAULT)
+      values: m.criteria.map(() => SWING_DEFAULT)
     };
-    renderSwingSet(prefix);
+    renderSwingSet(m.key);
   });
   _hasCalculated = false;
   renderSwingTally();
 
   // Blank the decision layer
-  _sortedFeatures.forEach(f => { delete f.properties._dstColor; });
+  _sortedFeatures.forEach(f => {
+    delete f.properties._dstColor;
+    delete f.properties._dstDirection;
+    _models.forEach(m => { delete f.properties[`_dstScore_${m.key}`]; });
+  });
   CONFIG.layers.filter(l => l.type === 'dst').forEach(recolorLayer);
 
   const chart = document.getElementById('dst-chart-section');
@@ -1134,54 +1235,72 @@ function resetDST() {
 // DST CALCULATION
 // =============================================================================
 
+// Palette/break set for the decision layer, from CONFIG.dst
+function decisionStyleDef() {
+  const d = CONFIG.dst || {};
+  return {
+    colorBreaks:   d.decisionBreaks   || [0,0.125,0.25,0.375,0.5,0.625,0.75,0.875],
+    colorPalette:  d.decisionPalette  || d.decisionPaletteA ||
+                   ['#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#b10026'],
+    colorPaletteA: d.decisionPaletteA || ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#990000'],
+    colorPaletteB: d.decisionPaletteB || ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b']
+  };
+}
+
 // Score every feature from the current swing weights and repaint the map.
 // Called by Calculate, and again on every slider move once Calculate has run.
 function applySwingToMap() {
-  const wRest = swingWeights('rest');
-  const wProt = swingWeights('prot');
-  if (!wRest || !wProt || !_sortedFeatures.length) return null;
+  if (!swingReady() || !_sortedFeatures.length) return null;
 
   const nF      = _sortedFeatures.length;
-  const impVals = new Array(nF).fill(0);
-  const prtVals = new Array(nF).fill(0);
+  const weights = {};
+  const scores  = {};
 
-  wRest.forEach((w, ci) => {
-    if (!_restoreArrays[ci]) return;
-    _restoreArrays[ci].forEach((v, fi) => { impVals[fi] += v * w; });
-  });
-  wProt.forEach((w, ci) => {
-    if (!_protectArrays[ci]) return;
-    _protectArrays[ci].forEach((v, fi) => { prtVals[fi] += v * w; });
+  _models.forEach(m => {
+    const w    = swingWeights(m.key);
+    const arrs = _critArrays[m.key] || [];
+    const acc  = new Array(nF).fill(0);
+    w.forEach((wi, ci) => {
+      if (!arrs[ci]) return;
+      arrs[ci].forEach((v, fi) => { acc[fi] += v * wi; });
+    });
+    weights[m.key] = w;
+    scores[m.key]  = acc;
   });
 
-  const decBreaks = CONFIG.dst.decisionBreaks   || [0,0.125,0.25,0.375,0.5,0.625,0.75,0.875];
-  const decPalA   = CONFIG.dst.decisionPaletteA || ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#990000'];
-  const decPalB   = CONFIG.dst.decisionPaletteB || ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'];
-  const dstLyrDef = { colorBreaks: decBreaks, colorPaletteA: decPalA, colorPaletteB: decPalB };
+  const styleDef = decisionStyleDef();
+  const dual     = _models.length >= 2;
+  const kA = _models[0]?.key, kB = _models[1]?.key;
 
   _sortedFeatures.forEach((feat, fi) => {
-    feat.properties._dstScoreRestore = impVals[fi];
-    feat.properties._dstScoreProtect = prtVals[fi];
-    feat.properties._dstDirection    = impVals[fi] >= prtVals[fi] ? 'Restore' : 'Protect';
-    feat.properties._dstColor        = getDualColor(impVals[fi], prtVals[fi], dstLyrDef);
+    _models.forEach(m => {
+      feat.properties[`_dstScore_${m.key}`] = scores[m.key][fi];
+    });
+    if (dual) {
+      const a = scores[kA][fi], b = scores[kB][fi];
+      feat.properties._dstDirection = a >= b ? modelOf(kA).legend : modelOf(kB).legend;
+      feat.properties._dstScore     = Math.max(a, b);
+      feat.properties._dstColor     = getDualColor(a, b, styleDef);
+    } else {
+      feat.properties._dstScore = scores[kA][fi];
+      feat.properties._dstColor = getColor(scores[kA][fi], styleDef);
+    }
   });
 
   CONFIG.layers.filter(l => l.type === 'dst').forEach(recolorLayer);
-  return { wRest, wProt };
+  return weights;
 }
 
 function runDSTCalculation() {
   if (!CONFIG.dst?.enabled || !_sortedFeatures.length) return;
 
-  if (!_restoreArrays.length && typeof CONFIG.dst.computeCriteriaArrays === 'function') {
-    const r = CONFIG.dst.computeCriteriaArrays(_sortedFeatures);
-    _restoreArrays = r.restoreArrays;
-    _protectArrays = r.protectArrays;
+  if (!hasCriteriaArrays()) {
+    loadCriteriaArrays();
     computeSwingSpreads();
   }
 
-  const res = applySwingToMap();
-  if (!res) return;
+  const weights = applySwingToMap();
+  if (!weights) return;
   _hasCalculated = true;
 
   // Turn the decision layer on so the result is actually visible
@@ -1196,77 +1315,98 @@ function runDSTCalculation() {
   });
 
   // Re-rank rows high → low so the panel mirrors the weights
-  ['rest', 'prot'].forEach(prefix => {
-    const s = _swing[prefix];
+  _models.forEach(m => {
+    const s = _swing[m.key];
     const pool = s.order.filter(i => i !== s.anchor)
-                        .sort((a, b) => swingRaw(prefix, b) - swingRaw(prefix, a));
+                        .sort((a, b) => swingRaw(m.key, b) - swingRaw(m.key, a));
     s.order = [s.anchor, ...pool];
-    flipSwingReorder(document.querySelector(`.crit-list[data-prefix="${prefix}"]`),
-                     () => renderSwingSet(prefix));
+    flipSwingReorder(document.querySelector(`.crit-list[data-model="${m.key}"]`),
+                     () => renderSwingSet(m.key));
   });
   renderSwingTally();
 
-  drawWeightChart(
-    res.wRest, res.wProt,
-    critList('rest').map((_, i) => critLabel('rest', i)),
-    critList('prot').map((_, i) => critLabel('prot', i))
-  );
+  drawWeightChart(_models.map(m => ({
+    label:   m.label.replace(/\s*criteria$/i, ''),
+    weights: weights[m.key],
+    labels:  m.criteria.map((_, i) => critLabel(m.key, i))
+  })));
 }
 
 // =============================================================================
-// D3 WEIGHT CHART  (unchanged from Leaflet version)
+// D3 WEIGHT CHART
+// Accepts [{label, weights:[…], labels:[…]}, …] — one entry per criteria model.
 // =============================================================================
-function drawWeightChart(rW, pW, rL, pL) {
+function drawWeightChart(groups) {
   const section = document.getElementById('dst-chart-section');
   if (section) section.style.display = '';
+
   const svgEl = document.getElementById('dst-chart');
-  if (!svgEl || typeof d3 === 'undefined') return;
+  if (!svgEl || typeof d3 === 'undefined' || !d3) return;
+
   d3.select(svgEl).selectAll('*').remove();
 
-  const allData = [
-    ...rW.map((w,i) => ({ label: rL[i], value: w, group: 'Restore' })),
-    { label: '', value: 0, group: 'spacer' },
-    ...pW.map((w,i) => ({ label: pL[i], value: w, group: 'Protect' }))
-  ];
+  const rows = [];
+  groups.forEach(g => {
+    (g.weights || []).forEach((w, i) => {
+      rows.push({ group: g.label, label: g.labels[i], value: w });
+    });
+  });
+  if (!rows.length) return;
 
-  const labelWidth = 130, barH = 14, rowH = barH + 5;
-  const margin = { top: 20, right: 45, bottom: 4, left: 8 };
-  const svgWidth = svgEl.getBoundingClientRect().width || 290;
-  const barWidth = svgWidth - margin.left - margin.right - labelWidth;
-  const svgHeight = allData.length * rowH + 30;
+  const margin  = { top: 8, right: 10, bottom: 4, left: 8 };
+  const width   = svgEl.getBoundingClientRect().width || 300;
+  const nGroups = groups.length;
+  const height  = rows.length * 15 + nGroups * 14 + 12;
+  const barH    = 11;
+  const labelW  = 92;
+
+  svgEl.setAttribute('height', height);
 
   const xScale = d3.scaleLinear()
-    .domain([0, d3.max(allData, d => d.value) * 1.15])
-    .range([0, barWidth]);
-  const colorScale = d3.scaleOrdinal()
-    .domain(['Restore','Protect'])
-    .range(['#c4963a','#4682b4']);
+    .domain([0, d3.max(rows, d => d.value) * 1.15 || 1])
+    .range([0, Math.max(40, width - margin.left - margin.right - labelW - 34)]);
 
-  d3.select(svgEl).attr('height', svgHeight);
+  const palette = ['#c4963a', '#4682b4', '#5dbf7a', '#b07aa1'];
+  const colorOf = g => palette[groups.findIndex(x => x.label === g) % palette.length];
+
   const svg = d3.select(svgEl).append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
-  let lastGroup = null, yOffset = 0;
-  allData.forEach(d => {
-    if (d.group === 'spacer') { yOffset += rowH; return; }
+  let y = 0, lastGroup = null;
+  rows.forEach(d => {
     if (d.group !== lastGroup) {
-      svg.append('text').attr('x', labelWidth).attr('y', yOffset - 2)
-        .attr('font-size','0.6rem').attr('fill','rgba(255,255,255,0.35)')
-        .attr('letter-spacing','0.1em').text(d.group.toUpperCase());
-      lastGroup = d.group; yOffset += 10;
+      y += lastGroup === null ? 8 : 14;
+      svg.append('text')
+        .attr('x', 0).attr('y', y - 4)
+        .attr('font-size', '0.6rem')
+        .attr('fill', 'rgba(255,255,255,0.35)')
+        .attr('letter-spacing', '0.1em')
+        .text(d.group.toUpperCase());
+      lastGroup = d.group;
     }
-    const y = yOffset;
-    svg.append('text').attr('x', labelWidth - 6).attr('y', y + barH * 0.78)
-      .attr('text-anchor','end').attr('font-size','0.68rem')
-      .attr('fill','rgba(255,255,255,0.65)').text(d.label);
-    svg.append('rect').attr('x', labelWidth).attr('y', y)
+
+    svg.append('text')
+      .attr('x', labelW - 4).attr('y', y + barH * 0.82)
+      .attr('text-anchor', 'end')
+      .attr('font-size', '0.65rem')
+      .attr('fill', 'rgba(255,255,255,0.6)')
+      .text(d.label.length > 15 ? d.label.slice(0, 14) + '…' : d.label);
+
+    svg.append('rect')
+      .attr('x', labelW).attr('y', y)
       .attr('height', barH).attr('width', 0)
-      .attr('fill', colorScale(d.group)).attr('opacity', 0.85)
-      .transition().duration(500).attr('width', xScale(d.value));
-    svg.append('text').attr('x', labelWidth + xScale(d.value) + 4)
-      .attr('y', y + barH * 0.78).attr('font-size','0.65rem')
-      .attr('fill','rgba(255,255,255,0.5)').text(d.value.toFixed(3));
-    yOffset += rowH;
+      .attr('fill', colorOf(d.group))
+      .attr('opacity', 0.85)
+      .transition().duration(500)
+      .attr('width', xScale(d.value));
+
+    svg.append('text')
+      .attr('x', labelW + xScale(d.value) + 4).attr('y', y + barH * 0.82)
+      .attr('font-size', '0.62rem')
+      .attr('fill', 'rgba(255,255,255,0.5)')
+      .text(d.value.toFixed(3));
+
+    y += 15;
   });
 }
 
