@@ -146,7 +146,8 @@ const CONFIG = {
       file:         'data/soe.geojson',
       type:         'dst',
       legendTitle:  'Decision score',
-      legendLabels: ['>0.75','0.5–0.75','0.25–0.5','0–0.25','-0.25–0','-0.5–-0.25','-0.75–-0.5','<-0.75'],
+      // Must match dst.decisionBreaks below, NOT the EcoLogic layer's -1..1 scale
+      legendLabels: ['0–.125','.125–.25','.25–.375','.375–.5','.5–.625','.625–.75','.75–.875','>.875'],
       legendHeadA:  'Restore',
       legendHeadB:  'Protect',
       strokeWeight: 0.5,
@@ -204,95 +205,104 @@ const CONFIG = {
   ],
 
   // ══════════════════════════════════════════════════════════
-  // DECISION SUPPORT TOOL (AHP)
+  // DECISION SUPPORT TOOL — swing weighting
+  //
+  // The user drags one criterion into the anchor slot (its worst-to-best
+  // swing becomes the reference, pinned at 100), then rates every other
+  // criterion 0-100 against it. Weights are raw / sum(raw).
+  //
+  // Each criterion is DECLARED, not computed. app.js derives the utility
+  // array and the swing shown in the panel from the same declaration, so
+  // the number a user rates is always the number the model uses.
+  //
+  //   label      display name
+  //   units      native units for the swing line ('t', 'MG', '' …)
+  //   direction  'lower' or 'higher' — which end of the raw scale is better
+  //   raw        f => native value, BEFORE transform or rescaling
+  //   transform  'log' | 'log1p' | 'sqrt' | omit — applied before scaling
+  //   scaling    how raw values map to [0,1]; omit to inherit dst.scaling
   // ══════════════════════════════════════════════════════════
   dst: {
     enabled: true,
 
-    // Field used to sort features before indexing (must be numeric, sequential)
+    // Field used to sort features before indexing (must be numeric, unique)
     sortField: 'hydroUnit',
 
-    // Color breaks and palettes for the decision score output layer
     decisionBreaks:   [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875],
     decisionPaletteA: ['#fff7ec','#fee8c8','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#990000'],
     decisionPaletteB: ['#fff7fb','#ece7f2','#d0d1e6','#a6bddb','#74a9cf','#3690c0','#0570b0','#034e7b'],
 
-    // Pairwise comparison criteria.
-    // Sliders compare criteria[i] vs criteria[i+1] for i = 0..n-2.
+    // ── Default scaling for every criterion ───────────────────
+    // Endpoints at the 5th/95th percentiles rather than min/max, so a single
+    // extreme catchment cannot define the swing everyone else is rated
+    // against. Units beyond the endpoints clamp to 0 or 1; the panel reports
+    // what share that is (~10% is expected at 5/95).
+    //
+    // Override per criterion with:
+    //   scaling: { method:'minmax' }
+    //   scaling: { method:'percentile', lower:0.10, upper:0.90 }
+    //   scaling: { method:'fixed', bounds:[-1,1] }          // raw units
+    //   scaling: { method:'ramp', points:[[0,0],[50,0.6],[200,1]] }
+    //
+    // 'ramp' is a piecewise-linear membership function in raw units — the
+    // same construct as a fuzzy logic ramp, with plateaus and thresholds.
+    scaling: { method: 'percentile', lower: 0.05, upper: 0.95 },
+
+    // ── Shared raw accessors ──────────────────────────────────
+    // Declared once so the displayed swing and the computed utility can
+    // never drift apart.
+    raw: {
+      logicRest:  f => f.properties.logicRest,
+      logicProt:  f => f.properties.logicProt,
+      effortRest: f => f.properties.effortRest,
+      effortProt: f => f.properties.effortProt,
+      diversity:  f => f.properties.diversity,
+      savEdge:    f => f.properties.savEdge,
+      forEdge:    f => f.properties.forEdge,
+    },
+
+    // ── Criteria ──────────────────────────────────────────────
     restoration: {
       criteria: [
-        'EcoLogic score',
-        'Restoration effort',
-        'Biodiversity',
-        'Savanna encroachment',
+        // EcoLogic is a tuned index on a meaningful absolute scale — keep it fixed
+        { label: 'EcoLogic score', direction: 'higher',
+          scaling: { method: 'fixed', bounds: [-1, 1] },
+          raw: f => CONFIG.dst.raw.logicRest(f) },
+
+        // Effort: higher raw = harder, so lower is better
+        { label: 'Restoration effort', direction: 'lower',
+          raw: f => CONFIG.dst.raw.effortRest(f) },
+
+        { label: 'Biodiversity', direction: 'higher',
+          raw: f => CONFIG.dst.raw.diversity(f) },
+
+        // More encroachment = more restoration opportunity
+        { label: 'Savanna encroachment', direction: 'higher',
+          raw: f => CONFIG.dst.raw.savEdge(f) },
       ]
     },
+
     protection: {
       criteria: [
-        'EcoLogic score',
-        'Protection effort',
-        'Biodiversity',
-        'Forest-savanna edge',
+        { label: 'EcoLogic score', direction: 'higher',
+          scaling: { method: 'fixed', bounds: [-1, 1] },
+          raw: f => CONFIG.dst.raw.logicProt(f) },
+
+        { label: 'Protection effort', direction: 'lower',
+          raw: f => CONFIG.dst.raw.effortProt(f) },
+
+        { label: 'Biodiversity', direction: 'higher',
+          raw: f => CONFIG.dst.raw.diversity(f) },
+
+        // More edge = more exposure to conversion, so more worth defending
+        { label: 'Forest-savanna edge', direction: 'higher',
+          raw: f => CONFIG.dst.raw.forEdge(f) },
       ]
-    },
-
-    // ──────────────────────────────────────────────────────────
-    // computeCriteriaArrays(features)
-    //
-    // Called once after GeoJSON loads. Returns utility scores in
-    // [0,1] for each criterion × feature combination.
-    //
-    // Expected fields on data/soe.geojson features:
-    //   logicRest    — EcoLogic restoration score (−1 to 1)
-    //   logicProt    — EcoLogic protection score (−1 to 1)
-    //   effortRest   — restoration effort index (raw; higher = harder)
-    //   effortProt   — protection effort index (raw; higher = harder)
-    //   diversity    — biodiversity score (species count or composite index)
-    //   savEdge      — savanna encroachment / edge density
-    //   forEdge      — forest-savanna edge density
-    //
-    // The utility() helper (from shared/app.js):
-    //   utility(array, inMin, inMax, outMin, outMax)
-    //   → rescales values from [inMin,inMax] to [outMin,outMax]
-    //   → set outMin=1, outMax=0 to INVERT (lower raw = higher utility)
-    // ──────────────────────────────────────────────────────────
-    computeCriteriaArrays(features) {
-
-      // ── Raw property arrays ───────────────────────────────
-      const logicRest  = features.map(f => f.properties.logicRest);
-      const logicProt  = features.map(f => f.properties.logicProt);
-      const effortRest = features.map(f => f.properties.effortRest);
-      const effortProt = features.map(f => f.properties.effortProt);
-      const diversity  = features.map(f => f.properties.diversity);
-      const savEdge    = features.map(f => f.properties.savEdge);
-      const forEdge    = features.map(f => f.properties.forEdge);
-
-      const minER = Math.min(...effortRest), maxER = Math.max(...effortRest);
-      const minEP = Math.min(...effortProt), maxEP = Math.max(...effortProt);
-      const minDv = Math.min(...diversity),  maxDv = Math.max(...diversity);
-      const minSE = Math.min(...savEdge),    maxSE = Math.max(...savEdge);
-      const minFE = Math.min(...forEdge),    maxFE = Math.max(...forEdge);
-
-      // ── Restoration utility arrays ────────────────────────
-      // Order must match restoration.criteria above!
-      const restoreArrays = [
-        utility(logicRest,  -1, 1,    0, 1),  // EcoLogic score
-        utility(effortRest, minER, maxER, 1, 0),  // Restoration effort (inverted)
-        utility(diversity,  minDv, maxDv, 0, 1),  // Biodiversity
-        utility(savEdge,    minSE, maxSE, 0, 1),  // Savanna encroachment
-      ];
-
-      // ── Protection utility arrays ─────────────────────────
-      // Order must match protection.criteria above!
-      const protectArrays = [
-        utility(logicProt,  -1, 1,    0, 1),  // EcoLogic score
-        utility(effortProt, minEP, maxEP, 1, 0),  // Protection effort (inverted)
-        utility(diversity,  minDv, maxDv, 0, 1),  // Biodiversity
-        utility(forEdge,    minFE, maxFE, 0, 1),  // Forest-savanna edge
-      ];
-
-      return { restoreArrays, protectArrays };
     }
+
+    // No computeCriteriaArrays() needed — app.js derives the utility arrays
+    // from the declarations above. Define one only for logic no declarative
+    // spec can express, and set dst.forceComputeFn: true to make it win.
   }
 
 };  // end CONFIG
