@@ -143,7 +143,10 @@ function initMap() {
 
   // DST panel toggle
   document.getElementById('dst-toggle')?.addEventListener('click', () => {
-    document.getElementById('dst-panel')?.classList.toggle('open');
+    const open = document.getElementById('dst-panel')?.classList.toggle('open');
+    // Lets fixed map controls slide clear of the sidebar instead of sitting under it
+    document.body.classList.toggle('dst-open', !!open);
+    document.getElementById('dst-toggle')?.setAttribute('aria-expanded', !!open);
   });
 
 
