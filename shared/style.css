@@ -871,3 +871,91 @@ html, body {
 }
 
 .sk-row b { font-weight: 500; color: rgba(255,255,255,0.7); }
+
+/* ── STEP 1 CARD ────────────────────────────────────────────────────────────── */
+.anchor-empty .ae-step,
+.step2-note .s2-step {
+  display: inline-block;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #1e2d28;
+  background: var(--gold);
+  border-radius: 2px;
+  padding: 0.12rem 0.4rem;
+  margin-bottom: 0.45rem;
+}
+
+.anchor-empty strong {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.92);
+  margin-bottom: 0.35rem;
+}
+
+.anchor-empty .ae-do {
+  display: block;
+  font-size: 0.71rem;
+  font-weight: 400;
+  color: var(--gold);
+  margin-top: 0.5rem;
+}
+
+/* ── STEP 2 BANNER ──────────────────────────────────────────────────────────── */
+.step2-note {
+  padding: 0.7rem 0.75rem 0.75rem;
+  margin: 0.75rem 0 0.9rem;
+  border-left: 2px solid rgba(196,150,58,0.5);
+  background: rgba(255,255,255,0.028);
+  border-radius: 0 var(--panel-radius) var(--panel-radius) 0;
+}
+
+.step2-note strong {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.4;
+  margin-bottom: 0.3rem;
+}
+
+.step2-note > span:not(.s2-step) {
+  display: block;
+  font-size: 0.71rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.55;
+}
+
+.step2-note em {
+  font-style: normal;
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.s2-scale {
+  list-style: none;
+  margin: 0.55rem 0 0;
+  padding: 0;
+}
+
+.s2-scale li {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.75;
+}
+
+.s2-scale b {
+  flex: 0 0 auto;
+  width: 26px;
+  text-align: right;
+  font-family: monospace;
+  font-weight: 500;
+  color: var(--gold);
+}

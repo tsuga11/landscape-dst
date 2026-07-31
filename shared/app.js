@@ -1085,8 +1085,8 @@ function buildDSTPanel() {
   panel.innerHTML = `
     <div class="dst-header">
       <h2>Decision Tool</h2>
-      <p>Set the <em>anchor</em> — the criterion whose worst-to-best swing moves
-         the decision most — then rate the others against it.</p>
+      <p>Rank and weight the criteria below. First pick the single upgrade
+         that matters most to you, then rate every other upgrade against it.</p>
       <details class="swing-key">
         <summary>
           <span class="sk-chip"><i class="sk-core"></i></span> How to read each row
@@ -1094,25 +1094,25 @@ function buildDSTPanel() {
         <div class="sk-body">
           <div class="sk-row">
             <span class="sk-lead">Swing</span>
-            <span>The line under the name gives the worst-to-best range in real
-                  units. <b>That is what you are rating.</b> Ask how much that
-                  movement is worth next to the anchor's.</span>
+            <span>The line under each name is the range actually on the table
+                  here — worst to best, in real units. <b>That is what you are
+                  rating.</b> A $34K → $2.5K saving is worth far more than a
+                  $34K → $30K one, though both are "most to least expensive".</span>
           </div>
           <div class="sk-row">
             <span class="sk-chip"><i class="sk-span" style="left:8%;width:84%"></i><i class="sk-core" style="left:26%;width:48%"></i></span>
             <span>The bar describes the data, not the swing. Gold marks where the
-                  middle 80% of units fall — a narrow band means few units are
-                  separated. That is not a reason to lower the rating; the model
-                  already accounts for it.</span>
+                  middle 80% of units fall — a narrow band means few units differ.
+                  That is not a reason to rate lower; the model already accounts
+                  for it.</span>
           </div>
           <div class="sk-row">
             <span class="sk-chip"><i class="sk-span trunc" style="left:22%;width:40%"></i><i class="sk-core" style="left:30%;width:24%"></i></span>
-            <span>Red means the values never reach the ends of their scale, so the
-                  swing above is wider than anything that occurs here. Narrow the
-                  scale in the config rather than shading the slider down.</span>
+            <span>Red means values never reach the ends of their scale, so the
+                  swing shown is wider than anything that occurs here.</span>
           </div>
-          <p class="sk-note">Criteria sharing units (two costs, say) should be
-             rated in proportion to their ranges.</p>
+          <p class="sk-note">Criteria in the same units — two costs, say — should
+             be rated in proportion to their ranges. A dollar is a dollar.</p>
         </div>
       </details>
     </div>
@@ -1218,15 +1218,38 @@ function renderSwingSet(key) {
   if (s.anchor === null) {
     slot.innerHTML = `
       <div class="anchor-empty">
-        <strong>Set the anchor</strong>
-        <span>Drag the criterion whose full range across these units moves the
-              decision most. It sets the 100-point scale.</span>
+        <span class="ae-step">Step 1</span>
+        <strong>Which single improvement would you take first?</strong>
+        <span>Picture a unit that scores worst on everything. You can upgrade
+              exactly one criterion to its best value shown below. Which upgrade
+              would you choose?</span>
+        <span class="ae-do">Drag it here. It becomes your reference, worth 100.</span>
       </div>`;
   } else {
     slot.appendChild(makeSwingRow(key, s.anchor, true));
   }
 
   list.innerHTML = '';
+
+  if (s.anchor !== null) {
+    const note = document.createElement('div');
+    note.className = 'step2-note';
+    note.innerHTML = `
+      <span class="s2-step">Step 2</span>
+      <strong>Rate each remaining upgrade against your reference.</strong>
+      <span>If two units were identical except on this one criterion, and you
+            moved from its worse value to its better one — how much is that
+            worth next to
+            <em>${critLabel(key, s.anchor)}</em>?</span>
+      <ul class="s2-scale">
+        <li><b>100</b> just as valuable as the reference</li>
+        <li><b>50</b> half as valuable</li>
+        <li><b>10</b> worth a tenth</li>
+        <li><b>0</b> makes no difference to your choice</li>
+      </ul>`;
+    list.appendChild(note);
+  }
+
   s.order.filter(i => i !== s.anchor)
          .forEach(i => list.appendChild(makeSwingRow(key, i, false)));
 
@@ -1344,7 +1367,7 @@ function onSwingPointerMove(e) {
   slot.classList.toggle('drop-active', overSlot);
   if (overSlot || _drag.fromAnchor) return;
 
-  const rows = [...list.children].filter(r => r !== _drag.row);
+  const rows = [...list.children].filter(r => r !== _drag.row && r.classList.contains('swing-row'));
   let before = null;
   for (const r of rows) {
     const b = r.getBoundingClientRect();
@@ -1367,7 +1390,8 @@ function onSwingPointerUp(e) {
 
   const s = _swing[key];
   const oldAnchor = s.anchor;
-  let pool = [...list.children].map(r => +r.dataset.idx);
+  let pool = [...list.children].filter(r => r.classList.contains('swing-row'))
+                               .map(r => +r.dataset.idx);
 
   if (onSlot) {
     // Promote. The outgoing anchor keeps its 100 and rejoins the pool, unlocked.
@@ -1432,10 +1456,12 @@ function flipSwingReorder(container, mutate) {
   if (!container) { mutate(); return; }
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const before = new Map([...container.children]
+    .filter(el => el.classList.contains('swing-row'))
     .map(el => [el.dataset.idx, el.getBoundingClientRect().top]));
   mutate();
   if (reduce) return;
   [...container.children].forEach(el => {
+    if (!el.classList.contains('swing-row')) return;
     const y0 = before.get(el.dataset.idx);
     if (y0 == null) return;
     const dy = y0 - el.getBoundingClientRect().top;
