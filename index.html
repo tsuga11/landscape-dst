@@ -2642,32 +2642,7 @@ PHOTOS SECTION
 
   
       <div class="photos-bento-wrap" id="photos-bento-wrap">
-        <div class="bento-grid-erc">
-          <div class="bento-cell span-wide">
-            <div class="photo-frame-erc"><img src="assets/wildfire-on-mountain_1600.jpg" alt="Wildfire panorama"></div>
-          </div>
-          <div class="bento-cell span-tall">
-            <div class="photo-frame-erc"><img src="assets/hamakua.jpg" alt="Hamakua"></div>
-          </div>
-          <div class="bento-cell">
-            <div class="photo-frame-erc"><img src="assets/tahoe.jpg" alt="Tahoe"></div>
-          </div>
-          <div class="bento-cell">
-            <div class="photo-frame-erc"><img src="assets/bw_burn.jpg" alt="Burn"></div>
-          </div>
-          <div class="bento-cell span-wide">
-            <div class="photo-frame-erc"><img src="assets/Babeldaob-mosaic.jpg" alt="Babeldaob"></div>
-          </div>
-          <div class="bento-cell span-tall">
-            <div class="photo-frame-erc"><img src="assets/washington.jpeg" alt="Washington"></div>
-          </div>
-          <div class="bento-cell">
-            <div class="photo-frame-erc"><img src="assets/hamakua.jpg" alt="Forest"></div>
-          </div>
-          <div class="bento-cell">
-            <div class="photo-frame-erc"><img src="assets/tahoe.jpg" alt="Sierra"></div>
-          </div>
-        </div>
+        <div class="bento-grid-erc" id="bento-grid"></div>
       </div>
       
       <div class="photos-toggle" id="photos-toggle-area">
@@ -3320,6 +3295,12 @@ PHOTOS SECTION
     .then(r => r.json())
     .then(photos => {
       const grid = document.getElementById('bento-grid');
+
+      // ── Shuffle on every load ─────────────────────────────
+      for (let i = photos.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [photos[i], photos[j]] = [photos[j], photos[i]];
+      }
 
       Promise.all(photos.map(src => new Promise(resolve => {
         const img  = new Image();
