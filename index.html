@@ -40,12 +40,12 @@
       --section-right-margin: 3.5rem;
       /* ← new — clears the nav dots */
       --section-radius: 10px;
-      --type-eyebrow:  0.7rem;
-      --type-hero:     clamp(3rem, 6vw, 5.5rem);
-      --type-heading:  clamp(2rem, 3.8vw, 3.2rem);
-      --type-subhead:  clamp(1.4rem, 2.2vw, 1.9rem);
-      --type-body:     0.92rem;
-      --type-small:    0.75rem;
+      --type-eyebrow: 0.7rem;
+      --type-hero: clamp(3rem, 6vw, 5.5rem);
+      --type-heading: clamp(2rem, 3.8vw, 3.2rem);
+      --type-subhead: clamp(1.4rem, 2.2vw, 1.9rem);
+      --type-body: 0.92rem;
+      --type-small: 0.75rem;
       --letter-eyebrow: 0.2em;
 
     }
@@ -62,7 +62,11 @@
       min-height: 100vh;
     }
 
-    #about { margin-top: 100vh; }  /* About is now first section */
+    #about {
+      margin-top: 100vh;
+    }
+
+    /* About is now first section */
 
 
 
@@ -134,16 +138,15 @@
     .hero-bg-secondary::after {
       content: '';
       position: absolute;
-      z-index: 1;   /* ← was 0, now above .hero at z-index 0 */
+      z-index: 1;
+      /* ← was 0, now above .hero at z-index 0 */
       inset: 0;
-      background: linear-gradient(
-        135deg,
-        rgba(80, 85, 95, 0.92) 0%,
-        rgba(90, 90, 100, 0.80) 40%,
-        rgba(110, 105, 100, 0.40) 70%,
-        rgba(120, 110, 95, 0.08) 100%
-      );
-    }    
+      background: linear-gradient(135deg,
+          rgba(80, 85, 95, 0.92) 0%,
+          rgba(90, 90, 100, 0.80) 40%,
+          rgba(110, 105, 100, 0.40) 70%,
+          rgba(120, 110, 95, 0.08) 100%);
+    }
 
     .hero-nav {
       position: fixed;
@@ -171,7 +174,7 @@
     .hero-nav.transparent .site-name {
       opacity: 0;
       pointer-events: none;
-    }    
+    }
 
     .hero-nav a {
       color: rgba(255, 255, 255, 0.5);
@@ -359,14 +362,17 @@
 
     .carousel-wrap {
       position: relative;
-      padding: 1.5rem;                       /* ← space around card grid */
-      background: rgba(255,255,255,0.08);    /* ← subtle container tint */
+      padding: 1.5rem;
+      /* ← space around card grid */
+      background: rgba(255, 255, 255, 0.08);
+      /* ← subtle container tint */
       border-radius: 8px;
     }
 
     /* Cream tint on Tools since background is already cream */
     .tools-section .carousel-wrap {
-      background: rgba(27,58,47,0.05);       /* ← green tint on cream bg */
+      background: rgba(27, 58, 47, 0.05);
+      /* ← green tint on cream bg */
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -389,7 +395,7 @@
       min-height: 120vh;
       display: flex;
       flex-direction: column;
-      justify-content: center;        
+      justify-content: center;
 
     }
 
@@ -398,7 +404,7 @@
       border-color: rgba(100, 80, 50, 0.2);
     }
 
- 
+
 
     /* ══════════════════════════════════════════════════════════
     SPLIT LAYOUT
@@ -460,9 +466,9 @@
 
     .globe-section .section-sub {
       color: var(--text-mid);
-    }   
-    
-    
+    }
+
+
     .globe-zoom-controls {
       display: flex;
       justify-content: flex-end;
@@ -494,7 +500,7 @@
       box-shadow:
         inset 3px 3px 7px rgba(130, 112, 88, 0.32),
         inset -3px -3px 7px rgba(255, 255, 255, 0.85);
-    }    
+    }
 
     /*
     .split-right {
@@ -529,7 +535,7 @@
     .pd-bio p {
       font-size: var(--type-body);
       line-height: 1.75;
-    }    
+    }
 
     /* Animate text and graphics in specific sections*/
     .section-animate {
@@ -538,17 +544,28 @@
       transition: opacity 0.65s ease, transform 0.65s ease;
     }
 
-    .section-animate.delay-1 { transition-delay: 0.12s; }
-    .section-animate.delay-2 { transition-delay: 0.24s; }
-    .section-animate.delay-3 { transition-delay: 0.38s; }
-    .section-animate.delay-4 { transition-delay: 0.52s; }
+    .section-animate.delay-1 {
+      transition-delay: 0.12s;
+    }
+
+    .section-animate.delay-2 {
+      transition-delay: 0.24s;
+    }
+
+    .section-animate.delay-3 {
+      transition-delay: 0.38s;
+    }
+
+    .section-animate.delay-4 {
+      transition-delay: 0.52s;
+    }
 
     .section-animate.in-view {
       opacity: 1;
       transform: translateY(0);
-    }   
-    
-    
+    }
+
+
 
 
     /* ── Stacked section layout ──────────────────────────────── */
@@ -566,8 +583,13 @@
       max-width: 680px;
     }
 
-    .stack-header .section-eyebrow { margin-bottom: 0.5rem; }
-    .stack-header .section-title   { margin-bottom: 0.75rem; }
+    .stack-header .section-eyebrow {
+      margin-bottom: 0.5rem;
+    }
+
+    .stack-header .section-title {
+      margin-bottom: 0.75rem;
+    }
 
     /* ── Card grid — no container, full width ────────────────── */
     .card-grid.layout-carousel {
@@ -583,24 +605,31 @@
       cursor: grab;
     }
 
-    .card-grid.layout-carousel:active  { cursor: grabbing; }
-    .card-grid.layout-carousel::-webkit-scrollbar { display: none; }
+    .card-grid.layout-carousel:active {
+      cursor: grabbing;
+    }
+
+    .card-grid.layout-carousel::-webkit-scrollbar {
+      display: none;
+    }
 
     /* ── Identical card size ─────────────────────────────────── */
     .card-grid.layout-carousel .project-card {
       flex: 0 0 280px;
       max-width: 280px;
       min-width: 0;
-      height: 460px;       /* ← fixed height — same on blog and tools */
+      height: 460px;
+      /* ← fixed height — same on blog and tools */
       scroll-snap-align: start;
-    }    
+    }
 
     /* ══════════════════════════════════════════════════════════
     CARD GRID
     ══════════════════════════════════════════════════════════ */
     .card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));  /* ← was 240px */
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      /* ← was 240px */
       gap: 1.25rem;
     }
 
@@ -628,28 +657,75 @@
       -webkit-backdrop-filter: none;
     }
 
-    .project-card.visible       { opacity: 1; transform: translateY(0); }
-    .project-card.wip.visible   { opacity: 0.72; }
-    .project-card.wip           { cursor: default; }
+    .project-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .project-card.wip.visible {
+      opacity: 0.72;
+    }
+
+    .project-card.wip {
+      cursor: default;
+    }
 
     /* ── Tools — LIGHT neumorphism (cream background) ─────── */
     .tools-section .project-card {
       background: var(--cream);
       box-shadow:
-         8px 8px 20px rgba(130, 112, 88, 0.52),
+        8px 8px 20px rgba(130, 112, 88, 0.52),
         -8px -8px 20px rgba(255, 255, 255, 0.88);
     }
 
     .tools-section .project-card:not(.wip):hover {
       box-shadow:
-         inset 5px 5px 12px rgba(130, 112, 88, 0.45),
-         inset -5px -5px 12px rgba(255, 255, 255, 0.85);
+        inset 5px 5px 12px rgba(130, 112, 88, 0.45),
+        inset -5px -5px 12px rgba(255, 255, 255, 0.85);
       transform: none;
     }
 
-    .tools-section .project-card.wip:hover { transform: none; }
+    .tools-section .project-card.wip:hover {
+      transform: none;
+    }
 
     /* ── Blog — DARK neumorphism (glass dark background) ─────── */
+    /*
+    #blog {
+      background: #1a1a14;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }*/
+    #blog {
+      background-color: #0a0806;              /* fallback if image fails */
+      background-image: url('assets/three_sisters_1.jpg');  /* ← swap image here */
+      background-size: cover;
+      background-position: center;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      position: relative;
+    }
+
+    /* Dark overlay — prevents image competing with cards */
+    #blog::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 6, 4, 0.72);   /* ← adjust opacity to taste */
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Lift content above overlay */
+    #blog .section-stack {
+      position: relative;
+      z-index: 1;
+    }
+
+    #blog .section-eyebrow { color: var(--gold); }
+    #blog .section-title   { color: var(--cream); }
+    #blog .section-sub     { color: rgba(255,255,255,0.5); }
+
     #blog .project-card {
       background: rgba(32, 28, 24, 0.88);
       backdrop-filter: blur(10px);
@@ -666,13 +742,27 @@
       transform: none;
     }
 
-    #blog .project-card.wip:hover { transform: none; }
+    #blog .project-card.wip:hover {
+      transform: none;
+    }
 
     /* Text adjustments for dark blog cards */
-    #blog .card-title  { color: rgba(255, 255, 255, 0.92); }
-    #blog .card-region { color: var(--gold-light); }
-    #blog .card-desc   { color: rgba(255, 255, 255, 0.58); }
-    #blog .card-meta   { color: var(--gold); font-weight: 500; }
+    #blog .card-title {
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    #blog .card-region {
+      color: var(--gold-light);
+    }
+
+    #blog .card-desc {
+      color: rgba(255, 255, 255, 0.58);
+    }
+
+    #blog .card-meta {
+      color: var(--gold);
+      font-weight: 500;
+    }
 
 
     /* ══════════════════════════════════════════════════════════
@@ -695,8 +785,8 @@
       text-decoration: none;
       align-self: flex-start;
       box-shadow:
-      4px 4px 10px rgba(0, 0, 0, 0.32),
-      -2px -2px 6px rgba(255, 255, 255, 0.1);
+        4px 4px 10px rgba(0, 0, 0, 0.32),
+        -2px -2px 6px rgba(255, 255, 255, 0.1);
       transition: box-shadow 0.25s ease, background 0.2s ease;
       cursor: pointer;
     }
@@ -704,8 +794,8 @@
     .card-link:hover {
       background: var(--green-light);
       box-shadow:
-      inset 3px 3px 7px rgba(0, 0, 0, 0.28),
-      inset -2px -2px 5px rgba(255, 255, 255, 0.08);
+        inset 3px 3px 7px rgba(0, 0, 0, 0.28),
+        inset -2px -2px 5px rgba(255, 255, 255, 0.08);
     }
 
     /* Disabled — tools (light bg) */
@@ -715,7 +805,7 @@
       pointer-events: none;
       box-shadow:
         4px 4px 10px rgba(130, 112, 88, 0.38),
-       -4px -4px 10px rgba(255, 255, 255, 0.88);
+        -4px -4px 10px rgba(255, 255, 255, 0.88);
     }
 
     /* Disabled — blog (dark bg) */
@@ -724,25 +814,33 @@
       color: rgba(255, 255, 255, 0.32);
       pointer-events: none;
       box-shadow:
-      inset 2px 2px 6px rgba(0, 0, 0, 0.4),
-      inset -1px -1px 4px rgba(255, 255, 255, 0.03);
+        inset 2px 2px 6px rgba(0, 0, 0, 0.4),
+        inset -1px -1px 4px rgba(255, 255, 255, 0.03);
     }
 
     /* Badges — neumorphic pill */
     .card-badge {
       position: absolute;
-      top: 10px; right: 10px;
+      top: 10px;
+      right: 10px;
       padding: 0.22rem 0.6rem;
       border-radius: 20px;
       font-size: 0.6rem;
       font-weight: 600;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      box-shadow: 2px 2px 6px rgba(0,0,0,0.2), -1px -1px 4px rgba(255,255,255,0.15);
+      box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2), -1px -1px 4px rgba(255, 255, 255, 0.15);
     }
 
-    .badge-ready { background: var(--gold); color: #fff; }
-    .badge-wip   { background: rgba(30,30,30,0.6); color: rgba(255,255,255,0.8); }
+    .badge-ready {
+      background: var(--gold);
+      color: #fff;
+    }
+
+    .badge-wip {
+      background: rgba(30, 30, 30, 0.6);
+      color: rgba(255, 255, 255, 0.8);
+    }
 
     /* Card meta (dates, updated text) */
     .card-meta {
@@ -753,13 +851,16 @@
       margin-bottom: 0.6rem;
     }
 
-    #blog .card-meta { color: var(--gold); }    
+    #blog .card-meta {
+      color: var(--gold);
+    }
 
 
 
 
     .card-img-wrap img {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       transition: transform 0.4s ease;
       filter: brightness(0.85);
@@ -768,12 +869,15 @@
       pointer-events: none;
     }
 
-    .project-card:not(.wip):hover .card-img-wrap img { transform: scale(1.04); }
+    .project-card:not(.wip):hover .card-img-wrap img {
+      transform: scale(1.04);
+    }
 
     /* ── JS-driven layout classes (applied by updateCarouselLayout()) ── */
     .card-grid.layout-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 360px)); /* fixed max width per card */
+      grid-template-columns: repeat(2, minmax(0, 360px));
+      /* fixed max width per card */
       gap: 1.5rem;
       overflow: hidden;
       cursor: default;
@@ -792,8 +896,13 @@
       cursor: grab;
     }
 
-    .card-grid.layout-carousel:active { cursor: grabbing; }
-    .card-grid.layout-carousel::-webkit-scrollbar { display: none; }
+    .card-grid.layout-carousel:active {
+      cursor: grabbing;
+    }
+
+    .card-grid.layout-carousel::-webkit-scrollbar {
+      display: none;
+    }
 
     /* Desktop: multiple cards visible at fixed width */
     .card-grid.layout-carousel .project-card {
@@ -805,8 +914,13 @@
 
 
     /* ── Dots: hidden unless carousel ────────────────────────── */
-    .carousel-dots { display: none; }
-    .split-right.is-carousel .carousel-dots { display: flex; }    
+    .carousel-dots {
+      display: none;
+    }
+
+    .split-right.is-carousel .carousel-dots {
+      display: flex;
+    }
 
     .card-img-wrap {
       height: 160px;
@@ -928,6 +1042,7 @@
         inset 4px 4px 9px rgba(0, 0, 0, 0.3),
         inset -2px -2px 6px rgba(255, 255, 255, 0.05);
     }
+
     .scholar-btn {
       display: inline-flex;
       align-items: center;
@@ -970,9 +1085,17 @@
 
 
     /* Fix text colors on cream background */
-    .tools-section .section-title   { color: var(--green-deep); }
-    .tools-section .section-eyebrow { color: var(--green-light); }
-    .tools-section .section-sub     { color: var(--text-mid); }
+    .tools-section .section-title {
+      color: var(--green-deep);
+    }
+
+    .tools-section .section-eyebrow {
+      color: var(--green-light);
+    }
+
+    .tools-section .section-sub {
+      color: var(--text-mid);
+    }
 
 
 
@@ -982,8 +1105,10 @@
     .globe-section .section-stack {
       flex-direction: row;
       align-items: stretch;
-      padding: 3rem 2rem 3rem 4rem;  /* ← less right padding */
-      gap: 1rem;                      /* ← tighter gap between text and globe */
+      padding: 3rem 2rem 3rem 4rem;
+      /* ← less right padding */
+      gap: 1rem;
+      /* ← tighter gap between text and globe */
       min-height: 80vh;
       position: relative;
     }
@@ -993,11 +1118,14 @@
       max-width: 260px;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;   /* push title to bottom */
+      justify-content: flex-end;
+      /* push title to bottom */
       padding-bottom: 3rem;
       position: relative;
-      z-index: 5;           /* above the WebGL canvas */
-      isolation: isolate;         /* sits above the WebGL canvas */
+      z-index: 5;
+      /* above the WebGL canvas */
+      isolation: isolate;
+      /* sits above the WebGL canvas */
     }
 
     /* ── Globe wrapper — the flex child ─────────────────────── */
@@ -1025,13 +1153,16 @@
       margin: 0 auto;
       height: 18px;
       border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(90,70,45,0.28) 0%, transparent 70%);
+      background: radial-gradient(ellipse, rgba(90, 70, 45, 0.28) 0%, transparent 70%);
       pointer-events: none;
-      width: 70%; /* fallback */
+      width: 70%;
+      /* fallback */
     }
 
 
-    .globe-container:active { cursor: grabbing; }
+    .globe-container:active {
+      cursor: grabbing;
+    }
 
     .globe-hint {
       display: block;
@@ -1046,8 +1177,13 @@
     }
 
     /* Hint variants */
-    .desktop-hint { display: block; }
-    .mobile-hint  { display: none; }
+    .desktop-hint {
+      display: block;
+    }
+
+    .mobile-hint {
+      display: none;
+    }
 
     @media (max-width: 900px) {
       .globe-section .section-stack {
@@ -1079,9 +1215,119 @@
         margin: 0 auto;
       }
 
-      .desktop-hint { display: none; }
-      .mobile-hint  { display: block; }      
+      .desktop-hint {
+        display: none;
+      }
+
+      .mobile-hint {
+        display: block;
+      }
     }
+
+
+
+
+/* ══════════════════════════════════════════════════════════
+PHOTOS SECTION
+══════════════════════════════════════════════════════════ */
+  #photos .section-stack { flex-direction: column; gap: 1.5rem; }
+  #photos .stack-header  { max-width: none; }
+  #photos .section-eyebrow { color: var(--gold); }
+  #photos .section-title   { color: rgba(255,255,255,0.92); }
+  #photos .section-sub     { color: rgba(255,255,255,0.5); }
+
+
+
+  .photo-frame-erc {
+    position: relative; border-radius: 14px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+    background: rgba(255,255,255,0.04);
+    width: 100%; height: 100%;
+  }
+  .photo-frame-erc img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.5s ease, filter 0.5s ease;
+    -webkit-user-drag: none; pointer-events: none;
+  }
+  .photo-frame-erc::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 55%);
+    pointer-events: none; z-index: 2;
+  }
+  .photo-frame-erc::after {
+    content: ''; position: absolute;
+    top: 0; left: -150%; width: 60%; height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-25deg); pointer-events: none; z-index: 3; transition: none;
+  }
+  .photo-frame-erc:hover img { transform: scale(1.04); filter: brightness(1.08) contrast(1.02); }
+  .photo-frame-erc:hover::after { left: 150%; transition: left 0.85s ease-in-out; }
+
+  /* Collapsed bento — shows ~2 rows */
+  .photos-bento-wrap {
+    position: relative;
+    max-height: 460px;
+    overflow: hidden;
+    transition: max-height 0.7s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* Fade at bottom when collapsed */
+  .photos-bento-wrap:not(.expanded)::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, rgba(8,6,4,0.95));
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .photos-bento-wrap.expanded { max-height: 3000px; }
+
+  .bento-grid-erc {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 220px; grid-auto-flow: dense; gap: 14px;
+  }
+  .bento-cell { border-radius: 14px; overflow: hidden; }
+  .bento-cell.span-wide { grid-column: span 2; }
+  .bento-cell.span-tall { grid-row: span 2; }
+
+  .photos-toggle { text-align: center; margin-top: 1.25rem; }
+  .photos-expand-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.6);
+    width: 42px; height: 42px; border-radius: 50%;
+    cursor: pointer; display: inline-flex;
+    align-items: center; justify-content: center;
+    transition: all 0.25s ease;
+  }
+  .photos-expand-btn:hover {
+    background: rgba(196,150,58,0.15);
+    border-color: rgba(196,150,58,0.5);
+    color: var(--gold-light);
+  }
+  .photos-expand-btn svg { transition: transform 0.45s cubic-bezier(0.4,0,0.2,1); }
+  .photos-expand-btn.expanded svg { transform: rotate(180deg); }
+
+  @media (max-width: 900px) {
+    .photo-strip-item { flex: 0 0 240px; height: 170px; }
+    .bento-grid-erc { grid-template-columns: repeat(2,1fr); grid-auto-rows: 180px; }
+    .photos-bento-wrap {
+      max-height: 195px;  /* ~1 row at 180px + gap */
+    }
+  }
+  @media (max-width: 480px) {
+    .bento-grid-erc { grid-template-columns: 1fr; grid-auto-rows: 200px; }
+    .bento-cell.span-wide { grid-column: span 1; }
+    .bento-cell.span-tall { grid-row: span 1; }
+    .photos-bento-wrap {
+      max-height: 215px;  /* ~1 row at 200px + gap */
+      border-radius: 1rem;
+    }
+  }    
 
 
     /* ══════════════════════════════════════════════════════════
@@ -1117,13 +1363,13 @@
       font-weight: 600;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(240,232,208,0.8);
+      color: rgba(240, 232, 208, 0.8);
       margin-bottom: 0.4rem;
     }
 
     .footer-tagline {
       font-size: 0.72rem;
-      color: rgba(240,232,208,0.35);
+      color: rgba(240, 232, 208, 0.35);
       letter-spacing: 0.12em;
     }
 
@@ -1139,17 +1385,19 @@
       font-weight: 500;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(240,232,208,0.45);
+      color: rgba(240, 232, 208, 0.45);
       text-decoration: none;
       transition: color 0.2s;
     }
 
-    .footer-nav a:hover { color: var(--gold-light); }
+    .footer-nav a:hover {
+      color: var(--gold-light);
+    }
 
     .footer-rule {
       width: 100%;
       height: 1px;
-      background: rgba(240,232,208,0.1);
+      background: rgba(240, 232, 208, 0.1);
       margin-bottom: 1.5rem;
     }
 
@@ -1164,11 +1412,13 @@
     .footer-bottom p,
     .footer-bottom a {
       font-size: 0.75rem;
-      color: rgba(240,232,208,0.3);
+      color: rgba(240, 232, 208, 0.3);
       text-decoration: none;
     }
 
-    .footer-bottom a:hover { color: var(--gold-light); }
+    .footer-bottom a:hover {
+      color: var(--gold-light);
+    }
 
 
 
@@ -1177,12 +1427,14 @@
     .hero-nav {
       display: flex;
       align-items: center;
-      justify-content: space-between;  /* name left, hamburger right */
+      justify-content: space-between;
+      /* name left, hamburger right */
     }
 
     /* ── Hamburger button ────────────────────────────────────── */
     .nav-hamburger {
-      display: none;          /* hidden while nav is transparent */
+      display: none;
+      /* hidden while nav is transparent */
       background: none;
       border: none;
       cursor: pointer;
@@ -1195,7 +1447,7 @@
 
     .nav-hamburger:hover {
       color: #fff;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255, 255, 255, 0.08);
     }
 
     /* Show hamburger only when dark nav bar is visible */
@@ -1208,23 +1460,26 @@
     /* ── Dropdown menu ───────────────────────────────────────── */
     .nav-dropdown {
       position: fixed;
-      top: 64px;                        /* sits below the hero-nav bar */
+      top: 64px;
+      /* sits below the hero-nav bar */
       right: 0;
       z-index: 2999;
       background: rgba(10, 8, 6, 0.96);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      border-left: 1px solid rgba(255,255,255,0.07);
-      border-bottom: 1px solid rgba(255,255,255,0.07);
+      border-left: 1px solid rgba(255, 255, 255, 0.07);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
       border-radius: 0 0 0 12px;
       min-width: 200px;
       padding: 0.5rem 0;
       display: none;
       flex-direction: column;
-      box-shadow: -4px 4px 24px rgba(0,0,0,0.4);
+      box-shadow: -4px 4px 24px rgba(0, 0, 0, 0.4);
     }
 
-    .nav-dropdown.open { display: flex; }
+    .nav-dropdown.open {
+      display: flex;
+    }
 
     .nav-drop-link {
       padding: 0.8rem 1.75rem;
@@ -1240,13 +1495,14 @@
 
     .nav-drop-link:hover {
       color: var(--gold-light);
-      background: rgba(255,255,255,0.04);
+      background: rgba(255, 255, 255, 0.04);
       border-left-color: var(--gold);
     }
 
 
     .carousel-dots {
-      display: none;  /* hidden on desktop */
+      display: none;
+      /* hidden on desktop */
       justify-content: center;
       gap: 6px;
       padding: 0.75rem 0 0.25rem;
@@ -1256,7 +1512,7 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.25);
+      background: rgba(255, 255, 255, 0.25);
       border: none;
       cursor: pointer;
       padding: 0;
@@ -1267,7 +1523,7 @@
     .carousel-dot.active {
       background: var(--gold);
       transform: scale(1.3);
-    }    
+    }
 
 
 
@@ -1284,13 +1540,16 @@
     }
 
     .hero-bg-secondary img {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       filter: brightness(0.55) blur(1px);
       opacity: 0.65;
     }
 
-    .hero-bg-secondary.visible { opacity: 1; }
+    .hero-bg-secondary.visible {
+      opacity: 1;
+    }
 
     /* ══════════════════════════════════════════════════════════
       PEOPLE SECTION
@@ -1306,7 +1565,7 @@
 
     .people-header {
       padding: 0 4rem 2rem;
-      border-bottom: 1px solid rgba(27,58,47,0.1);
+      border-bottom: 1px solid rgba(27, 58, 47, 0.1);
       margin-bottom: 2rem;
     }
 
@@ -1339,12 +1598,22 @@
       scroll-snap-type: x mandatory;
       padding-bottom: 1.25rem;
       scrollbar-width: thin;
-      scrollbar-color: rgba(27,58,47,0.2) rgba(0,0,0,0.04);
+      scrollbar-color: rgba(27, 58, 47, 0.2) rgba(0, 0, 0, 0.04);
     }
 
-    .people-strip::-webkit-scrollbar        { height: 3px; }
-    .people-strip::-webkit-scrollbar-track  { background: rgba(0,0,0,0.05); border-radius: 2px; }
-    .people-strip::-webkit-scrollbar-thumb  { background: rgba(27,58,47,0.25); border-radius: 2px; }
+    .people-strip::-webkit-scrollbar {
+      height: 3px;
+    }
+
+    .people-strip::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 2px;
+    }
+
+    .people-strip::-webkit-scrollbar-thumb {
+      background: rgba(27, 58, 47, 0.25);
+      border-radius: 2px;
+    }
 
     .people-avatar-btn {
       display: flex;
@@ -1361,10 +1630,13 @@
       transition: background 0.2s;
     }
 
-    .people-avatar-btn:hover { background: rgba(27,58,47,0.05); }
+    .people-avatar-btn:hover {
+      background: rgba(27, 58, 47, 0.05);
+    }
 
     .people-avatar-wrap {
-      width: 72px; height: 72px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       overflow: hidden;
       border: 2.5px solid transparent;
@@ -1377,7 +1649,8 @@
     }
 
     .people-avatar-wrap img {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       object-position: center top;
     }
@@ -1406,20 +1679,28 @@
       transition: opacity 0.3s ease;
     }
 
-    .people-detail.fading { opacity: 0; }
+    .people-detail.fading {
+      opacity: 0;
+    }
 
-    .people-detail-photo { flex-shrink: 0; }
+    .people-detail-photo {
+      flex-shrink: 0;
+    }
 
     .people-detail-photo img {
-      width: 200px; height: 200px;
+      width: 200px;
+      height: 200px;
       border-radius: 50%;
       object-fit: cover;
       object-position: center top;
-      box-shadow: 0 6px 30px rgba(0,0,0,0.12);
+      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
       border: 4px solid #fff;
     }
 
-    .people-detail-info { flex: 1; min-width: 0; }
+    .people-detail-info {
+      flex: 1;
+      min-width: 0;
+    }
 
     /* The neumorphic raised card */
     .pd-card {
@@ -1427,11 +1708,13 @@
       background: var(--cream);
       border-radius: 20px;
       box-shadow:
-         10px 10px 28px rgba(130, 112, 88, 0.5),
-         -10px -10px 28px rgba(255, 255, 255, 0.88);
+        10px 10px 28px rgba(130, 112, 88, 0.5),
+        -10px -10px 28px rgba(255, 255, 255, 0.88);
       width: 100%;
-      margin-left: 60px;              /* room for avatar overlap */
-      padding: 2rem 2.5rem 2rem 110px; /* left padding clears avatar */
+      margin-left: 60px;
+      /* room for avatar overlap */
+      padding: 2rem 2.5rem 2rem 110px;
+      /* left padding clears avatar */
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -1440,12 +1723,13 @@
     /* ── Desktop: avatar overlaps left edge (unchanged feel) ── */
     .pd-top {
       display: block;
-      padding-left: 60px; /* clears the absolute avatar */
+      padding-left: 60px;
+      /* clears the absolute avatar */
     }
 
     .pd-card-header {
       width: 100%;
-    }    
+    }
 
     /* Photo — overlaps left edge, vertically centered in upper card */
     .pd-avatar-wrap {
@@ -1459,12 +1743,13 @@
       border: 3px solid var(--cream);
       box-shadow:
         6px 6px 14px rgba(130, 112, 88, 0.42),
-       -6px -6px 14px rgba(255, 255, 255, 0.88);
+        -6px -6px 14px rgba(255, 255, 255, 0.88);
       flex-shrink: 0;
     }
 
     .pd-avatar-wrap img {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       object-position: center top;
     }
@@ -1519,10 +1804,59 @@
       max-height: none;
       overflow-y: visible;
       scrollbar-width: thin;
-      scrollbar-color: rgba(163,143,110,0.3) transparent;
+      scrollbar-color: rgba(163, 143, 110, 0.3) transparent;
     }
 
-    .pd-bio p + p { margin-top: 0.75rem; }
+    .pd-bio p+p {
+      margin-top: 0.75rem;
+    }
+
+/* ── Bio expand (mobile only) ───────────────────────────── */
+.pd-bio-wrap {
+  position: relative;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.bio-expand-btn { display: none; }
+
+@media (max-width: 900px) {
+  .pd-bio-wrap {
+    max-height: 145px;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    margin-bottom: 0;
+  }
+
+  .pd-bio-wrap:not(.expanded)::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 64px;
+    background: linear-gradient(to bottom, transparent, var(--cream) 90%);
+    pointer-events: none;
+  }
+
+  .pd-bio-wrap.expanded { max-height: 1200px; }
+
+  .bio-expand-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0 0.5rem;
+    color: var(--green-light);
+    transition: color 0.2s;
+    margin-bottom: 1rem;
+  }
+
+  .bio-expand-btn:hover { color: var(--green-deep); }
+  .bio-expand-btn svg   { transition: transform 0.35s ease; }
+  .bio-expand-btn.expanded svg { transform: rotate(180deg); }
+}    
 
     /* Neumorphic link buttons — left aligned */
     .pd-link {
@@ -1562,7 +1896,10 @@
 
     /* Mobile */
     @media (max-width: 900px) {
-      .people-detail { padding: 1rem 1.25rem 3rem; }
+      .people-detail {
+        padding: 1rem 1.25rem 3rem;
+      }
+
       .pd-card {
         margin-left: 0;
         margin-top: 0;
@@ -1576,7 +1913,8 @@
         gap: 1rem;
         padding-left: 0;
         margin-bottom: 0;
-      }      
+      }
+
       /* Avatar: static flow on mobile, not absolute */
       .pd-avatar-wrap {
         position: static;
@@ -1595,111 +1933,134 @@
       .pd-card-header {
         flex: 1;
         min-width: 0;
-      }      
+      }
 
-      .pd-card-body    { align-items: center; }
+      .pd-card-body {
+        align-items: center;
+      }
 
       /* Left-align all header text on mobile */
       .pd-name,
       .pd-title,
-      .pd-affil  { text-align: left; }
-      .pd-name   { font-size: 1.3rem; }
+      .pd-affil {
+        text-align: left;
+      }
 
-      .pd-divider { margin: 1rem 0; }
-      .pd-bio     { text-align: left; max-height: none; }
-      .pd-links   { justify-content: flex-start; }
+      .pd-name {
+        font-size: 1.3rem;
+      }
 
-      .people-detail { padding: 1rem 1.25rem 2rem; }      
+      .pd-divider {
+        margin: 1rem 0;
+      }
+
+      .pd-bio {
+        text-align: left;
+        max-height: none;
+      }
+
+      .pd-links {
+        justify-content: flex-start;
+      }
+
+      .people-detail {
+        padding: 1rem 1.25rem 2rem;
+      }
     }
 
-  /* ══════════════════════════════════════════════════════════
+    /* ══════════════════════════════════════════════════════════
     NEWS SECTION
   ══════════════════════════════════════════════════════════ */
-  .news-section {
-    position: relative;
-    z-index: 2;
-    background: #1a1a14;
-    padding: 5rem 4rem;
-    min-height: 120vh;
-  }
+    .news-section {
+      position: relative;
+      z-index: 2;
+      background: #1a1a14;
+      padding: 5rem 4rem;
+      min-height: 120vh;
+    }
 
-  .news-inner { max-width: 1200px; margin: 0 auto; }
+    .news-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
 
-  .news-eyebrow {
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 1rem;
-  }
+    .news-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
 
-  .news-heading {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2.2rem, 4.5vw, 3.5rem);
-    font-weight: 700;
-    color: #f0e8d0;
-    line-height: 1.1;
-    max-width: 820px;
-    margin-bottom: 2rem;
-  }
+    .news-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.2rem, 4.5vw, 3.5rem);
+      font-weight: 700;
+      color: #f0e8d0;
+      line-height: 1.1;
+      max-width: 820px;
+      margin-bottom: 2rem;
+    }
 
-  .news-rule {
-    width: 100%;
-    height: 1px;
-    background: rgba(240, 232, 208, 0.18);
-    margin-bottom: 3rem;
-  }
+    .news-rule {
+      width: 100%;
+      height: 1px;
+      background: rgba(240, 232, 208, 0.18);
+      margin-bottom: 3rem;
+    }
 
-  .news-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2.5rem 3rem;
-  }
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2.5rem 3rem;
+    }
 
-  .news-item-category {
-    font-size: 0.62rem;
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 0.65rem;
-  }
+    .news-item-category {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.65rem;
+    }
 
-  .news-item-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #f0e8d0;
-    line-height: 1.35;
-    margin-bottom: 0.65rem;
-    cursor: pointer;
-    transition: color 0.2s;
-  }
+    .news-item-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f0e8d0;
+      line-height: 1.35;
+      margin-bottom: 0.65rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
 
-  .news-item-title:hover { color: var(--gold-light); }
+    .news-item-title:hover {
+      color: var(--gold-light);
+    }
 
-  .news-item-text {
-    font-size: 0.85rem;
-    font-weight: 300;
-    line-height: 1.72;
-    color: #a8a090;
-    margin-bottom: 1rem;
-  }
+    .news-item-text {
+      font-size: 0.85rem;
+      font-weight: 300;
+      line-height: 1.72;
+      color: #a8a090;
+      margin-bottom: 1rem;
+    }
 
-  .news-item-link {
-    font-size: 0.78rem;
-    font-weight: 500;
-    color: #c8b888;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    text-decoration-color: rgba(200, 184, 136, 0.35);
-    transition: color 0.2s, text-decoration-color 0.2s;
-  }
+    .news-item-link {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #c8b888;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-color: rgba(200, 184, 136, 0.35);
+      transition: color 0.2s, text-decoration-color 0.2s;
+    }
 
-  .news-item-link:hover {
-    color: var(--gold-light);
-    text-decoration-color: var(--gold-light);
-  }
+    .news-item-link:hover {
+      color: var(--gold-light);
+      text-decoration-color: var(--gold-light);
+    }
 
 
 
@@ -1714,7 +2075,9 @@
       }
 
       /* Header stays full width */
-      .people-header { flex-shrink: 0; }
+      .people-header {
+        flex-shrink: 0;
+      }
 
       /* Strip + detail side by side */
       .people-body {
@@ -1724,7 +2087,8 @@
         padding: 0 4rem 4rem;
         align-items: flex-start;
         flex: 1;
-        padding-right: calc(var(--section-right-margin) + 4rem); /* ← clears nav */
+        padding-right: calc(var(--section-right-margin) + 4rem);
+        /* ← clears nav */
       }
 
       /* Vertical strip on left */
@@ -1750,14 +2114,13 @@
         padding: 0;
       }
 
-      .pd-card { max-width: none; }
+      .pd-card {
+        max-width: none;
+      }
     }
 
 
     @media (max-width: 1100px) {
-      #section-nav { right: 0.5rem; }
-      .nav-label   { font-size: 0.6rem; padding: 0.15rem 0.4rem; }
-
 
     }
 
@@ -1768,9 +2131,18 @@
     @media (max-width: 900px) {
 
       /* ── Mobile header & scroll ────────────────────────────── */
-      #mobile-header { display: flex; }
-      #about         { margin-top: calc(100vh + 52px); }
-      #tools         { margin-top: 0; }
+      #mobile-header {
+        display: flex;
+      }
+
+      #about {
+        margin-top: calc(100vh + 52px);
+      }
+
+      #tools {
+        margin-top: 0;
+      }
+
       /*html           { scroll-snap-type: none; } */
 
       /* ── Section heights ───────────────────────────────────── */
@@ -1788,19 +2160,37 @@
       }
 
       /* ── Nav ───────────────────────────────────────────────── */
-      #section-nav { display: none; }
-      .hero-nav    { display: none; }
-      .hero-content { padding: 1.5rem 1.5rem 4rem; }
-      .hero-title   { font-size: 2.5rem; }
+
+      .hero-nav {
+        display: none;
+      }
+
+      .hero-content {
+        padding: 1.5rem 1.5rem 4rem;
+      }
+
+      .hero-title {
+        font-size: 2.5rem;
+      }
 
       /* ── Split layout ──────────────────────────────────────── */
-      .simple-section { padding: 1.5rem; }
+      .simple-section {
+        padding: 1.5rem;
+      }
 
       /* ── Carousel ──────────────────────────────────────────── */
-      .carousel-wrap  { padding: 0; background: none; }
-      .carousel-dots  { padding: 0 1.25rem; }
+      .carousel-wrap {
+        padding: 0;
+        background: none;
+      }
 
-      .card-grid.layout-carousel { padding: 0 5% 1rem; }
+      .carousel-dots {
+        padding: 0 1.25rem;
+      }
+
+      .card-grid.layout-carousel {
+        padding: 0 5% 1rem;
+      }
 
       .card-grid.layout-carousel .project-card {
         flex: 0 0 88%;
@@ -1816,8 +2206,13 @@
       }
 
       /* Dots always visible when carousel active */
-      .carousel-dots { display: none; }
-      .split-right.is-carousel .carousel-dots { display: flex; }
+      .carousel-dots {
+        display: none;
+      }
+
+      .split-right.is-carousel .carousel-dots {
+        display: flex;
+      }
 
       /* Pagination buttons */
       .carousel-pagination {
@@ -1828,12 +2223,14 @@
         padding: 0.5rem 0 1rem;
       }
 
-      .split-right.is-carousel .carousel-pagination { display: flex; }
+      .split-right.is-carousel .carousel-pagination {
+        display: flex;
+      }
 
       .page-btn {
         background: none;
-        border: 1px solid rgba(255,255,255,0.2);
-        color: rgba(255,255,255,0.45);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.45);
         width: 28px;
         height: 28px;
         border-radius: 3px;
@@ -1845,8 +2242,8 @@
       }
 
       .page-btn:hover {
-        border-color: rgba(255,255,255,0.5);
-        color: rgba(255,255,255,0.8);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.8);
       }
 
       .page-btn.active {
@@ -1857,42 +2254,96 @@
 
       /* Page buttons on cream sections */
       .tools-section .page-btn {
-        border-color: rgba(27,58,47,0.25);
-        color: rgba(27,58,47,0.5);
+        border-color: rgba(27, 58, 47, 0.25);
+        color: rgba(27, 58, 47, 0.5);
       }
 
-      .tools-section .page-btn:hover { border-color: var(--green-light); color: var(--green-deep); }
-      .tools-section .page-btn.active { background: var(--gold); border-color: var(--gold); color: #fff; }      
+      .tools-section .page-btn:hover {
+        border-color: var(--green-light);
+        color: var(--green-deep);
+      }
+
+      .tools-section .page-btn.active {
+        background: var(--gold);
+        border-color: var(--gold);
+        color: #fff;
+      }
 
       /* ── People ────────────────────────────────────────────── */
       .people-header,
-      .people-strip-outer       { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .people-strip-outer {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
 
-      .people-detail { padding: 0 1.25rem 3rem; }
-      .pd-card { padding: 65px 1.5rem 2rem; }
+      .people-detail {
+        padding: 0 1.25rem 3rem;
+      }
 
-      .pd-avatar-wrap { width: 110px; height: 110px; top: -55px; }
-      .pd-card { margin-top: 55px; }
+      .pd-card {
+        padding: 65px 1.5rem 2rem;
+      }
 
-      .pd-name  { font-size: 1.6rem; }
-      .pd-bio   { max-height: none; }      
+      .pd-avatar-wrap {
+        width: 110px;
+        height: 110px;
+        top: -55px;
+      }
 
-      .people-detail-photo img  { width: 140px; height: 140px; }
-      .pd-name                  { font-size: 1.7rem; }
+      .pd-card {
+        margin-top: 55px;
+      }
+
+      .pd-name {
+        font-size: 1.6rem;
+      }
+
+      .pd-bio {
+        max-height: none;
+      }
+
+      .people-detail-photo img {
+        width: 140px;
+        height: 140px;
+      }
+
+      .pd-name {
+        font-size: 1.7rem;
+      }
 
       /* ── News ──────────────────────────────────────────────── */
-      .news-section { padding: 3rem 1.5rem; }
-      .news-grid    { grid-template-columns: 1fr; gap: 2rem; }
+      .news-section {
+        padding: 3rem 1.5rem;
+      }
+
+      .news-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
 
       /* ── Footer ────────────────────────────────────────────── */
-      .footer-section { padding: 2.5rem 1.5rem 1.5rem; }
-      .footer-top     { flex-direction: column; gap: 1.5rem; }
-      .footer-nav     { gap: 1rem; }
-
+      .footer-section {
+        padding: 2.5rem 1.5rem 1.5rem;
       }
+
+      .footer-top {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .footer-nav {
+        gap: 1rem;
+      }
+
+    }
+
     /* ── NEW: mobile-specific fixes ─────────────────────────── */
     @media (max-width: 600px) {
-      html { scroll-snap-type: none; }  /* prevents gap/jump between sections */
+      html {
+        scroll-snap-type: none;
+      }
+
+      /* prevents gap/jump between sections */
 
       .page-section {
         min-height: auto;
@@ -1919,7 +2370,9 @@
         scrollbar-width: none;
       }
 
-      .card-grid::-webkit-scrollbar { display: none; }
+      .card-grid::-webkit-scrollbar {
+        display: none;
+      }
 
       .card-grid .project-card {
         flex: 0 0 88% !important;
@@ -1927,16 +2380,16 @@
         min-width: 0;
         scroll-snap-align: center !important;
         transform: none !important;
-      }      
+      }
     }
 
     @media (max-width: 480px) {
       .card-grid.layout-carousel .project-card {
-        flex: 0 0 84%;    /* slightly narrower on small phones for bigger peek */
+        flex: 0 0 84%;
+        /* slightly narrower on small phones for bigger peek */
         max-width: 84%;
       }
     }
-
   </style>
 </head>
 
@@ -1957,7 +2410,7 @@
     </svg>
   -->
 
-  
+
 
   <!-- Mobile header (hidden on desktop) -->
   <header id="mobile-header">
@@ -1970,9 +2423,10 @@
     <a href="#about" class="mobile-menu-item" onclick="closeMobileMenu()">About</a>
     <a href="#people" class="mobile-menu-item" onclick="closeMobileMenu()">People</a>
     <a href="#news" class="mobile-menu-item" onclick="closeMobileMenu()">News</a>
+    <a href="#photos" class="mobile-menu-item" onclick="closeMobileMenu()">Photos</a>
     <a href="#blog" class="mobile-menu-item" onclick="closeMobileMenu()">Blog</a>
     <a href="#tools" class="mobile-menu-item" onclick="closeMobileMenu()">Tools</a>
-    </nav>
+  </nav>
 
 
   <!-- ══════════════════════════════════════════════════════════
@@ -2038,15 +2492,16 @@
       </svg>
     </button>
   </nav>
-  
+
   <div class="nav-dropdown" id="nav-dropdown">
     <a class="nav-drop-link" href="#about">About</a>
     <a class="nav-drop-link" href="#people">People</a>
     <a class="nav-drop-link" href="#news">News</a>
+    <a class="nav-drop-link" href="#photos">Photos</a>
     <a class="nav-drop-link" href="#blog">Blog</a>
     <a class="nav-drop-link" href="#tools">Tools</a>
   </div>
-  
+
   <section class="hero">
     <div class="hero-bg-img">
       <img src="assets/wildfire-on-mountain_1600.jpg" alt="Burning forest landscape">
@@ -2075,7 +2530,7 @@
   </section>
 
   <div id="hero-bg-2" class="hero-bg-secondary">
-    <img src="assets/washington.jpeg" alt=""> <!-- ← change this path -->
+    <img src="assets/three_sisters_2.jpg" alt=""> <!-- ← change this path -->
   </div>
 
 
@@ -2100,147 +2555,213 @@
         Get in touch →
       </a>
     </div>
-    </section>  
+  </section>
 
 
 
-    <!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
         2. People — full-bleed cream
       ══════════════════════════════════════════════════════════ -->
-    <section id="people" class="people-section">
-    
-      <div class="people-header">
-        <p class="people-eyebrow section-animate">Ecosystem Resilience Cooperative</p>
-        <h2 class="people-title section-animate delay-1">People</h2>
+  <section id="people" class="people-section">
+
+    <div class="people-header">
+      <p class="people-eyebrow section-animate">Ecosystem Resilience Cooperative</p>
+      <h2 class="people-title section-animate delay-1">People</h2>
+    </div>
+    <div class="people-body">
+      <div class="people-strip-outer section-animate delay-2">
+        <div class="people-strip" id="people-strip"></div>
       </div>
-      <div class="people-body">
-        <div class="people-strip-outer section-animate delay-2">
-          <div class="people-strip" id="people-strip"></div>
-        </div>
 
-        <!-- Detail panel -->
-        <div class="people-detail section-animate delay-3" id="people-detail">
+      <!-- Detail panel -->
+      <div class="people-detail section-animate delay-3" id="people-detail">
 
-          <div class="pd-card">
-            <div class="pd-top">
-              <div class="pd-avatar-wrap">
-                <img id="pd-photo" src="" alt="">
-              </div>
-              <div class="pd-card-header">
-                <h3 id="pd-name" class="pd-name"></h3>
-                <p id="pd-title" class="pd-title"></p>
-                <p id="pd-affil" class="pd-affil"></p>
-                <div id="pd-links" class="pd-links"></div>
-              </div>
+        <div class="pd-card">
+          <div class="pd-top">
+            <div class="pd-avatar-wrap">
+              <img id="pd-photo" src="" alt="">
             </div>
-            <div class="pd-divider"></div>
-            <div id="pd-bio" class="pd-bio"></div>    </div>
-          
+            <div class="pd-card-header">
+              <h3 id="pd-name" class="pd-name"></h3>
+              <p id="pd-title" class="pd-title"></p>
+              <p id="pd-affil" class="pd-affil"></p>
+              <div id="pd-links" class="pd-links"></div>
+            </div>
+          </div>
+          <div class="pd-divider"></div>
+          <div class="pd-bio-wrap">
+            <div id="pd-bio" class="pd-bio"></div>
+          </div>
+          <button class="bio-expand-btn" id="bio-expand-btn" aria-label="Read more">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round">
+              <polyline points="4,8 10,14 16,8" />
+            </svg> 
+          </button>
         </div>
 
       </div>
-    
-    </section>
+
+    </div>
+
+  </section>
 
 
-    <!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
         3. News — full-bleed dark 
       ══════════════════════════════════════════════════════════ -->
 
-    <section id="news" class="news-section">
-      <div class="news-inner">
-        <div class="news-header-block section-animate">
-          <p class="news-eyebrow">Lab updates &amp; announcements</p>
-          <h2 class="news-heading">
-            Advancing forest and watershed resilience science.
-          </h2>
-          <div class="news-rule"></div>
-        </div>
-        <div class="news-grid" id="news-grid">
-          <!-- populated by JS -->
+  <section id="news" class="news-section">
+    <div class="news-inner">
+      <div class="news-header-block section-animate">
+        <p class="news-eyebrow">Lab updates &amp; announcements</p>
+        <h2 class="news-heading">
+          Advancing forest and watershed resilience science.
+        </h2>
+        <div class="news-rule"></div>
+      </div>
+      <div class="news-grid" id="news-grid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+  </section>
+
+
+
+  <!-- ══════════════════════════════════════════════════════════
+    4. PHOTOS — dark glass
+  ══════════════════════════════════════════════════════════ -->
+  <section class="page-section" id="photos">
+    <div class="section-stack" style="flex-direction:column;gap:1.5rem;">
+      <div class="stack-header" style="max-width:none;">
+        <p class="section-eyebrow">Field &amp; lab</p>
+        <h2 class="section-title">Photos</h2>
+        <p class="section-sub">From the landscapes, field sites, and lab.</p>
+      </div>
+  
+
+  
+      <div class="photos-bento-wrap" id="photos-bento-wrap">
+        <div class="bento-grid-erc">
+          <div class="bento-cell span-wide">
+            <div class="photo-frame-erc"><img src="assets/wildfire-on-mountain_1600.jpg" alt="Wildfire panorama"></div>
+          </div>
+          <div class="bento-cell span-tall">
+            <div class="photo-frame-erc"><img src="assets/hamakua.jpg" alt="Hamakua"></div>
+          </div>
+          <div class="bento-cell">
+            <div class="photo-frame-erc"><img src="assets/tahoe.jpg" alt="Tahoe"></div>
+          </div>
+          <div class="bento-cell">
+            <div class="photo-frame-erc"><img src="assets/bw_burn.jpg" alt="Burn"></div>
+          </div>
+          <div class="bento-cell span-wide">
+            <div class="photo-frame-erc"><img src="assets/Babeldaob-mosaic.jpg" alt="Babeldaob"></div>
+          </div>
+          <div class="bento-cell span-tall">
+            <div class="photo-frame-erc"><img src="assets/washington.jpeg" alt="Washington"></div>
+          </div>
+          <div class="bento-cell">
+            <div class="photo-frame-erc"><img src="assets/hamakua.jpg" alt="Forest"></div>
+          </div>
+          <div class="bento-cell">
+            <div class="photo-frame-erc"><img src="assets/tahoe.jpg" alt="Sierra"></div>
+          </div>
         </div>
       </div>
-      </section>    
+      
+      <div class="photos-toggle" id="photos-toggle-area">
+        <button class="photos-expand-btn" id="photos-toggle-btn" onclick="togglePhotos()" aria-label="Expand photo grid">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round">
+            <polyline points="3,6 9,12 15,6" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </section>
 
 
 
-      <!-- ══════════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════════
             4. BLOG — floating glass
        ══════════════════════════════════════════════════════════ -->
-      <section class="page-section" id="blog">
-        <div class="section-stack">
-          <div class="stack-header">
-            <p class="section-eyebrow">Field notes &amp; research updates</p>
-            <h2 class="section-title">From the lab</h2>
-            <p class="section-sub">Notes on ongoing research, methods, and observations from the field and the data.</p>
-          </div>
-          <div class="split-right">
-            <div class="card-grid">
-              <article class="project-card">
-                <div class="card-img-wrap">
-                  <img src="assets/washington.jpeg" alt="Wildfire">
-                  <span class="card-badge badge-ready">New</span>
-                </div>
-                <div class="card-body">
-                  <p class="card-region">Research update</p>
-                  <h3 class="card-title">Climate analogs and the future of western conifers</h3>
-                  <p class="card-meta">May 2025</p>
-                  <p class="card-desc">How Mahalanobis distance modeling reveals where today's forests may be headed — and
-                    what that means for management.</p>
-                  <a class="card-link" href="blog/post-1.html">Read →</a>
-                </div>
-              </article>
-      
-              <article class="project-card wip">
-                <div class="card-img-wrap">
-                  <img src="assets/bw_burn.jpg" alt="Sierra Nevada">
-                  <span class="card-badge badge-wip">Coming soon</span>
-                </div>
-                <div class="card-body">
-                  <p class="card-region">Methods</p>
-                  <h3 class="card-title">Phylogenetic distance as an ecological vulnerability metric</h3>
-                  <p class="card-meta">Coming soon</p>
-                  <p class="card-desc">Exploring Aitchison distance and UniFrac as measures of compositional shift in analog
-                    vegetation communities.</p>
-                  <a class="card-link disabled" href="#">Coming soon</a>
-                </div>
-              </article>
-      
-              <article class="project-card wip">
-                <div class="card-img-wrap">
-                  <img src="assets/drone-forest.jpg" alt="Hamakua">
-                  <span class="card-badge badge-wip">Coming soon</span>
-                </div>
-                <div class="card-body">
-                  <p class="card-region">Field notes</p>
-                  <h3 class="card-title">Bottom-up refugia: where topography buffers climate</h3>
-                  <p class="card-meta">Coming soon</p>
-                  <p class="card-desc">Evidence from soil and terrain variables that local factors can partially offset
-                    regional climate pressure on conifer communities.</p>
-                  <a class="card-link disabled" href="#">Coming soon</a>
-                </div>
-              </article>
-      
-              <article class="project-card wip">
-                <div class="card-img-wrap">
-                  <img src="assets/wildfire-on-mountain_1600.jpg" alt="Tropical forest">
-                  <span class="card-badge badge-wip">Coming soon</span>
-                </div>
-                <div class="card-body">
-                  <p class="card-region">Tools &amp; code</p>
-                  <h3 class="card-title">Building the PROMOTE framework: from concept to pipeline</h3>
-                  <p class="card-meta">Coming soon</p>
-                  <p class="card-desc">A walkthrough of the Resist-Accept-Direct framework operationalized at landscape scale
-                    using R and ClimateNA.</p>
-                  <a class="card-link disabled" href="#">Coming soon</a>
-                </div>
-              </article>
+  <section class="page-section" id="blog">
+    <div class="section-stack">
+      <div class="stack-header">
+        <p class="section-eyebrow">Field notes &amp; research updates</p>
+        <h2 class="section-title">From the lab</h2>
+        <p class="section-sub">Notes on ongoing research, methods, and observations from the field and the data.</p>
+      </div>
+      <div class="split-right">
+        <div class="card-grid">
+          <article class="project-card">
+            <div class="card-img-wrap">
+              <img src="assets/washington.jpeg" alt="Wildfire">
+              <span class="card-badge badge-ready">New</span>
             </div>
-            <div class="carousel-dots"></div>
-            <div class="carousel-pagination"></div>
-          </div>
+            <div class="card-body">
+              <p class="card-region">Research update</p>
+              <h3 class="card-title">Climate analogs and the future of western conifers</h3>
+              <p class="card-meta">May 2025</p>
+              <p class="card-desc">How Mahalanobis distance modeling reveals where today's forests may be headed — and
+                what that means for management.</p>
+              <a class="card-link" href="blog/post-1.html">Read →</a>
+            </div>
+          </article>
+
+          <article class="project-card wip">
+            <div class="card-img-wrap">
+              <img src="assets/bw_burn.jpg" alt="Sierra Nevada">
+              <span class="card-badge badge-wip">Coming soon</span>
+            </div>
+            <div class="card-body">
+              <p class="card-region">Methods</p>
+              <h3 class="card-title">Phylogenetic distance as an ecological vulnerability metric</h3>
+              <p class="card-meta">Coming soon</p>
+              <p class="card-desc">Exploring Aitchison distance and UniFrac as measures of compositional shift in analog
+                vegetation communities.</p>
+              <a class="card-link disabled" href="#">Coming soon</a>
+            </div>
+          </article>
+
+          <article class="project-card wip">
+            <div class="card-img-wrap">
+              <img src="assets/drone-forest.jpg" alt="Hamakua">
+              <span class="card-badge badge-wip">Coming soon</span>
+            </div>
+            <div class="card-body">
+              <p class="card-region">Field notes</p>
+              <h3 class="card-title">Bottom-up refugia: where topography buffers climate</h3>
+              <p class="card-meta">Coming soon</p>
+              <p class="card-desc">Evidence from soil and terrain variables that local factors can partially offset
+                regional climate pressure on conifer communities.</p>
+              <a class="card-link disabled" href="#">Coming soon</a>
+            </div>
+          </article>
+
+          <article class="project-card wip">
+            <div class="card-img-wrap">
+              <img src="assets/wildfire-on-mountain_1600.jpg" alt="Tropical forest">
+              <span class="card-badge badge-wip">Coming soon</span>
+            </div>
+            <div class="card-body">
+              <p class="card-region">Tools &amp; code</p>
+              <h3 class="card-title">Building the PROMOTE framework: from concept to pipeline</h3>
+              <p class="card-meta">Coming soon</p>
+              <p class="card-desc">A walkthrough of the Resist-Accept-Direct framework operationalized at landscape
+                scale
+                using R and ClimateNA.</p>
+              <a class="card-link disabled" href="#">Coming soon</a>
+            </div>
+          </article>
         </div>
-        </section>
+        <div class="carousel-dots"></div>
+        <div class="carousel-pagination"></div>
+      </div>
+    </div>
+  </section>
 
 
 
@@ -2325,31 +2846,33 @@
     </section>
      -->
 
-    <section class="page-section tools-section globe-section" id="tools">
-      <div class="section-stack">
-        <div class="stack-header">
-          <p class="section-eyebrow">Decision support tools</p>
-          <h2 class="section-title">Select a geography</h2>
-          <p class="section-sub">Spatially explicit decision support for forest and watershed management. Spin the globe and
-            click a location to explore.</p>
-        </div>
-
-
-        <div class="globe-wrapper">
-          <div class="globe-container" id="globe-container"></div>
-          <div class="globe-shadow" id="globe-shadow"></div>
-          <p class="globe-hint desktop-hint">Drag to spin &nbsp;·&nbsp; Ctrl+scroll to zoom &nbsp;·&nbsp; Click a dot to open
-          </p>
-          <p class="globe-hint mobile-hint">Drag to spin &nbsp;·&nbsp; Tap a dot to open</p>
-          <div class="globe-zoom-controls">
-            <button class="globe-zoom-btn" id="globe-zoom-in">+</button>
-            <button class="globe-zoom-btn" id="globe-zoom-out">−</button>
-          </div>  
-        </div>
-
-
+  <section class="page-section tools-section globe-section" id="tools">
+    <div class="section-stack">
+      <div class="stack-header">
+        <p class="section-eyebrow">Decision support tools</p>
+        <h2 class="section-title">Select a geography</h2>
+        <p class="section-sub">Spatially explicit decision support for forest and watershed management. Spin the globe
+          and
+          click a location to explore.</p>
       </div>
-      </section>     
+
+
+      <div class="globe-wrapper">
+        <div class="globe-container" id="globe-container"></div>
+        <div class="globe-shadow" id="globe-shadow"></div>
+        <p class="globe-hint desktop-hint">Drag to spin &nbsp;·&nbsp; Ctrl+scroll to zoom &nbsp;·&nbsp; Click a dot to
+          open
+        </p>
+        <p class="globe-hint mobile-hint">Drag to spin &nbsp;·&nbsp; Tap a dot to open</p>
+        <div class="globe-zoom-controls">
+          <button class="globe-zoom-btn" id="globe-zoom-in">+</button>
+          <button class="globe-zoom-btn" id="globe-zoom-out">−</button>
+        </div>
+      </div>
+
+
+    </div>
+  </section>
 
 
   <!-- ══════════════════════════════════════════════════════════
@@ -2365,6 +2888,7 @@
         <a href="#about">About</a>
         <a href="#people">People</a>
         <a href="#news">News</a>
+        <a href="#photos">Photos</a>
         <a href="#blog">Blog</a>
         <a href="#tools">Tools</a>
       </nav>
@@ -2377,35 +2901,35 @@
       </p>
       <a href="mailto:napovak@gmail.com">napovak@gmail.com</a>
     </div>
-    </footer>
+  </footer>
 
   <!-- ══════════════════════════════════════════════════════════
        SCRIPTS
   ══════════════════════════════════════════════════════════ -->
-<script>
-  // ── Prevent scroll restoration and URL fragment jumps ──────
-  // ── Prevent scroll restoration ─────────────────────────────
-  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  if (window.location.hash) history.replaceState(null, null, window.location.pathname);
-  document.addEventListener('DOMContentLoaded', () => window.scrollTo(0, 0));
-  window.addEventListener('load', () => window.scrollTo(0, 0));
+  <script>
+    // ── Prevent scroll restoration and URL fragment jumps ──────
+    // ── Prevent scroll restoration ─────────────────────────────
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    if (window.location.hash) history.replaceState(null, null, window.location.pathname);
+    //document.addEventListener('DOMContentLoaded', () => window.scrollTo(0, 0));
+    //window.addEventListener('load', () => window.scrollTo(0, 0));
 
-  // ── DOM references — ALL declared first ────────────────────
-  const hero = document.querySelector('.hero');
-  const heroContent = document.querySelector('.hero-content');
-  const heroNav = document.querySelector('.hero-nav');
+    // ── DOM references — ALL declared first ────────────────────
+    const hero = document.querySelector('.hero');
+    const heroContent = document.querySelector('.hero-content');
+    const heroNav = document.querySelector('.hero-nav');
 
-  const sections = document.querySelectorAll('.page-section[id], .people-section[id], .news-section[id]');
-  const peopleSect = document.getElementById('people');   // ← must be before updateNavState
-  const heroBg2 = document.getElementById('hero-bg-2');
+    const sections = document.querySelectorAll('.page-section[id], .people-section[id], .news-section[id]');
+    const peopleSect = document.getElementById('people');   // ← must be before updateNavState
+    const heroBg2 = document.getElementById('hero-bg-2');
 
-  // ── Card reveal ────────────────────────────────────────────
-  document.querySelectorAll('.project-card').forEach((card, i) => {
-    setTimeout(() => card.classList.add('visible'), 200 + i * 100);
-  });
+    // ── Card reveal ────────────────────────────────────────────
+    document.querySelectorAll('.project-card').forEach((card, i) => {
+      setTimeout(() => card.classList.add('visible'), 200 + i * 100);
+    });
 
 
-  // ── Load data from JSON ────────────────────────────────────
+    // ── Load data from JSON ────────────────────────────────────
     async function loadData() {
       try {
         const [peopleRes, newsRes] = await Promise.all([
@@ -2484,22 +3008,41 @@
         <line x1="2" y1="12" x2="22" y2="12"/>
         <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
       </svg>`;
-    }    
-
-    function showPerson(idx, PEOPLE) {
-      const p = PEOPLE[idx];
-      document.getElementById('pd-photo').src = p.photo;
-      document.getElementById('pd-photo').alt = p.name;
-      document.getElementById('pd-name').textContent = p.name;
-      document.getElementById('pd-title').textContent = p.title;
-      document.getElementById('pd-affil').textContent = p.affiliation;
-      document.getElementById('pd-bio').innerHTML = p.bio;
-      document.getElementById('pd-links').innerHTML = p.links.map(l =>
-        `<a class="pd-link" href="${l.url}" target="_blank" rel="noopener" title="${l.label}">
-          ${getLinkIcon(l.label)}
-        </a>`
-              ).join('');
     }
+
+  function showPerson(idx, PEOPLE) {
+    const p = PEOPLE[idx];
+    document.getElementById('pd-photo').src = p.photo;
+    document.getElementById('pd-photo').alt = p.name;
+    document.getElementById('pd-name').textContent = p.name;
+    document.getElementById('pd-title').textContent = p.title;
+    document.getElementById('pd-affil').textContent = p.affiliation;
+    document.getElementById('pd-bio').innerHTML = p.bio;
+    document.getElementById('pd-links').innerHTML = p.links.map(l =>
+      `<a class="pd-link" href="${l.url}" target="_blank" rel="noopener" title="${l.label}">
+      ${getLinkIcon(l.label)}
+    </a>`
+    ).join('');
+
+    // Reset + re-init bio expand on every person change
+    const wrap = document.getElementById('pd-bio')?.parentElement;
+    const btn = document.getElementById('bio-expand-btn');
+    wrap?.classList.remove('expanded');
+    btn?.classList.remove('expanded');
+    requestAnimationFrame(initBioExpand);
+  }
+
+  function initBioExpand() {
+    const wrap = document.getElementById('pd-bio')?.parentElement;
+    const btn = document.getElementById('bio-expand-btn');
+    if (!wrap || !btn || window.innerWidth > 900) return;
+    const MAX_H = 145; // must match CSS max-height
+    btn.style.visibility = wrap.scrollHeight > MAX_H + 4 ? 'visible' : 'hidden';
+    btn.onclick = () => {
+      const expanded = wrap.classList.toggle('expanded');
+      btn.classList.toggle('expanded', expanded);
+    };
+  }
 
     function buildNews(NEWS) {
       const grid = document.getElementById('news-grid');
@@ -2549,205 +3092,210 @@
     });
 
 
-  // ── Mobile menu ────────────────────────────────────────────
-  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-  const mobileMenu = document.getElementById('mobile-menu');
+    // ── Mobile menu ────────────────────────────────────────────
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
 
-  mobileMenuBtn?.addEventListener('click', () => {
-    mobileMenu.classList.toggle('open');
-    mobileMenuBtn.textContent = mobileMenu.classList.contains('open') ? '✕' : '☰';
-  });
+    mobileMenuBtn?.addEventListener('click', () => {
+      mobileMenu.classList.toggle('open');
+      mobileMenuBtn.textContent = mobileMenu.classList.contains('open') ? '✕' : '☰';
+    });
 
-  function closeMobileMenu() {
-    mobileMenu?.classList.remove('open');
-    if (mobileMenuBtn) mobileMenuBtn.textContent = '☰';
-  }
-
-  document.addEventListener('click', e => {
-    if (!mobileMenu?.contains(e.target) && e.target !== mobileMenuBtn) {
-      closeMobileMenu();
+    function closeMobileMenu() {
+      mobileMenu?.classList.remove('open');
+      if (mobileMenuBtn) mobileMenuBtn.textContent = '☰';
     }
-  });
 
-  // ── Smooth scroll ──────────────────────────────────────────
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      const href = a.getAttribute('href');
-      if (href === '#') return;
-      const target = document.querySelector(href);
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth' });
+    document.addEventListener('click', e => {
+      if (!mobileMenu?.contains(e.target) && e.target !== mobileMenuBtn) {
+        closeMobileMenu();
       }
     });
-  });
 
-  // ── Carousel ───────────────────────────────────────────────
-  // ── Carousel: dots, pagination, auto-advance, drag ─────────
-  const PAGE_SIZE = 10;
-
-  document.querySelectorAll('.split-right').forEach(wrap => {
-    const grid = wrap.querySelector('.card-grid');
-    const dotsContainer = wrap.querySelector('.carousel-dots');
-    const pageContainer = wrap.querySelector('.carousel-pagination');
-    if (!grid) return;
-
-    // ── Sort cards: visible cards first, wip last ─────────────
-    const allCards = Array.from(grid.querySelectorAll('.project-card'));
-    if (!allCards.length) return;
-
-    // ── Pagination setup ──────────────────────────────────────
-    const totalPages = Math.ceil(allCards.length / PAGE_SIZE);
-    let currentPage = 0;
-
-    function getPageCards(page) {
-      return allCards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-    }
-
-    function showPage(pageIdx) {
-      currentPage = pageIdx;
-
-      // Show/hide cards by page
-      allCards.forEach((card, i) => {
-        const cardPage = Math.floor(i / PAGE_SIZE);
-        card.style.display = cardPage === pageIdx ? '' : 'none';
+    // ── Smooth scroll ──────────────────────────────────────────
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const href = a.getAttribute('href');
+        if (href === '#') return;
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
       });
+    });
 
-      // Reset scroll
-      grid.scrollTo({ left: 0, behavior: 'smooth' });
+    // ── Carousel ───────────────────────────────────────────────
+    // ── Carousel: dots, pagination, auto-advance, drag ─────────
+    const PAGE_SIZE = 10;
 
-      // Rebuild dots for current page
-      buildDots(getPageCards(pageIdx));
+    document.querySelectorAll('.split-right').forEach(wrap => {
+      const grid = wrap.querySelector('.card-grid');
+      const dotsContainer = wrap.querySelector('.carousel-dots');
+      const pageContainer = wrap.querySelector('.carousel-pagination');
+      if (!grid) return;
 
-      // Update page buttons
-      if (pageContainer) {
-        pageContainer.querySelectorAll('.page-btn')
-          .forEach((btn, i) => btn.classList.toggle('active', i === pageIdx));
+      // ── Sort cards: visible cards first, wip last ─────────────
+      const allCards = Array.from(grid.querySelectorAll('.project-card'));
+      if (!allCards.length) return;
+
+      // ── Pagination setup ──────────────────────────────────────
+      const totalPages = Math.ceil(allCards.length / PAGE_SIZE);
+      let currentPage = 0;
+
+      function getPageCards(page) {
+        return allCards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
       }
 
-      // Reset auto-advance
-      stopTimer(); startTimer();
-    }
+      function showPage(pageIdx) {
+        currentPage = pageIdx;
 
-    // ── Build page buttons ────────────────────────────────────
-    if (pageContainer && totalPages > 1) {
-      for (let i = 0; i < totalPages; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'page-btn' + (i === 0 ? ' active' : '');
-        btn.textContent = i + 1;
-        btn.setAttribute('aria-label', `Page ${i + 1}`);
-        btn.addEventListener('click', () => showPage(i));
-        pageContainer.appendChild(btn);
-      }
-    }
-
-    // ── Build dots ────────────────────────────────────────────
-    let dots = [];
-
-    function buildDots(visibleCards) {
-      if (!dotsContainer) return;
-      dotsContainer.innerHTML = '';
-      dots = [];
-
-      visibleCards.forEach((_, i) => {
-        const dot = document.createElement('button');
-        dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
-        dot.setAttribute('aria-label', `Card ${i + 1}`);
-        dot.addEventListener('click', () => {
-          const cardWidth = visibleCards[0].getBoundingClientRect().width + 16;
-          grid.scrollTo({ left: cardWidth * i, behavior: 'smooth' });
+        // Show/hide cards by page
+        allCards.forEach((card, i) => {
+          const cardPage = Math.floor(i / PAGE_SIZE);
+          card.style.display = cardPage === pageIdx ? '' : 'none';
         });
-        dotsContainer.appendChild(dot);
-        dots.push(dot);
-      });
-    }
 
-    // ── Scroll handler: update dots + fade ───────────────────
-    grid.addEventListener('scroll', () => {
-      const visibleCards = getPageCards(currentPage)
-        .filter(c => c.style.display !== 'none');
-      if (!visibleCards.length) return;
+        // Reset scroll
+        grid.scrollTo({ left: 0, behavior: 'smooth' });
 
-      const cardWidth = visibleCards[0].getBoundingClientRect().width + 16;
-      const idx = Math.round(grid.scrollLeft / cardWidth);
-      const gridRect = grid.getBoundingClientRect();
+        // Rebuild dots for current page
+        buildDots(getPageCards(pageIdx));
 
-      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        // Update page buttons
+        if (pageContainer) {
+          pageContainer.querySelectorAll('.page-btn')
+            .forEach((btn, i) => btn.classList.toggle('active', i === pageIdx));
+        }
 
-      allCards.forEach(card => {
-        if (card.style.display === 'none') return;
-        card.style.opacity =
-          card.getBoundingClientRect().left >= gridRect.left - 10 ? '1' : '0.35';
-      });
-    }, { passive: true });
-
-    // ── Auto-advance ──────────────────────────────────────────
-    let current = 0, timer;
-
-    const getCardWidth = () => {
-      const visible = getPageCards(currentPage).filter(c => c.style.display !== 'none');
-      return visible[0]?.getBoundingClientRect().width + 16 || 300;
-    };
-
-    const startTimer = () => {
-      timer = setInterval(() => {
-        const visible = getPageCards(currentPage).filter(c => c.style.display !== 'none');
-        current = (current + 1) % visible.length;
-        grid.scrollTo({ left: getCardWidth() * current, behavior: 'smooth' });
-      }, 4000);
-    };
-
-    const stopTimer = () => { clearInterval(timer); current = 0; };
-
-    startTimer();
-
-    // ── Click-drag ────────────────────────────────────────────
-    let isDown = false, startX, scrollLeft;
-    grid.style.cursor = 'grab';
-
-    grid.addEventListener('mousedown', e => {
-      e.preventDefault();
-      isDown = true;
-      startX = e.pageX - grid.offsetLeft;
-      scrollLeft = grid.scrollLeft;
-      grid.style.cursor = 'grabbing';
-      stopTimer();
-    });
-
-    grid.addEventListener('mouseleave', () => { isDown = false; grid.style.cursor = 'grab'; });
-    grid.addEventListener('mouseup', () => { isDown = false; grid.style.cursor = 'grab'; startTimer(); });
-    grid.addEventListener('mousemove', e => {
-      if (!isDown) return;
-      e.preventDefault();
-      grid.scrollLeft = scrollLeft - (e.pageX - grid.offsetLeft - startX) * 1.5;
-    });
-
-    grid.addEventListener('touchstart', stopTimer, { passive: true });
-    grid.addEventListener('touchend', startTimer, { passive: true });
-
-    // ── Init first page ───────────────────────────────────────
-    showPage(0);
-  });
-
-  
-
-  // ── Unified section animation observer ─────────────────────
-  const animObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-      } else {
-        entry.target.classList.remove('in-view');
+        // Reset auto-advance
+        stopTimer(); startTimer();
       }
+
+      // ── Build page buttons ────────────────────────────────────
+      if (pageContainer && totalPages > 1) {
+        for (let i = 0; i < totalPages; i++) {
+          const btn = document.createElement('button');
+          btn.className = 'page-btn' + (i === 0 ? ' active' : '');
+          btn.textContent = i + 1;
+          btn.setAttribute('aria-label', `Page ${i + 1}`);
+          btn.addEventListener('click', () => showPage(i));
+          pageContainer.appendChild(btn);
+        }
+      }
+
+      // ── Build dots ────────────────────────────────────────────
+      let dots = [];
+
+      function buildDots(visibleCards) {
+        if (!dotsContainer) return;
+        dotsContainer.innerHTML = '';
+        dots = [];
+
+        visibleCards.forEach((_, i) => {
+          const dot = document.createElement('button');
+          dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+          dot.setAttribute('aria-label', `Card ${i + 1}`);
+          dot.addEventListener('click', () => {
+            const cardWidth = visibleCards[0].getBoundingClientRect().width + 16;
+            grid.scrollTo({ left: cardWidth * i, behavior: 'smooth' });
+          });
+          dotsContainer.appendChild(dot);
+          dots.push(dot);
+        });
+      }
+
+      // ── Scroll handler: update dots + fade ───────────────────
+      grid.addEventListener('scroll', () => {
+        const visibleCards = getPageCards(currentPage)
+          .filter(c => c.style.display !== 'none');
+        if (!visibleCards.length) return;
+
+        const cardWidth = visibleCards[0].getBoundingClientRect().width + 16;
+        const idx = Math.round(grid.scrollLeft / cardWidth);
+        const gridRect = grid.getBoundingClientRect();
+
+        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+
+        allCards.forEach(card => {
+          if (card.style.display === 'none') return;
+          card.style.opacity =
+            card.getBoundingClientRect().left >= gridRect.left - 10 ? '1' : '0.35';
+        });
+      }, { passive: true });
+
+      // ── Auto-advance ──────────────────────────────────────────
+      let current = 0, timer;
+
+      const getCardWidth = () => {
+        const visible = getPageCards(currentPage).filter(c => c.style.display !== 'none');
+        return visible[0]?.getBoundingClientRect().width + 16 || 300;
+      };
+
+      const startTimer = () => {
+        timer = setInterval(() => {
+          const visible = getPageCards(currentPage).filter(c => c.style.display !== 'none');
+          current = (current + 1) % visible.length;
+          grid.scrollTo({ left: getCardWidth() * current, behavior: 'smooth' });
+        }, 4000);
+      };
+
+      const stopTimer = () => { clearInterval(timer); current = 0; };
+
+      startTimer();
+
+      // ── Click-drag ────────────────────────────────────────────
+      let isDown = false, startX, scrollLeft;
+      grid.style.cursor = 'grab';
+
+      grid.addEventListener('mousedown', e => {
+        e.preventDefault();
+        isDown = true;
+        startX = e.pageX - grid.offsetLeft;
+        scrollLeft = grid.scrollLeft;
+        grid.style.cursor = 'grabbing';
+        stopTimer();
+      });
+
+      grid.addEventListener('mouseleave', () => { isDown = false; grid.style.cursor = 'grab'; });
+      grid.addEventListener('mouseup', () => { isDown = false; grid.style.cursor = 'grab'; startTimer(); });
+      grid.addEventListener('mousemove', e => {
+        if (!isDown) return;
+        e.preventDefault();
+        grid.scrollLeft = scrollLeft - (e.pageX - grid.offsetLeft - startX) * 1.5;
+      });
+
+      grid.addEventListener('touchstart', stopTimer, { passive: true });
+      grid.addEventListener('touchend', startTimer, { passive: true });
+
+      // ── Init first page ───────────────────────────────────────
+      showPage(0);
     });
-  }, { threshold: 0.05 });
 
-  document.querySelectorAll('.section-animate').forEach(el => animObserver.observe(el));
 
-  // ── Background crossfade ───────────────────────────────────
+
+    // ── Unified section animation observer ─────────────────────
+    const animObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+        } else {
+          entry.target.classList.remove('in-view');
+        }
+      });
+    }, { threshold: 0.05 });
+
+    document.querySelectorAll('.section-animate').forEach(el => animObserver.observe(el));
+
+    // ── Background crossfade ───────────────────────────────────
   if (heroBg2 && peopleSect) {
     const bgObserver = new IntersectionObserver(entries => {
       entries.forEach(entry => {
+        // Don't switch bg if we're still near the top
+        if (window.scrollY < 100) {
+          heroBg2.classList.remove('visible');
+          return;
+        }
         if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
           heroBg2.classList.add('visible');
         } else {
@@ -2759,27 +3307,64 @@
     bgObserver.observe(peopleSect);
   }
 
+    function togglePhotos() {
+      const wrap = document.getElementById('photos-bento-wrap');
+      const btn  = document.getElementById('photos-toggle-btn');
+      if (!wrap || !btn) return;
+      wrap.classList.toggle('expanded');
+      btn.classList.toggle('expanded');
+    }
 
-  // Call after animObserver is defined
+  // ── Photo grid ─────────────────────────────────────────────
+  fetch('data/photos.json')
+    .then(r => r.json())
+    .then(photos => {
+      const grid = document.getElementById('bento-grid');
+
+      Promise.all(photos.map(src => new Promise(resolve => {
+        const img  = new Image();
+        img.onload = () => resolve({ src, w: img.naturalWidth, h: img.naturalHeight });
+        img.onerror = () => resolve({ src, w: 1, h: 1 });
+        img.src = src;
+      }))).then(measured => {
+        measured.forEach(({ src, w, h }) => {
+          const ratio = w / h;
+          let span = '';
+          if (ratio > 1.6)  span = 'span-wide';
+          else if (ratio < 0.7) span = 'span-tall';
+
+          const alt  = src.split('/').pop().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+          const cell = document.createElement('div');
+          cell.className = `bento-cell ${span}`.trim();
+          cell.innerHTML = `<div class="photo-frame-erc">
+            <img src="${src}" alt="${alt}" loading="lazy">
+          </div>`;
+          grid.appendChild(cell);
+        });
+      });
+    });
+
+
+    // Call after animObserver is defined
     loadData();
 
-  // ── Responsive carousel layout ─────────────────────────────
-  function updateCarouselLayout() {
-    document.querySelectorAll('.split-right').forEach(wrap => {
-      const grid = wrap.querySelector('.card-grid');
-      const dots = wrap.querySelector('.carousel-dots');
-      if (!grid) return;
+    // ── Responsive carousel layout ─────────────────────────────
+    function updateCarouselLayout() {
+      document.querySelectorAll('.split-right').forEach(wrap => {
+        const grid = wrap.querySelector('.card-grid');
+        const dots = wrap.querySelector('.carousel-dots');
+        if (!grid) return;
 
-      // Always carousel — remove grid option
-      grid.classList.remove('layout-grid', 'layout-row', 'layout-carousel');
-      wrap.classList.add('is-carousel');
-      grid.classList.add('layout-carousel');
-      if (dots) dots.style.display = 'flex';
-    });
-  }
+        // Always carousel — remove grid option
+        grid.classList.remove('layout-grid', 'layout-row', 'layout-carousel');
+        wrap.classList.add('is-carousel');
+        grid.classList.add('layout-carousel');
+        if (dots) dots.style.display = 'flex';
+      });
+    }
 
-  updateCarouselLayout();
-  window.addEventListener('resize', updateCarouselLayout, { passive: true });
+    updateCarouselLayout();
+    window.addEventListener('resize', updateCarouselLayout, { passive: true });
 
 
 
@@ -2806,102 +3391,109 @@
 
     // Set initial state on load
     heroNav.classList.add('transparent');
-</script>
+  </script>
 
 
 
 
-<!-- globe.gl CDN — must come before init script -->
-<script src="//unpkg.com/globe.gl"></script>
+  <!-- globe.gl CDN — must come before init script -->
+  <script src="//unpkg.com/globe.gl"></script>
 
-<script>
-  // ── Interactive Globe ──────────────────────────────────────
-  const GLOBE_POINTS = [
-    {
-      lat: 19.89, lng: -155.25,
-      name: 'Hamakua Coast',
-      region: "Hawai'i, USA",
-      url: 'geographies/hamakua/index.html',
-      live: true
-    },
-    {
-      lat: 7.51, lng: 134.58,
-      name: 'Babeldaob Island',
-      region: 'Palau, Micronesia',
-      url: 'geographies/palau/index.html',
-      live: true
-    },
-    {
-      lat: 38.80, lng: -120.00,
-      name: 'Tahoe–Central Sierra',
-      region: 'California / Nevada, USA',
-      url: 'geographies/tcsi/index.html',
-      live: true
-    },
-    {
-      lat: 48.20, lng: -120.50,
-      name: 'North-Central Washington',
-      region: 'Washington, USA',
-      url: null,
-      live: false
-    }
-  ];
-
-  (function initGlobe() {
-    const container = document.getElementById('globe-container');
-    if (!container || typeof Globe === 'undefined') return;
-
-    // ── Altitude based on container width ──────────────────
-    function getAltitude() {
-      const w = container.offsetWidth;
-      const mobile = window.innerWidth <= 900;
-      if (mobile) {
-        if (w < 300) return 2.2;
-        if (w < 420) return 1.6;   /* phone — pre-zoomed in */
-        return 1.4;
+  <script>
+    // ── Interactive Globe ──────────────────────────────────────
+    const GLOBE_POINTS = [
+      {
+        lat: 19.89, lng: -155.25,
+        name: 'Hamakua Coast',
+        region: "Hawai'i, USA",
+        url: 'geographies/hamakua/index.html',
+        live: true
+      },
+      {
+        lat: 7.51, lng: 134.58,
+        name: 'Babeldaob Island',
+        region: 'Palau, Micronesia',
+        url: 'geographies/palau/index.html',
+        live: true
+      },
+      {
+        lat: 38.80, lng: -120.00,
+        name: 'Tahoe–Central Sierra',
+        region: 'California / Nevada, USA',
+        url: 'geographies/tcsi/index.html',
+        live: true
+      },
+      {
+        lat: 48.20, lng: -120.50,
+        name: 'North-Central Washington',
+        region: 'Washington, USA',
+        url: null,
+        live: false
+      },
+      {
+        lat: 19.918941, lng: -155.765171,
+        name: 'N. Kona – S. Kohala',
+        region: "Hawai'i, USA",
+        url: 'geographies/nksk/index.html',
+        live: true   // ← change to true when ready to deploy
       }
-      if (w < 300) return 4.0;
-      if (w < 420) return 3.2;
-      if (w < 580) return 2.6;
-      return 2.2;
-    }
+    ];
 
-    const globe = Globe()
-      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-day.jpg')
-      .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-      .backgroundColor('rgba(0,0,0,0)')
-      .showAtmosphere(true)
-      .atmosphereColor('#64a0dc')
-      .atmosphereAltitude(0.15)
+    (function initGlobe() {
+      const container = document.getElementById('globe-container');
+      if (!container || typeof Globe === 'undefined') return;
 
-      // ── Solid dots ────────────────────────────────────────
-      .pointsData(GLOBE_POINTS)
-      .pointLat('lat')
-      .pointLng('lng')
-      .pointAltitude(0.07)   
-      .pointRadius(d => {
+      // ── Altitude based on container width ──────────────────
+      function getAltitude() {
+        const w = container.offsetWidth;
         const mobile = window.innerWidth <= 900;
-        return d.live ? (mobile ? 1.5 : 0.7) : (mobile ? 1.0 : 0.45);
-      })
-      .pointColor(d => d.live ? '#c4963a' : 'rgba(196,150,58,0.38)')
-      .pointResolution(16)
+        if (mobile) {
+          if (w < 300) return 2.2;
+          if (w < 420) return 1.6;   /* phone — pre-zoomed in */
+          return 1.4;
+        }
+        if (w < 300) return 4.0;
+        if (w < 420) return 3.2;
+        if (w < 580) return 2.6;
+        return 2.2;
+      }
 
-      // ── Signal rings — expanding from each location ───────
-      .ringsData(GLOBE_POINTS)
-      .ringLat('lat')
-      .ringLng('lng')
-      .ringAltitude(0.005)
-      .ringColor(d => t =>
-        d.live
-          ? `rgba(196,150,58,${Math.max(0, (1 - t * 1.4) * 1.0)})`
-          : `rgba(196,150,58,${Math.max(0, (1 - t * 1.4) * 0.5)})`
-      )
-      .ringMaxRadius(d => d.live ? 20 : 10)          /* was 4.5 / 2.8 ... d.live is if it is an active tool or not...*/ 
-      .ringPropagationSpeed(d => d.live ? 2.5 : 1.2) /* was 1.8 / 1.0 */
-      .ringRepeatPeriod(d => d.live ? 800 : 1600)
+      const globe = Globe()
+        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-day.jpg')
+        .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+        .backgroundColor('rgba(0,0,0,0)')
+        .showAtmosphere(true)
+        .atmosphereColor('#64a0dc')
+        .atmosphereAltitude(0.15)
 
-      // ── Hover tooltip ─────────────────────────────────────
-      .pointLabel(d => `
+        // ── Solid dots ────────────────────────────────────────
+        .pointsData(GLOBE_POINTS)
+        .pointLat('lat')
+        .pointLng('lng')
+        .pointAltitude(0.07)
+        .pointRadius(d => {
+          const mobile = window.innerWidth <= 900;
+          return d.live ? (mobile ? 1.5 : 0.7) : (mobile ? 1.0 : 0.45);
+        })
+        .pointColor(d => d.live ? '#c4963a' : 'rgba(196,150,58,0.38)')
+        .pointResolution(16)
+
+        // ── Signal rings — expanding from each location ───────
+        .ringsData(GLOBE_POINTS)
+        .ringLat('lat')
+        .ringLng('lng')
+        .ringAltitude(0.005)
+        .ringColor(d => t =>
+          d.live
+            ? `rgba(196,150,58,${Math.max(0, (1 - t * 1.4) * 1.0)})`
+            : `rgba(196,150,58,${Math.max(0, (1 - t * 1.4) * 0.5)})`
+        )
+        .ringMaxRadius(d => d.live ? 20 : 10)          /* was 4.5 / 2.8 ... d.live is if it is an active tool or not...*/
+        .ringPropagationSpeed(d => d.live ? 2.5 : 1.2) /* was 1.8 / 1.0 */
+        .ringRepeatPeriod(d => d.live ? 800 : 1600)
+
+        // ── Hover tooltip ─────────────────────────────────────
+        .pointLabel(d => `
       <div style="
         background: rgba(10,8,6,0.93);
         backdrop-filter: blur(10px);
@@ -2922,121 +3514,121 @@
       </div>
     `)
 
-      // ── Interaction ───────────────────────────────────────
-      .onPointClick(d => {
-        if (d.live && d.url) window.location.href = d.url;
-      })
-      .onPointHover(d => {
-        container.style.cursor = (d && d.live) ? 'pointer' : 'default';
-      })
+        // ── Interaction ───────────────────────────────────────
+        .onPointClick(d => {
+          if (d.live && d.url) window.location.href = d.url;
+        })
+        .onPointHover(d => {
+          container.style.cursor = (d && d.live) ? 'pointer' : 'default';
+        })
 
-      (container);
+        (container);
 
-    // ── Size + initial view ───────────────────────────────
-    globe.width(container.offsetWidth);
-    globe.height(container.offsetHeight);
-    globe.pointOfView({ lat: 30, lng: -122, altitude: getAltitude() }, 0);
-    globe.controls().enableZoom = false;
+      // ── Size + initial view ───────────────────────────────
+      globe.width(container.offsetWidth);
+      globe.height(container.offsetHeight);
+      globe.pointOfView({ lat: 30, lng: -122, altitude: getAltitude() }, 0);
+      globe.controls().enableZoom = false;
 
-    // Track current altitude for buttons
-    let currentAltitude = getAltitude();
+      // Track current altitude for buttons
+      let currentAltitude = getAltitude();
 
-    // ── Mobile touch tap handler ───────────────────────────────
-    let touchOrigin = null;
+      // ── Mobile touch tap handler ───────────────────────────────
+      let touchOrigin = null;
 
-    container.addEventListener('touchstart', e => {
-      touchOrigin = {
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY,
-        t: Date.now()
-      };
-    }, { passive: true });
+      container.addEventListener('touchstart', e => {
+        touchOrigin = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+          t: Date.now()
+        };
+      }, { passive: true });
 
-    container.addEventListener('touchend', e => {
-      if (!touchOrigin) return;
-      const touch = e.changedTouches[0];
-      const dx = Math.abs(touch.clientX - touchOrigin.x);
-      const dy = Math.abs(touch.clientY - touchOrigin.y);
-      const dt = Date.now() - touchOrigin.t;
-      touchOrigin = null;
+      container.addEventListener('touchend', e => {
+        if (!touchOrigin) return;
+        const touch = e.changedTouches[0];
+        const dx = Math.abs(touch.clientX - touchOrigin.x);
+        const dy = Math.abs(touch.clientY - touchOrigin.y);
+        const dt = Date.now() - touchOrigin.t;
+        touchOrigin = null;
 
-      // Only trigger if it was a short tap, not a drag
-      if (dx > 12 || dy > 12 || dt > 350) return;
+        // Only trigger if it was a short tap, not a drag
+        if (dx > 12 || dy > 12 || dt > 350) return;
 
-      const rect = container.getBoundingClientRect();
-      const coords = globe.toGlobeCoords(
-        touch.clientX - rect.left,
-        touch.clientY - rect.top
-      );
-      if (!coords) return;
+        const rect = container.getBoundingClientRect();
+        const coords = globe.toGlobeCoords(
+          touch.clientX - rect.left,
+          touch.clientY - rect.top
+        );
+        if (!coords) return;
 
-      // Find nearest point within ~12 degrees
-      const hit = GLOBE_POINTS.reduce((best, pt) => {
-        const dist = Math.hypot(pt.lat - coords.lat, pt.lng - coords.lng);
-        return (!best || dist < best.dist) ? { pt, dist } : best;
-      }, null);
+        // Find nearest point within ~12 degrees
+        const hit = GLOBE_POINTS.reduce((best, pt) => {
+          const dist = Math.hypot(pt.lat - coords.lat, pt.lng - coords.lng);
+          return (!best || dist < best.dist) ? { pt, dist } : best;
+        }, null);
 
-      if (hit && hit.dist < 12 && hit.pt.live && hit.pt.url) {
-        window.location.href = hit.pt.url;
+        if (hit && hit.dist < 12 && hit.pt.live && hit.pt.url) {
+          window.location.href = hit.pt.url;
+        }
+      }, { passive: true });
+
+      // ── Responsive: update size AND zoom on resize ────────
+      const shadow = document.getElementById('globe-shadow');
+
+      // Shadow scales with both container size AND zoom level (altitude)
+      function updateShadow() {
+        if (!shadow) return;
+        const size = Math.min(container.offsetWidth, container.offsetHeight);
+        if (size === 0) return;
+        // Globe fills more of the container at lower altitudes
+        // At alt=2.2 → ~75% of size; scales inversely with altitude
+        const fraction = 1.2 / (currentAltitude + 0.8);
+        const w = Math.round(size * Math.min(fraction, 0.95) * 2.15);
+        shadow.style.width = w + 'px';
       }
-    }, { passive: true });    
- 
-    // ── Responsive: update size AND zoom on resize ────────
-    const shadow = document.getElementById('globe-shadow');
 
-    // Shadow scales with both container size AND zoom level (altitude)
-    function updateShadow() {
-      if (!shadow) return;
-      const size = Math.min(container.offsetWidth, container.offsetHeight);
-      if (size === 0) return;
-      // Globe fills more of the container at lower altitudes
-      // At alt=2.2 → ~75% of size; scales inversely with altitude
-      const fraction = 1.2 / (currentAltitude + 0.8);
-      const w = Math.round(size * Math.min(fraction, 0.95) * 2.15);
-      shadow.style.width = w + 'px';
-    }
-
-    const ro = new ResizeObserver(() => {
-      const w = container.offsetWidth;
-      const h = container.offsetHeight;
-      globe.width(w).height(h);
-      globe.pointOfView({ altitude: getAltitude() }, 600);
-      updateShadow();
-    });
-    ro.observe(container);
-    setTimeout(updateShadow, 500); // fire after globe textures load
-
-
-
-    // ── Wire up zoom buttons (already in HTML) ────────────────
-    const zoomIn  = document.getElementById('globe-zoom-in');
-    const zoomOut = document.getElementById('globe-zoom-out');
-    if (zoomIn)  zoomIn.addEventListener('click',  () => {
-      currentAltitude = Math.max(0.8, currentAltitude * 0.72);
-      globe.pointOfView({ altitude: currentAltitude }, 400);
-      updateShadow();
-    });
-    if (zoomOut) zoomOut.addEventListener('click', () => {
-      currentAltitude = Math.min(5.5, currentAltitude * 1.38);
-      globe.pointOfView({ altitude: currentAltitude }, 400);
-      updateShadow();
-    });
-
-    // ── Ctrl+scroll zoom ──────────────────────────────────────
-    container.addEventListener('wheel', e => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? 1.15 : 0.87;
-        currentAltitude = Math.min(5.5, Math.max(0.8, currentAltitude * delta));
-        globe.pointOfView({ altitude: currentAltitude }, 200);
+      const ro = new ResizeObserver(() => {
+        const w = container.offsetWidth;
+        const h = container.offsetHeight;
+        globe.width(w).height(h);
+        globe.pointOfView({ altitude: getAltitude() }, 600);
         updateShadow();
-      }
-    }, { passive: false });
+      });
+      ro.observe(container);
+      setTimeout(updateShadow, 500); // fire after globe textures load
 
-  })();
 
 
-</script>
+      // ── Wire up zoom buttons (already in HTML) ────────────────
+      const zoomIn = document.getElementById('globe-zoom-in');
+      const zoomOut = document.getElementById('globe-zoom-out');
+      if (zoomIn) zoomIn.addEventListener('click', () => {
+        currentAltitude = Math.max(0.8, currentAltitude * 0.72);
+        globe.pointOfView({ altitude: currentAltitude }, 400);
+        updateShadow();
+      });
+      if (zoomOut) zoomOut.addEventListener('click', () => {
+        currentAltitude = Math.min(5.5, currentAltitude * 1.38);
+        globe.pointOfView({ altitude: currentAltitude }, 400);
+        updateShadow();
+      });
+
+      // ── Ctrl+scroll zoom ──────────────────────────────────────
+      container.addEventListener('wheel', e => {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? 1.15 : 0.87;
+          currentAltitude = Math.min(5.5, Math.max(0.8, currentAltitude * delta));
+          globe.pointOfView({ altitude: currentAltitude }, 200);
+          updateShadow();
+        }
+      }, { passive: false });
+
+    })();
+
+
+  </script>
 
 
 
