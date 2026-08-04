@@ -1778,6 +1778,15 @@ PHOTOS SECTION
       margin-bottom: 0.1rem;
     }
 
+    .pd-role {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.1rem;
+    }    
+
     .pd-affil {
       font-size: 0.76rem;
       color: var(--text-mid);
@@ -2510,15 +2519,15 @@ PHOTOS SECTION
     <div class="hero-shimmer" id="hero-shimmer"></div>
     -->
     <div class="hero-content">
-      <p class="hero-eyebrow">Landscape ecology · Decision support · Wildfire</p>
+      <p class="hero-eyebrow">Landscape ecology · Biodiversity conservation · Fire dynamics · Decision support</p>
       <h1 class="hero-title">
         Ecosystem Resilience<br> <!--&amp; -->
         <em>Cooperative</em>
       </h1>
       <p class="hero-desc">
-        Quantifying landscape resilience to disturbances and ongoing climate change.
-        Spatial decision support tools for prioritizing ecological restoration
-        and protection across western US forests and watersheds.
+        Research on landscape resilience and biodiversity vulnerability to disturbances and ongoing climate change. 
+        Developing spatial decision support tools to explore ecosystem status and change, 
+        and prioritize restoration and protection across western US forests and watersheds.
       </p>
       <a class="hero-scroll" href="#about">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
@@ -2584,6 +2593,7 @@ PHOTOS SECTION
             <div class="pd-card-header">
               <h3 id="pd-name" class="pd-name"></h3>
               <p id="pd-title" class="pd-title"></p>
+              <p  id="pd-role"  class="pd-role"></p>
               <p id="pd-affil" class="pd-affil"></p>
               <div id="pd-links" class="pd-links"></div>
             </div>
@@ -2991,6 +3001,7 @@ PHOTOS SECTION
     document.getElementById('pd-photo').alt = p.name;
     document.getElementById('pd-name').textContent = p.name;
     document.getElementById('pd-title').textContent = p.title;
+    document.getElementById('pd-role').textContent  = p.role || '';
     document.getElementById('pd-affil').textContent = p.affiliation;
     document.getElementById('pd-bio').innerHTML = p.bio;
     document.getElementById('pd-links').innerHTML = p.links.map(l =>
