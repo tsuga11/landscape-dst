@@ -2,6 +2,7 @@
   {
     "name": "Patricia Manley",
     "title": "Research Ecologist",
+    "role": "Co-lead",
     "affiliation": "USFS | PSW Research",
     "bio": "<p>Pat is a research ecologist and senior science advisor for the US Forest Service, a Fellow of the California Academy of Science, and an Adjunct Professor at the University of Nevada, Reno. Her research is transdisciplinary and focuses on the interface of climate change, fire, biodiversity conservation, and forest resilience. Most of her career has been dedicated to enhancing our understanding of the role and impact of management in sustaining and improving biological integrity, and to making scientific information on biodiversity, natural resource dynamics, and ecosystem resilience readily accessible and applicable to managers and policy makers through models, decision support tools, and monitoring.</p>",
     "photo": "assets/headshots/pat.jpg",
@@ -20,6 +21,7 @@
   {
     "name": "Nicholas Povak",
     "title": "Research Ecologist",
+    "role": "Co-lead",
     "affiliation": "Spatial Informatics Group",
     "bio": "<p>Nick is a Senior Research Scientist in the Forest and Agriculture domain with expertise in landscape ecology, climate change adaptation, and machine learning in landscape management. Broadly, he is interested in using landscape modeling to understand how landscapes change over time under management and climate change and applying this knowledge into actionable science through the development of interactive decision support models. Prior to working with SIG, Nick spent the first 18 years of his career with the US Forest Service Pacific Northwest and Southwest Research stations studying landscapes across the western US, Hawaii, and Palau.</p>\n<p>Nick’s research falls into three broad categories: decision support modeling, landscape simulation, and machine learning. He co-developed PROMOTE, a climate-informed decision support model that incorporates future resource vulnerability under climate change into landscape planning, which will soon be available through Planscape. Through this work, Nick has leveraged dynamic landscape models, such as LANDIS-II, and climate analog modeling to help characterize potential vulnerability of ecosystem resources under mid-century climate. He is also a co-developer of the REBURN model (link), which pairs state-and-transition models and spatial wildfire simulations to improve our understanding of long-term wildfire-vegetation feedbacks. He also used machine learning to quantify local effects of topography, fuels, and management on mitigating wildfire severity across extreme wildfire events.</p>\n<p>Nick holds Forestry degrees from Virginia Tech (BS), University of Wisconsin – Madison (MS), and University of Washington (PhD).</p>",
     "photo": "assets/headshots/nick.jpg",
