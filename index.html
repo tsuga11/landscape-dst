@@ -3296,27 +3296,44 @@ PHOTOS SECTION
     .then(photos => {
       const grid = document.getElementById('bento-grid');
 
-      // ── Shuffle on every load ─────────────────────────────
+      // Shuffle
       for (let i = photos.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [photos[i], photos[j]] = [photos[j], photos[i]];
       }
 
-      Promise.all(photos.map(src => new Promise(resolve => {
+      // Normalize — convert strings to objects
+      const normalized = photos.map(p =>
+        typeof p === 'string' ? { src: p, span: null } : p
+      );
+
+      Promise.all(normalized.map(photo => new Promise(resolve => {
+        // If span is explicitly set, skip measuring
+        if (photo.span !== null && photo.span !== undefined) {
+          return resolve({ ...photo, measured: false });
+        }
         const img  = new Image();
-        img.onload = () => resolve({ src, w: img.naturalWidth, h: img.naturalHeight });
-        img.onerror = () => resolve({ src, w: 1, h: 1 });
-        img.src = src;
-      }))).then(measured => {
-        measured.forEach(({ src, w, h }) => {
-          const ratio = w / h;
-          let span = '';
-          if (ratio > 1.6)  span = 'span-wide';
-          else if (ratio < 0.7) span = 'span-tall';
+        img.onload = () => resolve({
+          ...photo,
+          w: img.naturalWidth,
+          h: img.naturalHeight,
+          measured: true
+        });
+        img.onerror = () => resolve({ ...photo, w: 1, h: 1, measured: true });
+        img.src = photo.src;
+      }))).then(results => {
+        results.forEach(({ src, span, w, h, measured }) => {
+          // Use override span if provided, otherwise auto-detect
+          if (measured) {
+            const ratio = w / h;
+            if (ratio > 1.6)       span = 'span-wide';
+            else if (ratio < 0.7)  span = 'span-tall';
+            else                   span = '';
+          }
 
           const alt  = src.split('/').pop().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
           const cell = document.createElement('div');
-          cell.className = `bento-cell ${span}`.trim();
+          cell.className = `bento-cell ${span || ''}`.trim();
           cell.innerHTML = `<div class="photo-frame-erc">
             <img src="${src}" alt="${alt}" loading="lazy">
           </div>`;
@@ -3324,7 +3341,6 @@ PHOTOS SECTION
         });
       });
     });
-
 
     // Call after animObserver is defined
     loadData();
