@@ -16,7 +16,7 @@
     "assets/people/Jeff_Ryan.jpg",
     "assets/people/gang_field.JPEG",
     "assets/people/calif_mixedcon.JPEG",
-    "assets/people/Bryan_Nick_LBC.JPEG",
-    "assets/people/Bryan_Nick_Sac.JPEG",
+    {"src": "assets/people/Bryan_Nick_LBC.JPEG", "span": "span-tall"},
+    {"src": "assets/people/Bryan_Nick_Sac.JPEG", "span": "span-tall"},
     "assets/people/Bryan_Pat_fire.JPEG"
 ]
