@@ -72,5 +72,18 @@
         "url": "https://lirazbis.github.io/"
       }
     ]
+  },
+  {
+    "name": "Thomas Harbin",
+    "title": "Forest Ecology Research Fellow",
+    "affiliation": "ORISE | PSW Research",
+    "bio": "<p>Tom is a Research Fellow under Oak Ridge National Laboratories working with the U.S. Forest Service Pacific Southwest Research Station. He earned a B.S. in Botany from California State Polytechnic University, Humboldt, where he developed an interest in forest ecology and plant community dynamics. His research focuses on how forest vegetation responds to disturbance, management, and environmental variability through field studies and quantitative analysis, with a specific focus on understanding forest resilience, restoration ecology, and translating ecological research into practical management applications.</p>",
+    "photo": "assets/headshots/thomas.jpg",
+    "links": [
+      {
+        "label": "LinkedIn",
+        "url": "https://www.linkedin.com/in/tom-harbin-9692a9308/"
+      }
+    ]
   }
 ]
