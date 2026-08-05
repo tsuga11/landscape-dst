@@ -16,6 +16,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap"
     rel="stylesheet">
+  
   <style>
     *,
     *::before,
@@ -2278,6 +2279,40 @@ PHOTOS SECTION
         color: #fff;
       }
 
+
+
+    /* ── Web tools — general-purpose, below the globe ───────── */
+    .webtools-block {
+      padding: 0 4rem 4rem;
+      padding-right: calc(var(--section-right-margin) + 3.5rem);
+    }
+
+    .webtools-rule {
+      width: 100%;
+      height: 1px;
+      background: rgba(27, 58, 47, 0.12);
+      margin-bottom: 2.5rem;
+    }
+
+    .webtools-header {
+      max-width: 680px;
+      margin-bottom: 1.75rem;
+    }
+
+    .webtools-header .section-eyebrow { margin-bottom: 0.5rem; }
+    .webtools-header .section-title   { margin-bottom: 0.75rem; }
+
+    .webtools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 300px));
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 900px) {
+      .webtools-block { padding: 0 1.25rem 2.5rem; }
+      .webtools-grid  { grid-template-columns: 1fr; }
+    }      
+
       /* ── People ────────────────────────────────────────────── */
       .people-header,
       .people-strip-outer {
@@ -2857,6 +2892,34 @@ PHOTOS SECTION
 
 
     </div>
+
+    <div class="webtools-block">
+      <div class="webtools-rule"></div>
+      <div class="webtools-header">
+        <p class="section-eyebrow">Web tools</p>
+        <h2 class="section-title">Bring your own data</h2>
+        <p class="section-sub">General-purpose tools that run entirely in your browser — nothing is
+          uploaded, and no account is needed.</p>
+      </div>
+
+      <div class="webtools-grid">
+        <article class="project-card visible">
+          <div class="card-img-wrap">
+            <img src="assets/fuzzy_membership.jpg" alt="Fuzzy membership designer">
+            <span class="card-badge badge-ready">Live</span>
+          </div>
+          <div class="card-body">
+            <p class="card-region">Raster &amp; tabular</p>
+            <h3 class="card-title">Fuzzy membership designer</h3>
+            <p class="card-meta">Updated: August 2026</p>
+            <p class="card-desc">Calibrate a strength-of-evidence ramp against your data's own
+              distribution, then export the function and the transformed layer as GeoTIFF or
+              ESRI ASCII.</p>
+            <a class="card-link" href="webtools/fuzzy_membership/">Open tool →</a>
+          </div>
+        </article>
+      </div>
+    </div>    
   </section>
 
 
