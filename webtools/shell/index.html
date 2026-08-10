@@ -1,5 +1,5 @@
-<script type="module" crossorigin src="./assets/index-Bqkn4CUC.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-KizArRWY.css">
+<script type="module" crossorigin src="./assets/index-D2jdtdzp.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-MGNviBeR.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
@@ -59,7 +59,11 @@
   .proj[aria-current="true"] { background: var(--paper); border-color: var(--rule); }
   .proj small { display: block; color: var(--ink-mute); font: 400 11.5px "IBM Plex Mono", monospace; }
 
-  .storage { margin-top: calc(var(--step)*3); font: 400 11.5px "IBM Plex Mono", monospace; color: var(--ink-soft); }
+  .storage { margin-top: calc(var(--step)*3); font: 400 11.5px "IBM Plex Mono", monospace;
+             color: var(--ink-soft); line-height: 1.7; }
+  .storage-actions { display: flex; flex-direction: column; gap: 5px; margin-top: 9px; align-items: flex-start; }
+  #sweepResult { margin-top: 8px; line-height: 1.6; }
+  #sweepResult .mini { margin-top: 5px; }
   .meter { height: 4px; background: var(--rule-lt); margin: 6px 0; position: relative; }
   .meter i { position: absolute; inset: 0 auto 0 0; background: var(--measure); }
   .meter i.eph { background: var(--pending); left: auto; }
@@ -201,6 +205,15 @@
   button.cta:disabled { background: var(--rule-lt); border-color: var(--rule-lt); color: var(--ink-mute); }
 
 
+  .slots { display: grid; gap: calc(var(--step) * 1.5); margin: calc(var(--step) * 2) 0 0; }
+  .slot { display: block; }
+  .slot-label { display: block; font-size: 13px; }
+  .slot-hint { display: block; font-size: 11.5px; color: var(--ink-mute); margin-bottom: 4px; }
+  .slot select {
+    width: 100%; padding: 6px 8px; border: 1px solid var(--rule);
+    background: var(--paper); font: 400 12.5px "IBM Plex Mono", monospace; color: var(--ink);
+  }
+
   .maprow { display: grid; grid-template-columns: 1fr 260px; gap: calc(var(--step)*3); align-items: start; }
   @media (max-width: 860px) { .maprow { grid-template-columns: 1fr; } }
   .mapwrap { position: relative; border: 1px solid var(--rule); background: #EDF1EC; }
@@ -258,8 +271,8 @@
     <div id="banner" class="banner hidden"></div>
 
     <div id="drop" class="drop">
-      <input type="file" id="file" accept=".tif,.tiff" hidden>
-      <b>Drop a GeoTIFF</b> or click to choose — it stays on this machine.
+      <input type="file" id="file" accept=".tif,.tiff" multiple hidden>
+      <b>Drop GeoTIFFs</b> or click to choose — several at once is fine, and they stay on this machine.
     </div>
 
     <div id="empty" class="hidden">
