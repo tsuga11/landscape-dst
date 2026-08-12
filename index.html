@@ -3068,13 +3068,13 @@ PHOTOS SECTION
       card.setAttribute('tabindex', '0');
 
       card.addEventListener('click', () => {
-        window.location.href = card.dataset.href;
+        window.open(card.dataset.href, '_blank');
       });
 
       card.addEventListener('keydown', event => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          window.location.href = card.dataset.href;
+          window.open(card.dataset.href, '_blank');
         }
       });
     });
