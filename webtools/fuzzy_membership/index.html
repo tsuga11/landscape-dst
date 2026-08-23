@@ -9,16 +9,39 @@
       content="Load a raster or table, calibrate a fuzzy strength-of-evidence ramp against its own distribution, and export the function and transformed layer. Runs entirely in your browser."
     />
     <style>
-      html, body, #root { height: 100%; margin: 0; }
-      *, *::before, *::after { box-sizing: border-box; }
+      /*
+       * Layout only. The reset, the page background, the text colour and the
+       * face all come from @erc/ui/tokens.css, imported by src/index.tsx.
+       *
+       * This block used to set `background: #111820; color: #e6edf3` and a
+       * system font stack on <body> — the old hard-coded THEME, left behind
+       * when THEME moved to custom properties. The panels inside #root were
+       * correctly themed and the page behind them was a literal, so this app
+       * rendered a blue-grey ground in BOTH themes and ignored --font-body
+       * entirely. Nothing about that was visible from the TypeScript.
+       *
+       * The var() fallbacks are deliberate and are not defensive padding.
+       * This <style> parses before the module's CSS arrives, so the first
+       * frame has no custom properties defined; without a fallback that frame
+       * is a transparent body, which browsers paint white — a white flash on
+       * the way into a dark theme. The fallback values are the light theme's
+       * and only ever show for that one frame.
+       */
+      html, body, #root { height: 100%; }
       body {
-        background: #111820;
-        color: #e6edf3;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
-        -webkit-font-smoothing: antialiased;
+        background: var(--paper, #eae4d8);
+        color: var(--ink, #1e2a24);
       }
+
+      /* Skeleton shimmer for pending panels. Tokenised: the old literals were
+         a dark-theme gradient that stayed dark on a cream page. */
       ._sk {
-        background: linear-gradient(90deg, #1a2431 25%, #223040 37%, #1a2431 63%);
+        background: linear-gradient(
+          90deg,
+          var(--sunken) 25%,
+          var(--line-soft) 37%,
+          var(--sunken) 63%
+        );
         background-size: 400% 100%;
         animation: sk 1.4s ease infinite;
       }
@@ -33,10 +56,10 @@
       }
       @media (max-width: 900px) {
         .split { grid-template-columns: 1fr; }
-      }      
+      }
     </style>
-    <script type="module" crossorigin src="./assets/index-_XMW6GP2.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CU5PBYVR.css">
+    <script type="module" crossorigin src="./assets/index-XO6sg3Vb.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Ds2YpvfJ.css">
   </head>
   <body>
     <div id="root"></div>
