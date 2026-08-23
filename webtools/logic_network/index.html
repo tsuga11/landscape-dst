@@ -5,9 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Logic network developer</title>
     <meta name="description" content="Build NetWeaver-style logic networks from tabular or raster inputs and map the combined condition score." />
-    <script type="module" crossorigin src="./assets/index-D0Mf361T.js"></script>
+    <style>
+      /*
+       * The reset, ground, text colour and face come from @erc/ui/tokens.css,
+       * imported by src/index.tsx. Only the pre-CSS first frame is set here.
+       *
+       * This app previously set nothing at all, so <body> was the browser
+       * default — white in both themes, with correctly-themed panels on it.
+       * The two lines below are the fix for the flash, not for the theme:
+       * the fallbacks show for one frame before the module's CSS lands.
+       */
+      html, body, #root { height: 100%; }
+      body {
+        background: var(--paper, #eae4d8);
+        color: var(--ink, #1e2a24);
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index-QZ4j-ODe.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/maplibre-B14_k2lU.js">
-    <link rel="stylesheet" crossorigin href="./assets/index-B0YYmBP9.css">
+    <link rel="stylesheet" crossorigin href="./assets/index-BZMbMvag.css">
   </head>
   <body>
     <div id="root"></div>
