@@ -1,13 +1,23 @@
-<script type="module" crossorigin src="./assets/index-CUQZvvuE.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-D5ictxd9.css">
+<script type="module" crossorigin src="./assets/index-Dbh-vsXv.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-DBkhiR6t.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<!--
+  No font stylesheets here.
+
+  Two `fonts.googleapis.com` links sat in this file until 2026-08-25 — one for
+  three IBM Plex families, one for DM Sans and Cormorant Garamond. Nothing had
+  referenced any of them since Figtree was self-hosted into `@erc/ui`: the Plex
+  request had outlived `--font-mono` becoming `ui-monospace`, and the other two
+  faces were replaced outright. `tokens.css`'s own header and DESIGN.md §12 both
+  recorded that this removal had happened. It had not.
+
+  §1's premise is that a collaborator opens a URL and that is the whole install.
+  Two blocking third-party requests on every load of the hub, for faces the suite
+  no longer uses, was a quiet hole in it and failed offline.
+-->
 
 <div class="shell">
   <aside class="rail">
@@ -15,7 +25,18 @@
     <h3>Projects</h3>
     <div id="projList"></div>
     <button class="mini" id="newProject" style="margin-top:10px">New project</button>
-    <h3>Browser storage</h3>
+
+    <!--
+      The storage heading is rendered, not written here.
+
+      It said "Browser storage" unconditionally, directly above a panel whose
+      whole argument is that it must ask `store === dirStore` before saying
+      anything at all — see `renderStorage`'s comment on the two measurements.
+      On a folder-backed workspace the static heading asserted the browser
+      measurement the panel below carefully refuses to make, which is the same
+      category error one element higher up.
+    -->
+    <div id="storageHead"></div>
     <div class="storage" id="storage"></div>
     <div class="storage" id="workspace"></div>
   </aside>
@@ -24,9 +45,29 @@
     <div class="toprow"><span id="themeSlot"></span></div>
     <div id="banner" class="banner hidden"></div>
 
+    <!--
+      The header image. Decoration, per §12: it carries no state and nothing
+      about a project should have to be read from it. Filled by `renderHeader`
+      from `hero.ts`, which picks a bundled photograph by hashing the project id
+      and falls back to a generated ridgeline when none are bundled yet.
+    -->
+    <header class="hero hidden" id="hero"></header>
+
+    <!--
+      The front door, and it stays in one place.
+
+      Since the align moved into the ingest dialog, this is the only way a raster
+      enters the suite, and every workflow card is blocked until it is used. It
+      changes size rather than position: `renderAll` gives it `.primary` when
+      there is nothing to work on and `.quiet` when there is, so someone who
+      learns where it is on their first project still finds it on their fourth.
+      Moving it would be the more elegant layout and the worse affordance.
+    -->
     <div id="drop" class="drop">
       <input type="file" id="file" accept=".tif,.tiff" multiple hidden>
-      <b>Drop GeoTIFFs</b> or click to choose — several at once is fine, and they stay on this machine.
+      <b>Drop GeoTIFFs to start</b>
+      <span class="dropline">or click to choose — several at once is fine, and they stay on this machine.</span>
+      <p class="why" id="dropWhy"></p>
     </div>
 
     <div id="empty" class="hidden">
@@ -41,9 +82,6 @@
       </div>
     </div>
 
-    <h1 id="projName"></h1>
-    <div class="gridline" id="gridline"></div>
-
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" data-view="workflow" aria-selected="true">Workflow</button>
       <button class="tab" role="tab" data-view="layers"   aria-selected="false">Layers</button>
@@ -52,11 +90,50 @@
     </div>
 
     <section id="view-workflow">
-      <div class="graph">
-        <svg id="edges" aria-hidden="true"></svg>
-        <div class="nodes" id="nodes"></div>
+      <!--
+        Three panels: what to run, what is here, what happened. The SVG edge
+        overlay and the absolutely-positioned node grid are gone — §12's
+        argument is that six cards with a verdict on each read at a glance
+        where a node graph has to be traced, and that the only thing lost is
+        arbitrary node positions, which nothing needed.
+      -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="grow">
+            <h2 class="panel-title">Your workflow</h2>
+            <p class="panel-sub">Run tools in sequence or explore results on the map.</p>
+          </div>
+          <button class="mini" id="toMap" type="button">View on map</button>
+        </div>
+        <div class="cards" id="cards"></div>
       </div>
+
+      <!-- Unchanged. Selecting a card still opens the layer pickers and the
+           entry link here; only the thing that opens it has been restyled. -->
       <div class="inspect" id="inspect"></div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="grow">
+            <h2 class="panel-title">Layers at a glance</h2>
+            <p class="panel-sub" id="glanceSub"></p>
+          </div>
+          <button class="mini" id="toLayers" type="button">Go to layers</button>
+        </div>
+        <div class="glance" id="glance"></div>
+        <div class="recent" id="recent"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="grow">
+            <h2 class="panel-title">How this was computed</h2>
+            <p class="panel-sub">Track the steps and inputs that created your results.</p>
+          </div>
+          <button class="mini" id="toLineage" type="button">Open lineage</button>
+        </div>
+        <div class="strip" id="strip"></div>
+      </div>
     </section>
 
     <section id="view-layers" class="hidden">
