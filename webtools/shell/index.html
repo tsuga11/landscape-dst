@@ -1,5 +1,5 @@
-<script type="module" crossorigin src="./assets/index-D7ft-UbM.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-CVAhXMcW.css">
+<script type="module" crossorigin src="./assets/index-BFp4zix2.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-CGNqX7Qs.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
@@ -19,8 +19,29 @@
   no longer uses, was a quiet hole in it and failed offline.
 -->
 
+<!--
+  The rail toggle, and the scrim that closes it.
+
+  Both are inert above 860px — `app.css` hides them there — and are declared
+  here rather than created in JS so the markup is one place. Below 860px the
+  rail is an off-canvas drawer; without this it was `display: none`, which took
+  creating a project, switching, deleting and storage off the page with nothing
+  in `main` offering any of them.
+
+  The toggle is outside `.shell` because it is fixed-position chrome and belongs
+  to neither column.
+-->
+<button class="railtoggle" id="railToggle" type="button"
+        aria-controls="rail" aria-expanded="false" aria-label="Projects and storage">
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+       stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+    <path d="M4 7h16M4 12h16M4 17h16"/>
+  </svg>
+</button>
+
 <div class="shell">
-  <aside class="rail">
+  <button class="rail-scrim" id="railScrim" type="button" tabindex="-1" aria-hidden="true"></button>
+  <aside class="rail" id="rail">
     <div class="brand">ERC tools</div>
     <h3>Projects</h3>
     <div id="projList"></div>
@@ -93,7 +114,7 @@
       <!--
         Three panels: what to run, what is here, what happened. The SVG edge
         overlay and the absolutely-positioned node grid are gone — §12's
-        argument is that six cards with a verdict on each read at a glance
+        argument is that a card per tool with a verdict on it reads at a glance
         where a node graph has to be traced, and that the only thing lost is
         arbitrary node positions, which nothing needed.
       -->
