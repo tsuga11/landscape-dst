@@ -1,5 +1,5 @@
-<script type="module" crossorigin src="./assets/index-azv_oplh.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-CLQ9jK3y.css">
+<script type="module" crossorigin src="./assets/index-D6DYs_oJ.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-CnPqj8PH.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
@@ -122,16 +122,36 @@
         <div class="panel-head">
           <div class="grow">
             <h2 class="panel-title">Your workflow</h2>
-            <p class="panel-sub">Run tools in sequence or explore results on the map.</p>
+            <p class="panel-sub">Each tool reads this project and writes a stage back to it, so
+            nothing has to be downloaded and re-uploaded between steps. Pick any tool that is
+            ready — this is a graph, not a sequence.</p>
           </div>
           <button class="mini" id="toMap" type="button">View on map</button>
         </div>
         <div class="cards" id="cards"></div>
       </div>
 
-      <!-- Unchanged. Selecting a card still opens the layer pickers and the
-           entry link here; only the thing that opens it has been restyled. -->
-      <div class="inspect" id="inspect"></div>
+      <!--
+      The inspector, as a dialog.
+
+      It was a plain block between the workflow panel and "Layers at a glance",
+      so selecting a card put its content below the fold, pushed everything
+      under it down, and landed outside the reading line. Same content, same
+      handlers — `renderInspector` still writes `#inspect` and nothing about
+      what it writes changed.
+
+      Markup rather than created in JS, matching `#ingest` directly above: the
+      shell keeps its structure in one file, and a dialog assembled in
+      TypeScript is the one nobody finds when reading the page.
+    -->
+    <div id="inspectModal" class="modal hidden">
+      <div class="modal-box">
+        <div class="inspect" id="inspect"></div>
+        <div class="row">
+          <button class="mini" id="inspectClose" type="button">Close</button>
+        </div>
+      </div>
+    </div>
 
       <div class="panel">
         <div class="panel-head">
