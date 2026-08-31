@@ -1114,49 +1114,6 @@
       color: var(--text-mid);
     }
 
-    /* ── Web tools — general-purpose, below the globe ───────── */
-    .webtools-block {
-      padding: 0 4rem 4rem;
-      padding-right: calc(var(--section-right-margin) + 3.5rem);
-    }
-
-    .webtools-rule {
-      width: 100%;
-      height: 1px;
-      background: rgba(27, 58, 47, 0.12);
-      margin-bottom: 2.5rem;
-    }
-
-    .webtools-header {
-      max-width: 680px;
-      margin-bottom: 1.75rem;
-    }
-
-    .webtools-header .section-eyebrow { margin-bottom: 0.5rem; }
-    .webtools-header .section-title   { margin-bottom: 0.75rem; }
-
-    .tools-section .webtools-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, 300px);
-      justify-content: start;
-      gap: 1.25rem;
-    }
-
-    .tools-section .webtools-grid .project-card {
-      width: 300px;
-      height: auto;
-      min-height: 0;
-    }
-
-    @media (max-width: 900px) {
-      .tools-section .webtools-block { padding: 0 1.25rem 2.5rem; }
-      .tools-section .webtools-grid  { grid-template-columns: 1fr; }
-      .tools-section .webtools-grid .project-card { width: 100%; height: auto; }
-    }   
-
-
-
-
     /* ══════════════════════════════════════════════════════════
        WEB TOOLS — WORKSPACE-FIRST LANDING
        ══════════════════════════════════════════════════════════ */
@@ -1505,6 +1462,8 @@
         height: 44px;
       }
     }
+
+
 
     /* ── Globe: side-by-side layout ─────────────────────────── */
     .globe-section .section-stack {
@@ -3360,7 +3319,7 @@ PHOTOS SECTION
   ══════════════════════════════════════════════════════════ -->
 
   <script>
-    document.querySelectorAll('.project-card[data-href], .workspace-card[data-href], .tool-link-card[data-href]').forEach(card => {
+    document.querySelectorAll('.project-card[data-href]').forEach(card => {
       card.setAttribute('tabindex', '0');
 
       card.addEventListener('click', () => {
