@@ -1162,8 +1162,8 @@
        ══════════════════════════════════════════════════════════ */
     .tools-section .webtools-block {
       position: relative;
-      min-height: 86vh;
-      padding: 4.5rem 4rem 4.5rem;
+      min-height: 82vh;
+      padding: 4.25rem 4rem 4.25rem;
       padding-right: calc(var(--section-right-margin) + 3.5rem);
       display: flex;
       flex-direction: column;
@@ -1176,18 +1176,20 @@
       content: '';
       position: absolute;
       z-index: -2;
-      left: -4rem;
-      bottom: -7rem;
-      width: min(43vw, 620px);
-      height: 78%;
+      left: -2rem;
+      bottom: -5rem;
+      width: min(34vw, 500px);
+      height: 76%;
       background: url('assets/drone-forest.jpg') left bottom / cover no-repeat;
-      opacity: 0.72;
-      filter: saturate(0.72) contrast(0.94);
-      -webkit-mask-image: linear-gradient(to right, #000 0%, rgba(0,0,0,.96) 48%, rgba(0,0,0,.58) 73%, transparent 100%),
-                          linear-gradient(to top, #000 0%, #000 54%, transparent 100%);
+      opacity: .78;
+      filter: saturate(.72) contrast(.94);
+      -webkit-mask-image:
+        linear-gradient(to right, #000 0%, rgba(0,0,0,.98) 38%, rgba(0,0,0,.62) 68%, transparent 100%),
+        linear-gradient(to top, #000 0%, #000 52%, transparent 100%);
       -webkit-mask-composite: source-in;
-      mask-image: linear-gradient(to right, #000 0%, rgba(0,0,0,.96) 48%, rgba(0,0,0,.58) 73%, transparent 100%),
-                  linear-gradient(to top, #000 0%, #000 54%, transparent 100%);
+      mask-image:
+        linear-gradient(to right, #000 0%, rgba(0,0,0,.98) 38%, rgba(0,0,0,.62) 68%, transparent 100%),
+        linear-gradient(to top, #000 0%, #000 52%, transparent 100%);
       mask-composite: intersect;
       pointer-events: none;
     }
@@ -1198,9 +1200,9 @@
       z-index: -1;
       left: 0;
       top: 0;
-      width: 48%;
+      width: 38%;
       height: 100%;
-      background: linear-gradient(90deg, rgba(226,219,208,.08), rgba(226,219,208,.72) 72%, transparent);
+      background: linear-gradient(90deg, rgba(226,219,208,.04), rgba(226,219,208,.58) 76%, transparent);
       pointer-events: none;
     }
 
@@ -1210,7 +1212,7 @@
 
     .tools-section .webtools-header {
       max-width: 760px;
-      margin: 0 0 2.25rem;
+      margin: 0 0 2rem;
       position: relative;
       z-index: 2;
     }
@@ -1233,9 +1235,9 @@
 
     .tools-suite {
       display: grid;
-      grid-template-columns: minmax(430px, 1.3fr) minmax(360px, .82fr);
-      gap: 1.15rem;
-      align-items: stretch;
+      grid-template-columns: minmax(0, 1.05fr) minmax(340px, .78fr);
+      gap: 1.1rem;
+      align-items: center;
       position: relative;
       z-index: 2;
     }
@@ -1247,9 +1249,10 @@
     }
 
     .workspace-card {
-      min-height: 470px;
-      border-radius: 20px;
-      padding: 2.5rem;
+      min-height: 365px;
+      margin-left: clamp(70px, 6vw, 115px);
+      border-radius: 19px;
+      padding: 2.1rem 2.25rem;
       position: relative;
       overflow: hidden;
       display: flex;
@@ -1292,9 +1295,9 @@
     }
 
     .tool-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 15px;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1305,8 +1308,8 @@
     }
 
     .tool-icon svg {
-      width: 28px;
-      height: 28px;
+      width: 27px;
+      height: 27px;
     }
 
     .workspace-badge {
@@ -1322,9 +1325,9 @@
     }
 
     .workspace-kicker {
-      margin-bottom: .45rem;
+      margin-bottom: .4rem;
       color: rgba(232,196,106,.88);
-      font-size: .66rem;
+      font-size: .64rem;
       font-weight: 500;
       letter-spacing: .18em;
       text-transform: uppercase;
@@ -1332,30 +1335,30 @@
 
     .workspace-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.4rem, 4vw, 3.7rem);
+      font-size: clamp(2.25rem, 3.5vw, 3.25rem);
       font-weight: 600;
       line-height: 1;
-      margin-bottom: 1rem;
+      margin-bottom: .8rem;
     }
 
     .workspace-desc {
-      max-width: 560px;
+      max-width: 520px;
       color: rgba(255,255,255,.72);
-      font-size: .92rem;
-      line-height: 1.72;
+      font-size: .88rem;
+      line-height: 1.68;
     }
 
     .workspace-cta {
       display: inline-flex;
       align-items: center;
-      gap: .7rem;
+      gap: .65rem;
       width: fit-content;
-      margin-top: 1.8rem;
-      padding: .72rem 1.05rem .72rem 1.15rem;
+      margin-top: 1.35rem;
+      padding: .68rem 1rem .68rem 1.1rem;
       border-radius: 999px;
       background: #f3eee5;
       color: var(--green-deep);
-      font-size: .77rem;
+      font-size: .75rem;
       font-weight: 500;
       letter-spacing: .03em;
       box-shadow: 4px 5px 12px rgba(0,0,0,.18);
@@ -1376,19 +1379,19 @@
     .tool-link-list {
       display: grid;
       grid-template-rows: repeat(5, 1fr);
-      gap: .7rem;
+      gap: .62rem;
     }
 
     .tool-link-card {
-      min-height: 0;
-      padding: .95rem 1.1rem;
+      min-height: 62px;
+      padding: .72rem .95rem;
       border: 1px solid rgba(160,140,110,.26);
-      border-radius: 15px;
-      background: rgba(239,234,224,.72);
+      border-radius: 14px;
+      background: rgba(239,234,224,.78);
       box-shadow: 5px 6px 15px rgba(130,112,88,.16), -3px -3px 9px rgba(255,255,255,.7);
       display: flex;
       align-items: center;
-      gap: .95rem;
+      gap: .85rem;
       cursor: pointer;
       transition: transform .22s ease, background .22s ease, box-shadow .22s ease;
     }
@@ -1400,9 +1403,9 @@
     }
 
     .tool-link-card .tool-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 14px;
+      width: 46px;
+      height: 46px;
+      border-radius: 13px;
       background: rgba(27,58,47,.075);
       color: var(--green-deep);
       border: none;
@@ -1411,20 +1414,24 @@
     .tool-link-copy {
       min-width: 0;
       flex: 1;
+      display: flex;
+      align-items: baseline;
+      gap: .35rem;
+      flex-wrap: wrap;
     }
 
     .tool-link-name {
       color: var(--green-deep);
-      font-size: .93rem;
+      font-size: .9rem;
       font-weight: 500;
       line-height: 1.2;
     }
 
     .tool-link-type {
-      margin-top: .24rem;
+      margin-top: 0;
       color: rgba(74,74,74,.62);
-      font-size: .63rem;
-      letter-spacing: .09em;
+      font-size: .59rem;
+      letter-spacing: .08em;
       text-transform: uppercase;
     }
 
@@ -1440,14 +1447,15 @@
         grid-template-columns: 1fr;
       }
       .workspace-card {
-        min-height: 390px;
+        min-height: 365px;
+        margin-left: 55px;
       }
       .tool-link-list {
         grid-template-columns: repeat(2, 1fr);
         grid-template-rows: none;
       }
       .tool-link-card {
-        min-height: 88px;
+        min-height: 78px;
       }
     }
 
@@ -1473,7 +1481,8 @@
         gap: .85rem;
       }
       .workspace-card {
-        min-height: 390px;
+        min-height: 360px;
+        margin-left: 0;
         padding: 1.5rem;
         border-radius: 17px;
       }
