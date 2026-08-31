@@ -1114,352 +1114,199 @@
       color: var(--text-mid);
     }
 
-    /* ══════════════════════════════════════════════════════════
-       WEB TOOLS — WORKSPACE-FIRST LANDING
-       ══════════════════════════════════════════════════════════ */
+    /* ── Web tools: bounded workspace layout ───────────────────── */
+
     .tools-section .webtools-block {
       position: relative;
       min-height: 82vh;
-      padding: 4.25rem 4rem 4.25rem;
-      padding-right: calc(var(--section-right-margin) + 3.5rem);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+
+      padding-top: 4rem;
+      padding-bottom: 4rem;
+
+      /*
+      * Leave enough room on the left for the forest and
+      * enough room on the right for the fixed navigation.
+      */
+      padding-left: 4rem;
+      padding-right: calc(var(--section-right-margin) + 4rem);
+
       overflow: hidden;
       isolation: isolate;
     }
 
+    /* Conifer forest from the mockup */
     .tools-section .webtools-block::before {
-      content: '';
+      content: "";
       position: absolute;
       z-index: -2;
+
       left: -2rem;
-      bottom: -5rem;
-      width: min(34vw, 500px);
-      height: 76%;
-      background: url('assets/drone-forest.jpg') left bottom / cover no-repeat;
-      opacity: .78;
-      filter: saturate(.72) contrast(.94);
-      -webkit-mask-image:
-        linear-gradient(to right, #000 0%, rgba(0,0,0,.98) 38%, rgba(0,0,0,.62) 68%, transparent 100%),
-        linear-gradient(to top, #000 0%, #000 52%, transparent 100%);
-      -webkit-mask-composite: source-in;
-      mask-image:
-        linear-gradient(to right, #000 0%, rgba(0,0,0,.98) 38%, rgba(0,0,0,.62) 68%, transparent 100%),
-        linear-gradient(to top, #000 0%, #000 52%, transparent 100%);
-      mask-composite: intersect;
+      bottom: 0;
+
+      width: 42%;
+      height: 82%;
+
+      background: url("assets/drone-forest.jpg") left bottom / cover no-repeat;
+
+      opacity: 0.8;
+
+      -webkit-mask-image: linear-gradient(
+        to right,
+        #000 0%,
+        #000 35%,
+        rgba(0,0,0,.7) 65%,
+        transparent 100%
+      );
+
+      mask-image: linear-gradient(
+        to right,
+        #000 0%,
+        #000 35%,
+        rgba(0,0,0,.7) 65%,
+        transparent 100%
+      );
+
       pointer-events: none;
     }
 
-    .tools-section .webtools-block::after {
-      content: '';
-      position: absolute;
-      z-index: -1;
-      left: 0;
-      top: 0;
-      width: 38%;
-      height: 100%;
-      background: linear-gradient(90deg, rgba(226,219,208,.04), rgba(226,219,208,.58) 76%, transparent);
-      pointer-events: none;
-    }
-
-    .tools-section .webtools-rule {
-      display: none;
-    }
-
-    .tools-section .webtools-header {
-      max-width: 760px;
-      margin: 0 0 2rem;
-      position: relative;
-      z-index: 2;
-    }
-
-    .tools-section .webtools-header .section-eyebrow {
-      margin-bottom: .55rem;
-    }
-
-    .tools-section .webtools-header .section-title {
-      font-size: clamp(2.5rem, 4.4vw, 4.35rem);
-      margin-bottom: .75rem;
-      letter-spacing: -.025em;
-    }
-
-    .tools-section .webtools-header .section-sub {
-      max-width: 650px;
-      font-size: .98rem;
-      line-height: 1.7;
-    }
-
+    /* This is the actual hard width constraint */
     .tools-suite {
+      width: min(58vw, 900px);
+      max-width: 900px;
+
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(340px, .78fr);
-      gap: 1.1rem;
-      align-items: center;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: 1rem;
+
       position: relative;
       z-index: 2;
+
+      /* Center the composition within the available content area */
+      margin-left: auto;
+      margin-right: auto;
     }
 
-    .workspace-card,
-    .tool-link-card {
-      text-decoration: none;
-      color: inherit;
-    }
+    /* LEFT — Project Workspace */
 
     .workspace-card {
+      width: 100%;
+      min-width: 0;
       min-height: 365px;
-      margin-left: clamp(70px, 6vw, 115px);
-      border-radius: 19px;
-      padding: 2.1rem 2.25rem;
-      position: relative;
-      overflow: hidden;
+
+      margin: 0;
+      padding: 2rem;
+
+      border-radius: 18px;
+
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      background: linear-gradient(135deg, #18382d 0%, #24483a 100%);
-      box-shadow: 10px 12px 28px rgba(71, 62, 49, .26), -5px -5px 16px rgba(255,255,255,.52);
+
+      background: linear-gradient(
+        135deg,
+        #18382d 0%,
+        #24483a 100%
+      );
+
       color: #f4efe6;
+
+      box-shadow:
+        10px 12px 28px rgba(71, 62, 49, .26),
+        -5px -5px 16px rgba(255,255,255,.52);
+
       cursor: pointer;
-      transition: transform .28s ease, box-shadow .28s ease;
     }
 
-    .workspace-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 88% 85%, rgba(196,150,58,.12), transparent 30%),
-        repeating-radial-gradient(ellipse at 82% 105%, transparent 0 22px, rgba(255,255,255,.07) 23px 24px);
-      opacity: .7;
-      pointer-events: none;
-    }
-
-    .workspace-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 13px 16px 34px rgba(71, 62, 49, .31), -5px -5px 16px rgba(255,255,255,.58);
-    }
-
-    .workspace-top,
-    .workspace-bottom {
-      position: relative;
-      z-index: 1;
-    }
-
-    .workspace-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-
-    .tool-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(232,236,225,.16);
-      color: #dfe9dc;
-      border: 1px solid rgba(255,255,255,.10);
-      flex-shrink: 0;
-    }
-
-    .tool-icon svg {
-      width: 27px;
-      height: 27px;
-    }
-
-    .workspace-badge {
-      padding: .34rem .7rem;
-      border-radius: 999px;
-      background: rgba(206,225,204,.16);
-      color: #e3ebdf;
-      font-size: .61rem;
-      font-weight: 600;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      border: 1px solid rgba(255,255,255,.10);
-    }
-
-    .workspace-kicker {
-      margin-bottom: .4rem;
-      color: rgba(232,196,106,.88);
-      font-size: .64rem;
-      font-weight: 500;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-    }
-
-    .workspace-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.25rem, 3.5vw, 3.25rem);
-      font-weight: 600;
-      line-height: 1;
-      margin-bottom: .8rem;
-    }
-
-    .workspace-desc {
-      max-width: 520px;
-      color: rgba(255,255,255,.72);
-      font-size: .88rem;
-      line-height: 1.68;
-    }
-
-    .workspace-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: .65rem;
-      width: fit-content;
-      margin-top: 1.35rem;
-      padding: .68rem 1rem .68rem 1.1rem;
-      border-radius: 999px;
-      background: #f3eee5;
-      color: var(--green-deep);
-      font-size: .75rem;
-      font-weight: 500;
-      letter-spacing: .03em;
-      box-shadow: 4px 5px 12px rgba(0,0,0,.18);
-    }
-
-    .workspace-cta svg,
-    .tool-arrow svg {
-      width: 18px;
-      height: 18px;
-      transition: transform .22s ease;
-    }
-
-    .workspace-card:hover .workspace-cta svg,
-    .tool-link-card:hover .tool-arrow svg {
-      transform: translateX(3px);
-    }
+    /* RIGHT — five compact tool cards */
 
     .tool-link-list {
-      display: grid;
-      grid-template-rows: repeat(5, 1fr);
-      gap: .62rem;
+      width: 100%;
+      min-width: 0;
+
+      display: flex;
+      flex-direction: column;
+      gap: .65rem;
     }
 
     .tool-link-card {
+      width: 100%;
+      min-width: 0;
       min-height: 62px;
-      padding: .72rem .95rem;
-      border: 1px solid rgba(160,140,110,.26);
-      border-radius: 14px;
-      background: rgba(239,234,224,.78);
-      box-shadow: 5px 6px 15px rgba(130,112,88,.16), -3px -3px 9px rgba(255,255,255,.7);
+
+      padding: .7rem .85rem;
+
+      border-radius: 13px;
+
       display: flex;
       align-items: center;
-      gap: .85rem;
+      gap: .7rem;
+
+      background: rgba(239,234,224,.82);
+
+      border: 1px solid rgba(160,140,110,.26);
+
+      box-shadow:
+        5px 6px 15px rgba(130,112,88,.16),
+        -3px -3px 9px rgba(255,255,255,.7);
+
       cursor: pointer;
-      transition: transform .22s ease, background .22s ease, box-shadow .22s ease;
     }
 
-    .tool-link-card:hover {
-      transform: translateX(4px);
-      background: rgba(246,242,235,.94);
-      box-shadow: 8px 9px 18px rgba(130,112,88,.2), -3px -3px 9px rgba(255,255,255,.8);
-    }
-
-    .tool-link-card .tool-icon {
-      width: 46px;
-      height: 46px;
-      border-radius: 13px;
-      background: rgba(27,58,47,.075);
-      color: var(--green-deep);
-      border: none;
-    }
-
+    /* Prevent the text from forcing the card wider */
     .tool-link-copy {
       min-width: 0;
       flex: 1;
-      display: flex;
-      align-items: baseline;
-      gap: .35rem;
-      flex-wrap: wrap;
     }
 
     .tool-link-name {
-      color: var(--green-deep);
-      font-size: .9rem;
-      font-weight: 500;
-      line-height: 1.2;
-    }
-
-    .tool-link-type {
-      margin-top: 0;
-      color: rgba(74,74,74,.62);
-      font-size: .59rem;
-      letter-spacing: .08em;
-      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .tool-arrow {
-      color: var(--green-light);
-      display: inline-flex;
-      align-items: center;
       flex-shrink: 0;
     }
 
+
+    /* ── Tablet ───────────────────────────────────────────────── */
+
     @media (max-width: 1000px) {
-      .tools-suite {
-        grid-template-columns: 1fr;
-      }
-      .workspace-card {
-        min-height: 365px;
-        margin-left: 55px;
-      }
-      .tool-link-list {
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: none;
-      }
-      .tool-link-card {
-        min-height: 78px;
-      }
+    .tools-suite {
+      width: 80vw;
+      max-width: 800px;
+
+      margin-left: auto;
+      margin-right: auto;
+
+      grid-template-columns: 1fr;
+    }
     }
 
-    @media (max-width: 600px) {
+
+    /* ── Phone ────────────────────────────────────────────────── */
+
+    @media (max-width: 650px) {
       .tools-section .webtools-block {
-        min-height: auto;
-        padding: 3.25rem 1.25rem 3rem;
+        padding: 3rem 1.25rem;
       }
-      .tools-section .webtools-block::before {
-        left: -5rem;
-        bottom: -2rem;
-        width: 100%;
-        height: 40%;
-        opacity: .42;
-      }
-      .tools-section .webtools-header {
-        margin-bottom: 1.5rem;
-      }
-      .tools-section .webtools-header .section-title {
-        font-size: 2.65rem;
-      }
+
       .tools-suite {
-        gap: .85rem;
-      }
-      .workspace-card {
-        min-height: 360px;
-        margin-left: 0;
-        padding: 1.5rem;
-        border-radius: 17px;
-      }
-      .workspace-title {
-        font-size: 2.7rem;
-      }
-      .workspace-desc {
-        font-size: .86rem;
-      }
-      .tool-link-list {
+        width: 100%;
+        max-width: none;
+
         grid-template-columns: 1fr;
-        gap: .65rem;
+        gap: 1rem;
+
+        margin: 0;
       }
-      .tool-link-card {
-        min-height: 74px;
-        padding: .8rem .9rem;
+
+      .workspace-card {
+        min-height: 330px;
       }
-      .tool-link-card .tool-icon {
-        width: 44px;
-        height: 44px;
+
+      .tool-link-list {
+        gap: .6rem;
       }
     }
 
