@@ -4013,15 +4013,6 @@ PHOTOS SECTION
 
       /*
       const globe = Globe()
-        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-day.jpg')
-        .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-        .backgroundColor('rgba(0,0,0,0)')
-        .showAtmosphere(true)
-        .atmosphereColor('#64a0dc')
-        .atmosphereAltitude(0.15)
-        */
-
-      const globe = Globe()
         .backgroundColor('rgba(0,0,0,0)')
         .showAtmosphere(true)
         .atmosphereColor('#6f867b')
@@ -4036,6 +4027,15 @@ PHOTOS SECTION
               specular: '#3f564c'
             })
           ) 
+        */
+
+      const globe = Globe()
+        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-day.jpg')
+        .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+        .backgroundColor('rgba(0,0,0,0)')
+        .showAtmosphere(true)
+        .atmosphereColor('#64a0dc')
+        .atmosphereAltitude(0.15)
 
         // ── Solid dots ────────────────────────────────────────
         .pointsData(GLOBE_POINTS)
