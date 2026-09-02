@@ -4011,6 +4011,7 @@ PHOTOS SECTION
         return 2.2;
       }
 
+      /*
       const globe = Globe()
         .globeImageUrl('//unpkg.com/three-globe/example/img/earth-day.jpg')
         .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
@@ -4018,6 +4019,23 @@ PHOTOS SECTION
         .showAtmosphere(true)
         .atmosphereColor('#64a0dc')
         .atmosphereAltitude(0.15)
+        */
+
+      const globe = Globe()
+        .backgroundColor('rgba(0,0,0,0)')
+        .showAtmosphere(true)
+        .atmosphereColor('#6f867b')
+        .atmosphereAltitude(0.10)
+
+        .globeMaterial(
+            new THREE.MeshPhongMaterial({
+              color: '#5f766b',
+              emissive: '#1f332c',
+              emissiveIntensity: 0.10,
+              shininess: 8,
+              specular: '#3f564c'
+            })
+          ) 
 
         // ── Solid dots ────────────────────────────────────────
         .pointsData(GLOBE_POINTS)
@@ -4044,6 +4062,8 @@ PHOTOS SECTION
         .ringMaxRadius(d => d.live ? 20 : 10)          /* was 4.5 / 2.8 ... d.live is if it is an active tool or not...*/
         .ringPropagationSpeed(d => d.live ? 2.5 : 1.2) /* was 1.8 / 1.0 */
         .ringRepeatPeriod(d => d.live ? 800 : 1600)
+
+       
 
         // ── Hover tooltip ─────────────────────────────────────
         .pointLabel(d => `
