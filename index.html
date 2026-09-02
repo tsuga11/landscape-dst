@@ -1116,62 +1116,75 @@
 
     /* ── Web tools: bounded workspace layout ───────────────────── */
 
+    /* ── Tools + Globe: continuous forest backdrop ─────────────── */
+    .tools-section {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tools-section .webtools-forest {
+      position: absolute;
+      z-index: 0;
+      left: 0;
+      top: 6rem;
+      width: min(42vw, 620px);
+      height: auto;
+      display: block;
+      opacity: .78;
+      filter: saturate(.72) contrast(.94);
+
+      /* The image itself supplies the soft lower transition.
+         This only lets it dissolve horizontally into the page. */
+      -webkit-mask-image: linear-gradient(
+        to right,
+        #000 0%,
+        rgba(0,0,0,.98) 42%,
+        rgba(0,0,0,.70) 68%,
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        #000 0%,
+        rgba(0,0,0,.98) 42%,
+        rgba(0,0,0,.70) 68%,
+        transparent 100%
+      );
+
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* Tools content stays above the forest */
     .tools-section .webtools-block {
       position: relative;
+      z-index: 1;
       min-height: 82vh;
 
-      /* Keeps the forest and the cards from drifting apart on wide monitors */
       width: 100%;
       max-width: 1500px;
       margin-inline: auto;
 
       padding-top: 4rem;
       padding-bottom: 4rem;
-
-      /*
-      * Leave enough room on the left for the forest and
-      * enough room on the right for the fixed navigation.
-      */
       padding-left: 4rem;
       padding-right: calc(var(--section-right-margin) + 3rem);
 
-      overflow: hidden;
-      isolation: isolate;
-    }
-
-    /* ── Misty conifer forest ───────────────────────────────────
-       assets/conifer-forest.webp is pre-keyed: its fog is transparent,
-       so it blends into --cream on any background. Swap the src alone
-       to change the photo. ------------------------------------------ */
-    .tools-section .webtools-forest {
-      position: absolute;
-      z-index: 0;
-
-      left: 0;
-      bottom: 0;
-
-      /* Starts below the heading so the copy never sits over the trees */
-      width: 33%;
-      max-width: 500px;
-      height: 76%;
-
-      object-fit: cover;
-      object-position: left bottom;
-
-      /* Let the canopy emerge out of the cream rather than cutting off */
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 100%);
-      mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 100%);
-
-      pointer-events: none;
-      user-select: none;
+      overflow: visible;
     }
 
     @media (max-width: 1000px) {
-      .tools-section .webtools-forest { width: 44%; height: 62%; opacity: .55; }
+      .tools-section .webtools-forest {
+        width: min(52vw, 500px);
+        opacity: .55;
+      }
     }
 
     @media (max-width: 650px) {
-      .tools-section .webtools-forest { width: 100%; height: 45%; opacity: .25; }
+      .tools-section .webtools-forest {
+        width: 92vw;
+        top: 16rem;
+        opacity: .25;
+      }
     }
 
     /* Header sits above the forest */
@@ -1547,6 +1560,7 @@
     .globe-section .section-stack {
       flex-direction: row;
       align-items: stretch;
+      z-index: 1;
       padding: 3rem 2rem 3rem 4rem;
       /* ← less right padding */
       gap: 1rem;
@@ -3275,15 +3289,15 @@ PHOTOS SECTION
      -->
 
   <section class="page-section tools-section globe-section" id="tools">
-    <div class="webtools-block">
+    <!-- ── Continuous forest backdrop: extends into the Globe section ── -->
+    <img class="webtools-forest"
+         src="assets/conifer-forest-extended.webp"
+         alt=""
+         aria-hidden="true"
+         loading="lazy"
+         decoding="async">
 
-      <!-- ── Misty conifer forest ── -->
-      <img class="webtools-forest"
-           src="assets/conifer-forest.webp"
-           alt=""
-           aria-hidden="true"
-           loading="lazy"
-           decoding="async">
+    <div class="webtools-block">
 
       <div class="webtools-header">
         <p class="section-eyebrow">Web tools</p>
