@@ -244,6 +244,8 @@ import{r as Vs,g as Ys}from"./maplibre-ChAaPfnC.js";(function(){const u=document
                               <input type="number" step="any" data-field="maskThreshold"
                                      value="${M.maskThreshold??""}" />
                             </span>`:""}
+                      </label>
+                     </span>
                    </div>
                  </div>`:""}
         </li>`}).join(""),B=Wt.map(M=>{const $=u.bands.filter(U=>U.role===M.value).length;return $>0?`${$} ${M.tag.toLowerCase()}${$===1?"":"s"}`:null}).filter(Boolean).join(", ");c.innerHTML=`
