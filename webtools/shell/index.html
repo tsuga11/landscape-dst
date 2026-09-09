@@ -1,5 +1,5 @@
-<script type="module" crossorigin src="./assets/index-CfsUEPoD.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-CnPqj8PH.css">
+<script type="module" crossorigin src="./assets/index-BLS56V3U.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-CWqkQg56.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
@@ -192,29 +192,40 @@
         <div class="mapwrap">
           <div id="mapCanvas"></div>
           <div class="mapscale" id="mapScale"></div>
+          <!--
+            Under the map, not in the layer panel.
+
+            A project with eight PROMOTE outputs plus uploads plus zones pushes
+            these off the bottom of a scrolling list, so the controls that
+            affect the whole map were reachable only by scrolling past the
+            layers they apply to. Same arrangement the logic network uses.
+          -->
+          <div class="mapchrome">
+            <label>Opacity
+              <input type="range" id="opacity" min="0" max="100" value="80">
+            </label>
+            <label>Basemap
+              <select id="basemap">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="satellite">Satellite</option>
+                <option value="none">None</option>
+              </select>
+            </label>
+            <!-- Terrain over the layers, not under them: the point is reading a
+                 surface draped on topography. Off by default and per session. -->
+            <label class="check">
+              <input type="checkbox" id="hillshade">
+              Terrain
+            </label>
+            <label id="hillshadeOpacityRow" hidden>Terrain opacity
+              <input type="range" id="hillshadeOpacity" min="5" max="100" value="35">
+            </label>
+          </div>
         </div>
         <div class="maplayers">
           <h2>Layers</h2>
           <div id="mapList"></div>
-          <label class="opac">Opacity
-            <input type="range" id="opacity" min="0" max="100" value="80">
-          </label>
-          <label class="opac">Basemap
-            <select id="basemap">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="satellite">Satellite</option>
-              <option value="none">None</option>
-            </select>
-          </label>
-          <!-- Terrain over the layers, not under them: the point is reading a
-               surface draped on topography. Off by default and per session. -->
-          <label class="opac">Terrain
-            <input type="checkbox" id="hillshade">
-          </label>
-          <label class="opac" id="hillshadeOpacityRow" hidden>Terrain opacity
-            <input type="range" id="hillshadeOpacity" min="5" max="100" value="35">
-          </label>
           <p class="note" id="mapNote"></p>
         </div>
       </div>
