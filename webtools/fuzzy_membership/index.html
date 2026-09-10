@@ -57,8 +57,18 @@
       @media (max-width: 900px) {
         .split { grid-template-columns: 1fr; }
       }
+      /* Four across; 2x2 below the point where four would wrap to 3+1. */
+      .fuzzy-stat-grid > * {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+      }
+      @media (max-width: 860px) {
+        .fuzzy-stat-grid > * {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+      }
     </style>
-    <script type="module" crossorigin src="./assets/index-Cr4m78i5.js"></script>
+    <script type="module" crossorigin src="./assets/index-CNyHCZIa.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-DGhL2c6Q.css">
   </head>
   <body>
