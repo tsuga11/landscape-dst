@@ -1,5 +1,5 @@
-<script type="module" crossorigin src="./assets/index-BR4PQMIc.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-DNSDiCrr.css">
+<script type="module" crossorigin src="./assets/index-DreJmXM6.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-B3Vn8kKW.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
@@ -190,38 +190,42 @@
     <section id="view-map" class="hidden">
       <div class="maprow">
         <div class="mapwrap">
-          <div id="mapCanvas"></div>
-          <div class="mapscale" id="mapScale"></div>
           <!--
-            Under the map, not in the layer panel.
+            Above the map, labelled.
 
-            A project with eight PROMOTE outputs plus uploads plus zones pushes
-            these off the bottom of a scrolling list, so the controls that
-            affect the whole map were reachable only by scrolling past the
-            layers they apply to. Same arrangement the logic network uses.
+            They were under it, which put the controls that affect the whole map
+            below the thing they affect and read as an afterthought. Above,
+            labelled, in a row is the house pattern — the logic network, zonal
+            and prioritize all do it, and this was the last one that did not.
+
+            The basemap options are *not* listed here. They are written by
+            `main.ts` from `BASEMAP_OPTIONS` in `@erc/geo`: this list said light,
+            dark, satellite, none while the shared table had five, so the shell
+            was the one tool that could not offer OpenStreetMap. A hardcoded
+            copy beside a shared source of truth drifts quietly.
           -->
           <div class="mapchrome">
-            <label>Opacity
+            <div class="field">
+              <label for="basemap">Basemap</label>
+              <select id="basemap"></select>
+            </div>
+            <div class="field">
+              <label for="opacity">Layer opacity</label>
               <input type="range" id="opacity" min="0" max="100" value="80">
-            </label>
-            <label>Basemap
-              <select id="basemap">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="satellite">Satellite</option>
-                <option value="none">None</option>
-              </select>
-            </label>
+            </div>
             <!-- Terrain over the layers, not under them: the point is reading a
                  surface draped on topography. Off by default and per session. -->
             <label class="check">
               <input type="checkbox" id="hillshade">
               Terrain
             </label>
-            <label id="hillshadeOpacityRow" hidden>Terrain opacity
+            <div class="field" id="hillshadeOpacityRow" hidden>
+              <label for="hillshadeOpacity">Terrain opacity</label>
               <input type="range" id="hillshadeOpacity" min="5" max="100" value="35">
-            </label>
+            </div>
           </div>
+          <div id="mapCanvas"></div>
+          <div class="mapscale" id="mapScale"></div>
         </div>
         <div class="maplayers">
           <h2>Layers</h2>
