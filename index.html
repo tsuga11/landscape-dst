@@ -3420,7 +3420,67 @@ PHOTOS SECTION
   ══════════════════════════════════════════════════════════ -->
 
   <script>
-    document.querySelectorAll('.project-card[data-href], .workspace-card[data-href], .tool-link-card[data-href]').forEach(card => {
+    /*
+     * The web tools open in their own window, not in a tab.
+     *
+     * This is not a stylistic choice. A hidden tab has its renderer process
+     * deprioritised, and the tools run for minutes over hundred-megapixel
+     * rasters: a zonal window pass measured roughly three times slower with
+     * its tab in the background, and the run does not catch up on return.
+     *
+     * What matters is whether a page is the *selected tab in its own window*.
+     * A tool in a window of its own keeps full speed while that window is
+     * unfocused, on another monitor, or completely covered by other windows —
+     * it only stalls when another tab is selected in front of it. Giving it a
+     * window with no tab strip means that cannot happen, so someone can start
+     * a long run and go and do something else.
+     *
+     * `window.open` opens a tab unless it is given a features string; any
+     * non-empty one produces a window. The size is most of the screen rather
+     * than a fixed number, because these are map-and-panel layouts that a
+     * small popup makes unusable.
+     *
+     * The geography tools (`.project-card`) are left as tabs. They are
+     * MapLibre viewers with no long compute, so the reason above does not
+     * apply to them.
+     */
+    function openInOwnWindow(url) {
+      var w = Math.max(1100, Math.round(screen.availWidth * 0.9));
+      var h = Math.max(700, Math.round(screen.availHeight * 0.9));
+      var left = Math.round((screen.availWidth - w) / 2);
+      var top = Math.round((screen.availHeight - h) / 2);
+      /*
+       * `_blank` every time, never a reused window name.
+       *
+       * A name would focus an existing window instead of opening a second —
+       * tidier, and wrong: `window.open` navigates a named window to the URL,
+       * which reloads it. Clicking a tool a second time would silently kill a
+       * run already going in the first. A stray duplicate window is the far
+       * cheaper mistake.
+       */
+      window.open(
+        url,
+        '_blank',
+        'popup=yes,noopener,width=' + w + ',height=' + h + ',left=' + left + ',top=' + top
+      );
+    }
+
+    document.querySelectorAll('.workspace-card[data-href], .tool-link-card[data-href]').forEach(card => {
+      card.setAttribute('tabindex', '0');
+
+      card.addEventListener('click', () => {
+        openInOwnWindow(card.dataset.href);
+      });
+
+      card.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openInOwnWindow(card.dataset.href);
+        }
+      });
+    });
+
+    document.querySelectorAll('.project-card[data-href]').forEach(card => {
       card.setAttribute('tabindex', '0');
 
       card.addEventListener('click', () => {
