@@ -1,5 +1,5 @@
-<script type="module" crossorigin src="./assets/index-WRu2eSrJ.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-DHKFaND3.css">
+<script type="module" crossorigin src="./assets/index-Cr5Ml99B.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-BTOXeILF.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
@@ -109,6 +109,7 @@
       <button class="tab" role="tab" data-view="map"      aria-selected="false">Map</button>
       <button class="tab" role="tab" data-view="lineage"  aria-selected="false">Lineage</button>
       <button class="tab" role="tab" data-view="notes"    aria-selected="false">Notes</button>
+      <button class="tab" role="tab" data-view="handoff"  aria-selected="false">Handoff</button>
     </div>
 
     <section id="view-workflow">
@@ -284,6 +285,38 @@
         placeholder="Why a cutoff was chosen, what was tried and dropped, who agreed. Type @ to reference a layer or a step."></textarea>
       <div id="notesPreview" class="notes-preview" hidden></div>
       <p class="note" id="notesWhere"></p>
+    </section>
+
+    <!--
+      Handoff: one zip for someone else - the layers as GeoTIFF, CSV and
+      GeoJSON, the method, a README, and handoff.json with every file's
+      checksum. `renderHandoffView` in main.ts fills it; handoff.ts plans it.
+    -->
+    <section id="view-handoff" class="hidden">
+      <p class="prose">Package this project for someone else, whether they open it in these tools or in a GIS.
+        The layers you tick go in as ordinary files; the lineage, a Methods document for each final layer,
+        the notes and the project's records always go in, so what was left out is still described.
+        Every package is recorded in the project and in its notes.</p>
+      <div class="handoff-toolbar">
+        <div class="handoff-picks" role="group" aria-label="Select layers">
+          <button type="button" class="secondary mini" data-handoff-pick="default">Inputs and outputs</button>
+          <button type="button" class="secondary mini" data-handoff-pick="all">All layers</button>
+          <button type="button" class="secondary mini" data-handoff-pick="none">None</button>
+        </div>
+        <span class="grow"></span>
+        <span class="why" id="handoffTotal"></span>
+        <button type="button" class="primary" id="handoffBuild">Build package</button>
+      </div>
+      <p class="why" id="handoffStatus" aria-live="polite"></p>
+      <div class="table-wrap">
+        <table class="handoff-table">
+          <thead><tr><th scope="col"><span class="sr-only">Pack</span></th><th scope="col">Layer</th><th scope="col">Role</th><th scope="col">Kind</th><th scope="col" class="num">Size</th></tr></thead>
+          <tbody id="handoffRows"></tbody>
+        </table>
+      </div>
+      <ul class="handoff-warnings" id="handoffWarnings"></ul>
+      <h3 class="handoff-h">Handoffs from this project</h3>
+      <div id="handoffLog"></div>
     </section>
   </main>
 </div>
