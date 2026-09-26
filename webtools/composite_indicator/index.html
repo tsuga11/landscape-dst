@@ -8,8 +8,9 @@
       name="description"
       content="Combine a project's metrics into one composite indicator: each scored 0-100 within its stratum between robust endpoints, then combined by weighted arithmetic and geometric means."
     />
-    <script type="module" crossorigin src="./assets/index-BwxfeL6c.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CySO4N2t.css">
+    <script type="module" crossorigin src="./assets/index-DPsiMpo1.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/maplibre-C9SPEquG.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-BSqQ-L4z.css">
   </head>
   <body>
     <div class="shell">
@@ -25,7 +26,11 @@
         </p>
       </header>
       <div id="messages" class="messages"></div>
-      <main id="app"></main>
+      <div class="layout">
+        <main id="app"></main>
+        <section id="map-panel" class="panel mappanel" aria-label="Map"></section>
+      </div>
+      <section id="result-panel"></section>
     </div>
   </body>
 </html>
