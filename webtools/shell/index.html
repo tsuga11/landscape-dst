@@ -1,4 +1,4 @@
-<script type="module" crossorigin src="./assets/index-DD0MjpW4.js"></script>
+<script type="module" crossorigin src="./assets/index-B3fpZtXJ.js"></script>
 <link rel="stylesheet" crossorigin href="./assets/index-SDLgmSfG.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -45,7 +45,18 @@
     <div class="brand">ERC tools</div>
     <h3>Projects</h3>
     <div id="projList"></div>
-    <button class="mini" id="newProject" style="margin-top:10px">New project</button>
+    <!--
+      Upload project opens a handoff package (.zip) or a shared recipe (.json)
+      as a new project. It was reachable only by dropping onto the landing zone
+      of a project that already existed, so receiving one meant making an empty
+      project first.
+    -->
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px">
+      <button class="mini" id="newProject" type="button">New project</button>
+      <button class="mini" id="uploadProject" type="button"
+        data-tip="Open a handoff package (.zip) or a shared recipe (.json) as a new project.">Upload project</button>
+      <input type="file" id="uploadProjectFile" accept=".zip,.json" hidden>
+    </div>
 
     <!--
       The storage heading is rendered, not written here.
