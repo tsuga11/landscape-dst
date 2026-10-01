@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="./assets/index-C2lDz8Ta.js"></script>
+    <script type="module" crossorigin src="./assets/index-BUrlc8ie.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/maplibre-CmBfE8H1.js">
     <link rel="stylesheet" crossorigin href="./assets/index-DyG4o8jk.css">
   </head>
@@ -33,7 +33,7 @@
 
       <div id="messages" class="messages"></div>
 
-      <div class="layout">
+      <div class="layout" id="landscape-view">
         <aside>
           <section id="load-panel" class="panel"></section>
           <section id="zones-panel" class="panel"></section>
@@ -48,6 +48,11 @@
           </section>
           <section id="table-panel"></section>
         </main>
+      </div>
+
+      <div class="layout" id="network-view" style="display: none">
+        <aside id="network-aside"></aside>
+        <main id="network-main"></main>
       </div>
     </div>
 
