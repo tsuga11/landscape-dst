@@ -1,5 +1,5 @@
-<script type="module" crossorigin src="./assets/index-B2dixtja.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-CvGtcaOZ.css">
+<script type="module" crossorigin src="./assets/index-BmAitssO.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-Bj4CYHpo.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
@@ -42,7 +42,14 @@
 <div class="shell">
   <button class="rail-scrim" id="railScrim" type="button" tabindex="-1" aria-hidden="true"></button>
   <aside class="rail" id="rail">
-    <div class="brand">ERC tools</div>
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+        <path d="M2 24 10 15l5 5 6-8 9 12" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M2 28.5h28" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="23.5" cy="7.5" r="2.6" fill="var(--gold)"/>
+      </svg>
+      <span class="brand-text"><span>ERC tools</span><span class="brand-sub">Ecosystem Resilience Collaborative</span></span>
+    </div>
 
     <!--
       Three sections, each a different kind of thing: Start (make or open a
@@ -73,8 +80,8 @@
       The storage heading is rendered, not written here: it must ask
       `store === dirStore` before saying anything (see `renderStorage`).
     -->
+    <div id="storageHead"></div>
     <section class="railpanel" aria-label="Workspace">
-      <div id="storageHead"></div>
       <div class="storage" id="storage"></div>
       <div class="storage" id="workspace"></div>
     </section>
