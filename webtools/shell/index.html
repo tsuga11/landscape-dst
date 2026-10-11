@@ -1,5 +1,5 @@
-<script type="module" crossorigin src="./assets/index-DYgIkbKR.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-DJ1DH-Ry.css">
+<script type="module" crossorigin src="./assets/index-CXp8udVo.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-BIQrErme.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
@@ -51,10 +51,16 @@
       of a project that already existed, so receiving one meant making an empty
       project first.
     -->
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px">
-      <button class="mini" id="newProject" type="button">New project</button>
-      <button class="mini" id="uploadProject" type="button"
-        data-tip="Open a handoff package (.zip) or a shared recipe (.json) as a new project.">Upload project</button>
+    <!-- As Zonal lays out its choices: a card to start from the map, a drop zone to open a file. -->
+    <div class="railcards">
+      <button class="railcard" id="newProject" type="button">
+        <span class="t">New project</span>
+        <span class="d">Choose a study area on the map and the data from the web to start with.</span>
+      </button>
+      <button class="raildrop" id="uploadProject" type="button">
+        <span class="t">Open a project file</span>
+        <span class="d">Drop a handoff package (.zip) or a shared recipe (.json), or click to browse.</span>
+      </button>
       <input type="file" id="uploadProjectFile" accept=".zip,.json" hidden>
     </div>
 
