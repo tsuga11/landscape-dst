@@ -1,5 +1,5 @@
-<script type="module" crossorigin src="./assets/index-DXKUnKvM.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-DS0Vhe6E.css">
+<script type="module" crossorigin src="./assets/index-B2dixtja.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-CvGtcaOZ.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
@@ -43,15 +43,17 @@
   <button class="rail-scrim" id="railScrim" type="button" tabindex="-1" aria-hidden="true"></button>
   <aside class="rail" id="rail">
     <div class="brand">ERC tools</div>
-    <h3>Projects</h3>
-    <div id="projList"></div>
+
     <!--
+      Three sections, each a different kind of thing: Start (make or open a
+      project), Your projects (the list), and the workspace - where every
+      project's files live - as a panel of its own, so its figures read as about
+      the workspace rather than about the project that is open.
+
       Upload project opens a handoff package (.zip) or a shared recipe (.json)
-      as a new project. It was reachable only by dropping onto the landing zone
-      of a project that already existed, so receiving one meant making an empty
-      project first.
+      as a new project; it also takes a dropped file (main.ts).
     -->
-    <!-- As Zonal lays out its choices: a card to start from the map, a drop zone to open a file. -->
+    <h3>Start</h3>
     <div class="railcards">
       <button class="railcard" id="newProject" type="button">
         <span class="t">New project</span>
@@ -64,19 +66,18 @@
       <input type="file" id="uploadProjectFile" accept=".zip,.json" hidden>
     </div>
 
-    <!--
-      The storage heading is rendered, not written here.
+    <h3>Your projects</h3>
+    <div id="projList"></div>
 
-      It said "Browser storage" unconditionally, directly above a panel whose
-      whole argument is that it must ask `store === dirStore` before saying
-      anything at all — see `renderStorage`'s comment on the two measurements.
-      On a folder-backed workspace the static heading asserted the browser
-      measurement the panel below carefully refuses to make, which is the same
-      category error one element higher up.
+    <!--
+      The storage heading is rendered, not written here: it must ask
+      `store === dirStore` before saying anything (see `renderStorage`).
     -->
-    <div id="storageHead"></div>
-    <div class="storage" id="storage"></div>
-    <div class="storage" id="workspace"></div>
+    <section class="railpanel" aria-label="Workspace">
+      <div id="storageHead"></div>
+      <div class="storage" id="storage"></div>
+      <div class="storage" id="workspace"></div>
+    </section>
   </aside>
 
   <main>
