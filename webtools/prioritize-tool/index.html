@@ -14,9 +14,9 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="./assets/index-ByOWq3c1.js"></script>
+    <script type="module" crossorigin src="./assets/index-rByM7BOl.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/maplibre-DrOnZnMV.js">
-    <link rel="stylesheet" crossorigin href="./assets/index-BN_WZ19c.css">
+    <link rel="stylesheet" crossorigin href="./assets/index-BW50AkVL.css">
   </head>
   <body>
     <div class="shell">
@@ -52,9 +52,14 @@
           </section>
           <!-- q138-prioritizer-plans-2026-11-11: alternative plans side by side. -->
           <section id="plans-panel" class="panel"></section>
-          <details class="more">
+          <!-- q200-fold-panels: each its own collapsible card; open state remembered (main.ts). -->
+          <details class="panel fold" data-fold="returns" open>
+            <summary>Returns on the budget</summary>
+            <div id="returns-panel"></div>
+          </details>
+          <details class="panel fold" data-fold="sweep">
             <summary>Explore all weightings</summary>
-            <section id="sweep-panel" class="panel"></section>
+            <div id="sweep-panel"></div>
           </details>
           <section id="table-panel"></section>
         </main>
