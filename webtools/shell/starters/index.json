@@ -1,0 +1,11 @@
+{
+  "about": "Starter projects for the Shell (q277-starters). Each entry is a shared recipe in this folder, exported from the Shell's Share tab. An entry whose file is missing is not shown. Recipes here are public: no NACC, Riverscapes or other local-only data inside them.",
+  "starters": [
+    {
+      "id": "barrier-removal-wa",
+      "title": "Barrier removal (Washington)",
+      "blurb": "Where removing barriers to fish passage would do the most good, by HUC12: connectivity, ecological integrity, high-value areas, feasibility and support. Public layers do the work; links to NACC barriers and Riverscapes are in the model, switched off until you add your own files.",
+      "file": "barrier-removal-wa.json"
+    }
+  ]
+}
