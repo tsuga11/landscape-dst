@@ -1,4 +1,4 @@
-<script type="module" crossorigin src="./assets/index-CixQDXw3.js"></script>
+<script type="module" crossorigin src="./assets/index-BrTZtre5.js"></script>
 <link rel="stylesheet" crossorigin href="./assets/index-BjxGppT9.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -110,9 +110,10 @@
       Moving it would be the more elegant layout and the worse affordance.
     -->
     <div id="drop" class="drop">
-      <input type="file" id="file" accept=".tif,.tiff,.geojson,.fgb,.zip,.json" multiple hidden>
+      <!-- shell-csv-2026-11-17: tables too; a picked table opens the join dialog, as a dropped one does. -->
+      <input type="file" id="file" accept=".tif,.tiff,.geojson,.fgb,.zip,.json,.csv,.tsv,.parquet" multiple hidden>
       <b>Drop GeoTIFFs to start</b>
-      <span class="dropline">or vector files (GeoJSON, FlatGeobuf), a handoff package (.zip) or shared recipe (.json) - or click to choose. Everything stays on this machine.</span>
+      <span class="dropline">or vector files (GeoJSON, FlatGeobuf), a table to join (CSV, TSV, Parquet), a handoff package (.zip) or shared recipe (.json) - or click to choose. Everything stays on this machine.</span>
       <p class="why" id="dropWhy"></p>
     </div>
 
