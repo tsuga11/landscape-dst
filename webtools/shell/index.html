@@ -1,5 +1,5 @@
-<script type="module" crossorigin src="./assets/index-cu_0ITDf.js"></script>
-<link rel="stylesheet" crossorigin href="./assets/index-BR3X7ZRt.css">
+<script type="module" crossorigin src="./assets/index-eMaRsePO.js"></script>
+<link rel="stylesheet" crossorigin href="./assets/index-DalAXenQ.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ERC tools — project shell</title>
@@ -46,7 +46,12 @@
       <svg class="brand-mark" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
         <path d="M2 24 10 15l5 5 6-8 9 12" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
         <path d="M2 28.5h28" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round"/>
-        <circle cx="23.5" cy="7.5" r="2.6" fill="var(--gold)"/>
+        <!-- sun-moon-2026-11-22: the sun in light, the moon in dark; on a switch one sets behind the ridge and the other rises (app.css). -->
+        <clipPath id="brandSky"><path d="M0 0H32V22.6L21 10.6 15 18.6 10 13.6 2 22.6H0Z"/></clipPath>
+        <g clip-path="url(#brandSky)">
+          <circle class="brand-sun" cx="23.5" cy="7.5" r="2.6" fill="var(--gold)"/>
+          <circle class="brand-moon" cx="23.5" cy="7.5" r="2.3" fill="none" stroke="var(--gold)" stroke-width="1.5"/>
+        </g>
       </svg>
       <span class="brand-text"><span>ERC tools</span><span class="brand-sub">Ecosystem Resilience Collaborative</span></span>
     </div>
